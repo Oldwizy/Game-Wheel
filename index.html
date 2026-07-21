@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лототрон ігор</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Шапка сторінки: назва та коротке пояснення правил розіграшу. -->
+  <header>
+    <div class="eyebrow">Стрім-лототрон</div>
+    <h1>Розіграш ігор</h1>
+    <div class="sub">Глядачі пропонують ігри — кожен раунд вилучає один квиток, поки не залишиться одна гра.</div>
+  </header>
+
+  <!-- Банер показується після завершення розіграшу з назвою переможця. -->
+  <div class="winner-banner" id="winnerBanner">
+    <div class="winner-eyebrow">Обрано</div>
+    <div class="winner-name" id="winnerName">—</div>
+  </div>
+
+  <!-- Етап 1: додавання ігор до списку перед початком розіграшу. -->
+  <section class="panel" id="buildPanel">
+    <div class="panel-title">Список ігор</div>
+
+    <!-- Останні 3 збережені списки — можна швидко відновити попередній набір ігор. -->
+    <div class="history-block" id="historyBlock" style="display:none;">
+      <div class="history-label">Останні списки</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="add-row">
+      <input type="text" id="gameInput" placeholder="Назва гри від глядача..." maxlength="60">
+      <input type="number" id="copiesInput" min="1" value="1" title="Кількість копій">
+      <button class="btn-amber" id="addBtn">Додати</button>
+    </div>
+    <div id="ticketsWrap">
+      <p class="empty-note" id="emptyNote">Список порожній. Додайте першу гру, щоб почати.</p>
+      <div class="tickets" id="tickets"></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-ghost danger" id="resetAllBtn">Скинути все</button>
+      <button class="btn-ghost" id="clearBtn">Очистити список</button>
+      <button class="btn-teal" id="lockBtn" disabled>Почати розіграш →</button>
+    </div>
+  </section>
+
+  <!-- Етап 2: панель раунду. Спочатку прихована, її відкриває JavaScript. -->
+  <section class="panel" id="drawPanel" style="display:none;">
+    <div class="panel-title">Раунд розіграшу</div>
+
+    <div class="round-controls">
+      <div class="duration-block">
+        <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
+        <input type="range" id="durationRange" min="5" max="60" value="15" step="1">
+      </div>
+      <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
+        <span class="switch">
+          <input type="checkbox" id="instantWinToggle">
+          <span class="switch-slider"></span>
+        </span>
+        <span>Миттєво визначати переможця</span>
+      </label>
+      <button class="btn-amber" id="startRoundBtn">Почати раунд</button>
+      <button class="btn-ghost" id="backBtn">← До списку</button>
+    </div>
+
+    <!-- Перемикач між двома варіантами відображення розіграшу. -->
+    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
+      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+      <button class="btn-ghost" id="shuffleVisualsBtn" type="button">Перемішати варіанти</button>
+    </div>
+
+    <!-- Візуальна «рулетка», яка анімацією показує випадково обрану гру. -->
+    <div class="slot-machine" id="slotMachine">
+      <div class="slot-window">
+        <div class="slot-fade top"></div>
+        <div class="slot-center-band" id="slotCenterBand"></div>
+        <span class="slot-arrow left">▶</span>
+        <span class="slot-arrow right">◀</span>
+        <div class="slot-fade bottom"></div>
+        <div class="slot-strip" id="slotStrip"></div>
+      </div>
+    </div>
+
+    <!-- Альтернативний вигляд: колесо, де кожна копія гри є окремим сектором. -->
+    <div class="wheel-machine" id="wheelMachine" style="display:none;">
+      <div class="wheel-pointer" aria-hidden="true"></div>
+      <div class="wheel-stage" id="wheelStage" role="img" aria-label="Колесо з усіма копіями ігор"></div>
+    </div>
+
+    <div class="status-line" id="statusLine">Готово до першого раунду.</div>
+
+    <div class="tickets" id="drawTickets" style="margin-top:20px;"></div>
+  </section>
+
+  <!-- Журнал містить результат кожного завершеного раунду. -->
+  <section class="panel" id="logPanel" style="display:none;">
+    <div class="panel-title">Історія раундів</div>
+    <ul class="log" id="log"></ul>
+  </section>
+
+</div>
+  <!-- Основна логіка застосунку підключається після HTML-розмітки. -->
+  <script src="app.js"></script>
+</body>
+</html>
