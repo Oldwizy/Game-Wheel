@@ -67,6 +67,16 @@
     return PALETTE_COLORS[game.id % PALETTE_COLORS.length];
   }
 
+  // Перетворює HEX-колір у "rgba(...)" з заданою прозорістю — використовується
+  // для м'якого підсвічування фону картки без втрати читабельності тексту.
+  function hexToRgba(hex, alpha){
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2), 16);
+    const g = parseInt(h.substring(2,4), 16);
+    const b = parseInt(h.substring(4,6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
   // ---- Допоміжні функції для роботи зі списком ігор ----
   function normalize(name){ return name.trim().replace(/\s+/g,' '); }
 
@@ -127,6 +137,20 @@
     saveState();
   }
 
+  // Застосовує колір гри до картки: рамка зліва, колір номера та легке підсвічування фону.
+  function applyCardColor(card, game){
+    const color = colorForGame(game);
+    card.style.borderLeft = `3px solid ${color}`;
+    card.style.background = `linear-gradient(90deg, ${hexToRgba(color, 0.10)}, transparent 60%)`;
+    const tnum = card.querySelector('.tnum');
+    if(tnum) tnum.style.color = color;
+    const badge = card.querySelector('.copies-badge');
+    if(badge){
+      badge.style.borderColor = hexToRgba(color, 0.55);
+      badge.style.color = color;
+    }
+  }
+
   function renderBuildList(){
     // Наново будує картки ігор на екрані формування списку.
     ticketsEl.innerHTML = '';
@@ -145,6 +169,7 @@
           </div>
           <button class="del-btn" data-id="${g.id}">видалити</button>
         </div>`;
+      applyCardColor(card, g);
       card.querySelector('.del-btn').addEventListener('click', () => removeGame(g.id));
       card.querySelector('.minus-btn').addEventListener('click', () => changeCopies(g.id, -1, false));
       card.querySelector('.plus-btn').addEventListener('click', () => changeCopies(g.id, 1, false));
@@ -346,6 +371,7 @@
           </div>
           <span></span>
         </div>`;
+      applyCardColor(card, g);
       card.querySelector('.minus-btn').addEventListener('click', () => { if(!roundActive) changeCopies(g.id, -1, true); });
       card.querySelector('.plus-btn').addEventListener('click', () => { if(!roundActive) changeCopies(g.id, 1, true); });
       drawTickets.appendChild(card);
