@@ -135,7 +135,7 @@
       const card = document.createElement('div');
       card.className = 'ticket';
       card.innerHTML = `
-        <div class="tnum">КВИТОК №${String(i+1).padStart(2,'0')}</div>
+        <div class="tnum"> №${String(i+1).padStart(2,'0')}</div>
         <div class="tname">${escapeHtml(g.name)}</div>
         <div class="trow">
           <div class="copies-stepper">
