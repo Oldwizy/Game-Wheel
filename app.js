@@ -336,7 +336,7 @@
       card.dataset.id = g.id;
       card.innerHTML = `
         <div class="stamp">ВИЛУЧЕНО</div>
-        <div class="tnum">КВИТОК №${String(i+1).padStart(2,'0')}</div>
+        <div class="tnum"> №${String(i+1).padStart(2,'0')}</div>
         <div class="tname">${escapeHtml(g.name)}</div>
         <div class="trow">
           <div class="copies-stepper">
