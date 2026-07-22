@@ -30,6 +30,7 @@
 
   const buildPanel = $('#buildPanel');
   const drawPanel = $('#drawPanel');
+  const drawGamesPanel = $('#drawGamesPanel');
   const logPanel = $('#logPanel');
   const drawTickets = $('#drawTickets');
   const durationRange = $('#durationRange');
@@ -286,6 +287,7 @@
     if(games.length < 2) return;
     addToHistory(games);
     buildPanel.style.display = 'none';
+    drawGamesPanel.style.display = 'block';
     drawPanel.style.display = 'block';
     logPanel.style.display = 'block';
     renderDrawGrid();
@@ -297,6 +299,7 @@
   backBtn.addEventListener('click', () => {
     if(roundActive) return;
     drawPanel.style.display = 'none';
+    drawGamesPanel.style.display = 'none';
     buildPanel.style.display = 'block';
     renderBuildList();
     saveState();
@@ -327,6 +330,7 @@
     winnerBanner.classList.remove('show');
     winnerName.textContent = '—';
     drawPanel.style.display = 'none';
+    drawGamesPanel.style.display = 'none';
     logPanel.style.display = 'none';
     buildPanel.style.display = 'block';
     setVisualMode('slot');
@@ -510,7 +514,10 @@
     for(let i=0;i<Math.max(SLOT_ROWS, pool.length);i++){
       items.push(pool[i % pool.length]);
     }
-    const centerIndex = Math.min(1, items.length-1);
+    // Центр вікна розрахований так, щоб над і під обраним рядком було
+    // порівну місця (SLOT_ROWS=5 → 2 елементи зверху, 1 у центрі, 2 знизу) —
+    // це заповнює всі 5 позицій вікна без порожнього проміжку зверху.
+    const centerIndex = Math.min(Math.floor(SLOT_ROWS/2), items.length-1);
     slotStrip.innerHTML = items.map(slotItemHtml).join('');
     slotStrip.style.transition = 'none';
     const ty = (SLOT_WINDOW_H/2 - SLOT_ITEM_H/2) - centerIndex*SLOT_ITEM_H;
@@ -756,6 +763,7 @@
 
     if(state.screen === 'draw' && games.length){
       buildPanel.style.display = 'none';
+      drawGamesPanel.style.display = 'block';
       drawPanel.style.display = 'block';
       logPanel.style.display = 'block';
       renderDrawGrid();
@@ -774,6 +782,7 @@
       }
     } else {
       buildPanel.style.display = 'block';
+      drawGamesPanel.style.display = 'none';
       drawPanel.style.display = 'none';
       logPanel.style.display = 'none';
       renderLogFromEntries();
