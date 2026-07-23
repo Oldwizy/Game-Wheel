@@ -69,7 +69,7 @@ body{
 .wrap{max-width:900px;margin:0 auto;padding:40px 20px 24px;}
 
 /* --- Header --- */
-.site-header{text-align:center;margin-bottom:36px;padding-bottom:26px;border-bottom:1px solid var(--line-soft);}
+.site-header{text-align:center;padding-bottom:26px;border-bottom:1px solid var(--line-soft);}
 .glitch-title{
   font-family:var(--font-display);
   font-weight:800;
