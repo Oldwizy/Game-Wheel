@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лохотрон ігор і не тільки — розіграш</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Шапка сторінки: назва та коротке пояснення правил розіграшу. -->
+  <header>
+    <h1>Рандомайзер рандому</h1>
+    <div class="sub">Все просто, вводищ назву, потім тицяєш крутити і вуаля, скамиш</div>
+  </header>
+
+  <!-- Банер показується після завершення розіграшу з назвою переможця. -->
+  <div class="winner-banner" id="winnerBanner">
+    <div class="winner-eyebrow">Обрано</div>
+    <div class="winner-name" id="winnerName">—</div>
+  </div>
+
+  <!-- Обгортка для екрану розіграшу: список ігор, панель раунду (колесо/слот)
+       і журнал розташовуються в три колонки на широких екранах (через CSS-грід
+       .draw-layout, styles.css), і одна під одною на вузьких. -->
+  <div class="draw-layout">
+
+  <!-- Ліва колонка: список ігор-учасників поточного розіграшу. -->
+  <section class="panel" id="drawGamesPanel">
+    <div class="panel-title">Учасники розіграшу</div>
+    <div class="tickets" id="drawTickets"></div>
+  </section>
+
+  <!-- Панель раунду: слот-машина або колесо. -->
+  <section class="panel" id="drawPanel">
+
+    <div class="round-controls">
+      <button class="btn-ghost" id="backBtn">← До списку</button>
+      <div class="duration-block">
+        <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
+        <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
+      </div>
+      <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
+        <span class="switch">
+          <input type="checkbox" id="instantWinToggle">
+          <span class="switch-slider"></span>
+        </span>
+        <span>В один раунд</span>
+      </label>
+    </div>
+
+    <!-- Перемикач між двома варіантами відображення розіграшу. -->
+    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
+      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+    </div>
+
+    <div class="status-line" id="statusLine">Готово до першого раунду.</div>
+
+    <!-- Візуальна «рулетка», яка анімацією показує випадково обрану гру. -->
+    <div class="slot-machine" id="slotMachine">
+      <div class="slot-window">
+        <div class="slot-fade top"></div>
+        <div class="slot-center-band" id="slotCenterBand"></div>
+        <span class="slot-arrow left">▶</span>
+        <span class="slot-arrow right">◀</span>
+        <div class="slot-fade bottom"></div>
+        <div class="slot-strip" id="slotStrip"></div>
+      </div>
+    </div>
+
+    <!-- Альтернативний вигляд: колесо, де кожна копія гри є окремим сектором. -->
+    <div class="wheel-machine" id="wheelMachine" style="display:none;">
+      <div class="wheel-pointer" aria-hidden="true"></div>
+      <div class="wheel-stage" id="wheelStage" role="img" aria-label="Колесо з усіма копіями ігор"></div>
+    </div>
+
+    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+      <button class="btn-ghost" id="shuffleVisualsBtn" type="button">Перемішати варіанти</button>
+      <button class="btn-amber" id="startRoundBtn">Почати раунд</button>
+    </div>
+
+  </section>
+
+  <!-- Журнал містить результат кожного завершеного раунду. -->
+  <section class="panel" id="logPanel">
+    <div class="panel-title">Історія раундів</div>
+    <ul class="log" id="log"></ul>
+  </section>
+
+  </div>
+
+</div>
+  <!-- Спільні допоміжні функції, потім логіка цієї сторінки. -->
+  <script src="common.js"></script>
+  <script src="draw.js"></script>
+</body>
+</html>

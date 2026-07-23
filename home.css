@@ -1,0 +1,443 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block');
+
+/* ------------------------------------------------------------------
+   Тема "термінал/сканер" тільки для index.html (сторінка списку ігор).
+   draw.html і далі використовує окремий styles.css — тут навмисно нічого
+   спільного, щоб зміни кольорів/шрифтів не зачепили екран розіграшу.
+------------------------------------------------------------------ */
+
+:root{
+  --bg:#05070a;
+  --panel:#0b0e12;
+  --panel-soft: rgba(0,245,255,0.03);
+  --line: rgba(0,245,255,0.14);
+  --line-soft: rgba(0,245,255,0.07);
+  --cyan:#00f5ff;
+  --cyan-dim: rgba(0,245,255,0.45);
+  --cyan-glow: rgba(0,245,255,0.25);
+  --text:#e9feff;
+  --muted:#7c9092;
+  --error:#ff6b6b;
+  --font-display:'Sora', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+
+body{
+  background:
+    linear-gradient(rgba(0,245,255,0.05) 1px, transparent 1px) 0 0 / 100% 42px,
+    linear-gradient(90deg, rgba(0,245,255,0.05) 1px, transparent 1px) 0 0 / 42px 100%,
+    radial-gradient(circle at 20% 0%, rgba(0,245,255,0.08), transparent 45%),
+    radial-gradient(circle at 85% 100%, rgba(0,245,255,0.05), transparent 40%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--font-mono);
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* Тонка лінія сканування, що повільно "проходить" по всьому екрану. */
+.scanline{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:50;
+  background:linear-gradient(180deg, transparent, rgba(0,245,255,0.05) 50%, transparent);
+  height:140px;
+  animation:scan 7s linear infinite;
+  mix-blend-mode:screen;
+}
+@keyframes scan{
+  0%{transform:translateY(-140px);}
+  100%{transform:translateY(100vh);}
+}
+
+.msi{
+  font-family:'Material Symbols Outlined';
+  font-weight:normal;
+  font-style:normal;
+  font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;
+  line-height:1;
+  vertical-align:-3px;
+  display:inline-block;
+}
+
+.wrap{max-width:900px;margin:0 auto;padding:40px 20px 90px;}
+
+/* --- Header --- */
+.site-header{text-align:center;margin-bottom:36px;padding-bottom:26px;border-bottom:1px solid var(--line-soft);}
+.glitch-title{
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:clamp(28px,5.5vw,44px);
+  text-transform:uppercase;
+  letter-spacing:-.01em;
+  margin:0;
+  color:var(--text);
+  text-shadow:0 0 20px rgba(233,254,255,0.25);
+}
+.glitch-title .accent{
+  color:var(--cyan);
+  text-shadow:0 0 12px rgba(0,245,255,0.65), 0 0 32px rgba(0,245,255,0.35);
+}
+.sub{
+  color:var(--muted);
+  font-size:12.5px;
+  margin-top:12px;
+  letter-spacing:.02em;
+}
+
+/* --- HUD-панель введення --- */
+.hud-panel{
+  border:1px solid var(--line);
+  border-left:3px solid var(--cyan);
+  background:linear-gradient(180deg, var(--panel-soft), transparent 60%), var(--panel);
+  border-radius:2px;
+  padding:22px 24px 26px;
+  margin-bottom:32px;
+  box-shadow:0 0 0 1px rgba(0,245,255,0.03), 0 20px 40px -20px rgba(0,245,255,0.08);
+}
+.hud-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.hud-label{
+  font-size:11px;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:var(--cyan-dim);
+  font-weight:700;
+}
+.hud-label .dot{
+  color:var(--cyan);
+  margin-right:6px;
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+.hud-flag{
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.add-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+.input-shell{
+  position:relative;
+  flex:1 1 220px;
+  display:flex;
+  align-items:center;
+}
+.input-icon{
+  position:absolute;
+  left:14px;
+  color:var(--cyan-dim);
+  pointer-events:none;
+}
+.input-shell input[type=text]{
+  width:100%;
+  background:rgba(0,0,0,0.35);
+  border:1px solid var(--line);
+  color:var(--text);
+  border-radius:2px;
+  padding:15px 14px 15px 42px;
+  font-size:14px;
+  font-family:var(--font-mono);
+  letter-spacing:.03em;
+}
+.input-shell input::placeholder{color:rgba(233,254,255,0.25);}
+
+.copies-shell{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(0,0,0,0.35);
+  border:1px solid var(--line);
+  border-radius:2px;
+  padding:0 12px;
+}
+.copies-label{font-size:10px;color:var(--muted);letter-spacing:.1em;}
+.copies-shell input[type=number]{
+  width:56px;
+  background:transparent;
+  border:none;
+  color:var(--cyan);
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:15px;
+  text-align:center;
+  padding:14px 0;
+}
+
+input:focus{outline:1px solid var(--cyan);outline-offset:0;}
+
+button{
+  font-family:var(--font-mono);
+  border:none;
+  border-radius:2px;
+  cursor:pointer;
+  transition:transform .12s ease, opacity .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+}
+button:active{transform:scale(0.97);}
+button:disabled{opacity:.35;cursor:not-allowed;}
+button:disabled:active{transform:none;}
+
+.btn-cta{
+  background:var(--cyan);
+  color:#00181a;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:.08em;
+  padding:0 26px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  text-transform:uppercase;
+}
+.btn-cta:hover:not(:disabled){background:#7bfbff;box-shadow:0 0 24px rgba(0,245,255,0.35);}
+
+/* --- Історія збережених списків --- */
+.history-block{margin-bottom:20px;}
+.history-label{
+  font-size:10px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+.history-list{display:flex;flex-wrap:wrap;gap:10px;}
+.history-item{
+  background:rgba(0,0,0,0.35);
+  border:1px solid var(--line);
+  border-radius:2px;
+  padding:10px 12px;
+  max-width:260px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.history-item .h-date{font-size:10px;color:var(--cyan-dim);}
+.history-item .h-names{font-size:11.5px;color:var(--text);line-height:1.4;font-family:var(--font-mono);opacity:.85;}
+.history-item button{
+  align-self:flex-start;
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--muted);
+  padding:5px 10px;
+  font-size:10.5px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+.history-item button:hover{color:var(--cyan);border-color:var(--cyan-dim);}
+
+/* --- Заголовок і дії секції списку --- */
+.list-section{display:flex;flex-direction:column;gap:18px;margin-bottom:36px;}
+.list-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line-soft);
+  padding-bottom:14px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.list-head h2{
+  font-family:var(--font-display);
+  font-size:19px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:var(--text);
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.list-head h2 .msi{color:var(--cyan);}
+.list-actions{display:flex;gap:16px;}
+.link-btn{
+  background:transparent;
+  color:var(--muted);
+  font-size:10.5px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 2px;
+}
+.link-btn:hover:not(:disabled){color:var(--cyan);}
+.link-btn.danger:hover:not(:disabled){color:var(--error);}
+.link-btn .msi{font-size:16px;}
+
+/* --- Порожній стан (сканер) --- */
+.empty-note{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  text-align:center;
+  border:1px solid var(--line-soft);
+  background:rgba(0,245,255,0.02);
+  border-radius:10px;
+  padding:80px 24px;
+  overflow:hidden;
+}
+.empty-watermark{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:220px;
+  color:var(--cyan);
+  opacity:.03;
+  pointer-events:none;
+}
+.empty-glyph{
+  position:relative;
+  font-size:52px;
+  color:var(--cyan-dim);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+.empty-note p{
+  position:relative;
+  margin:0;
+  max-width:340px;
+  color:var(--muted);
+  font-size:13.5px;
+  line-height:1.5;
+  letter-spacing:.02em;
+}
+
+/* --- Картки ігор --- */
+.tickets{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(230px,1fr));
+  gap:14px;
+}
+.ticket{
+  position:relative;
+  background:linear-gradient(180deg, rgba(0,245,255,0.025), transparent 45%), var(--panel);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:16px 16px 16px 18px;
+  transition:border-color .15s ease, transform .2s ease, opacity .35s ease;
+}
+.ticket::before,.ticket::after{
+  content:"";
+  position:absolute;
+  width:12px;height:12px;
+  opacity:0;
+  transition:opacity .2s ease;
+  pointer-events:none;
+}
+.ticket::before{top:6px;left:6px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);}
+.ticket::after{bottom:6px;right:6px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan);}
+.ticket:hover::before,.ticket:hover::after{opacity:.8;}
+.ticket .tnum{
+  font-size:10.5px;
+  color:var(--muted);
+  letter-spacing:.08em;
+}
+.ticket .tname{
+  font-family:var(--font-display);
+  font-size:16px;
+  font-weight:700;
+  text-transform:uppercase;
+  margin:8px 0 14px;
+  line-height:1.25;
+  word-break:break-word;
+  color:var(--text);
+}
+.ticket .trow{display:flex;align-items:center;justify-content:space-between;}
+.copies-stepper{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  background:rgba(0,0,0,0.4);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:2px;
+}
+.copies-badge{
+  font-size:12px;
+  color:var(--cyan);
+  min-width:32px;
+  text-align:center;
+  font-weight:700;
+}
+.step-btn{
+  width:22px;
+  height:22px;
+  padding:0;
+  background:transparent;
+  color:var(--muted);
+  font-family:var(--font-mono);
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:2px;
+}
+.step-btn:hover:not(:disabled){color:var(--cyan);background:rgba(0,245,255,0.08);}
+.del-btn{
+  background:transparent;
+  color:rgba(233,254,255,0.25);
+  font-size:10px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  padding:4px 6px;
+}
+.del-btn:hover{color:var(--error);}
+
+/* --- CTA: почати розіграш --- */
+.cta-bar{position:sticky;bottom:18px;}
+.hex-btn{
+  width:100%;
+  padding:26px 20px;
+  background:linear-gradient(120deg, var(--cyan), #7bfbff, var(--cyan));
+  color:#00181a;
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:clamp(16px,2.4vw,22px);
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  clip-path:polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%);
+  box-shadow:0 10px 40px -10px rgba(0,245,255,0.45);
+}
+.hex-btn:hover:not(:disabled){filter:brightness(1.08);}
+.hex-btn:disabled{
+  background:#171c20;
+  color:#4a5a5c;
+  box-shadow:none;
+}
+.hex-btn .msi{animation:bob 1.6s ease-in-out infinite;}
+.hex-btn:disabled .msi{animation:none;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+
+@media (max-width:640px){
+  .add-row{flex-direction:column;align-items:stretch;}
+  .copies-shell{justify-content:space-between;}
+  .btn-cta{justify-content:center;padding:14px;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .scanline,.hud-label .dot,.empty-glyph,.hex-btn .msi{animation:none;}
+  .ticket{transition:none;}
+}
