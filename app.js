@@ -730,7 +730,7 @@
       startRoundBtn.disabled = false;
       lockBtn.disabled = false;
       instantWinToggle.disabled = false;
-      updateStatus(`Готово до раунду ${roundCount+1}. Залишилось ігор: ${games.length}.`);
+      updateStatus(`Тут закінчили ${roundCount+1}. Залишилось ігор: ${games.length}.`);
     }
     saveState();
   }
