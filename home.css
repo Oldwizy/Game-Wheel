@@ -12,7 +12,7 @@
   --panel:#0b0e12;
   --panel-soft: rgba(0,245,255,0.03);
   --line: rgba(0,245,255,0.14);
-  --line-soft: rgba(0,245,255,0.07);
+
   --cyan:#00f5ff;
   --cyan-dim: rgba(0,245,255,0.45);
   --cyan-glow: rgba(0,245,255,0.25);
@@ -423,7 +423,7 @@ button:disabled:active{transform:none;}
   align-items:center;
   justify-content:center;
   gap:16px;
-  clip-path:polygon(4% 0%, 96% 0%, 100% 50%, 96% 100%, 4% 100%, 0% 50%);
+
   box-shadow:0 10px 40px -10px rgba(0,245,255,0.45);
 }
 .hex-btn:hover:not(:disabled){filter:brightness(1.08);}
