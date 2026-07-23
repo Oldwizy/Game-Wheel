@@ -149,6 +149,7 @@
     font-size:13px;
     font-style:italic;
     padding:10px 2px;
+    max-width: none;
   }
 
   /* --- saved lists history --- */

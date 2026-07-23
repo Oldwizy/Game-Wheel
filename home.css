@@ -313,6 +313,8 @@ button:disabled:active{transform:none;}
 }
 .empty-note p{
   position:relative;
+  display: inline-flex;
+
   margin:0;
   max-width:340px;
   color:var(--muted);
