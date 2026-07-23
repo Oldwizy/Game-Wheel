@@ -144,6 +144,7 @@
   .btn-teal:hover:not(:disabled){background:#63d9d1;}
 
   .empty-note{
+
     color:var(--muted);
     font-size:13px;
     font-style:italic;
