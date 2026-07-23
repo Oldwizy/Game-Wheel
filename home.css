@@ -66,10 +66,10 @@ body{
   display:inline-block;
 }
 
-.wrap{max-width:900px;margin:0 auto;padding:40px 20px 90px;}
+.wrap{max-width:900px;margin:0 auto;padding-top: 32px;}
 
 /* --- Header --- */
-.site-header{text-align:center;margin-bottom:36px;padding-bottom:26px;border-bottom:1px solid var(--line-soft);}
+.site-header{text-align:center;padding-bottom:26px;border-bottom:1px solid var(--line-soft);}
 .glitch-title{
   font-family:var(--font-display);
   font-weight:800;
@@ -289,7 +289,7 @@ button:disabled:active{transform:none;}
   gap:16px;
   text-align:center;
   border:1px solid var(--line-soft);
-  background:rgba(0,245,255,0.02);
+  background:linear-gradient(180deg, rgba(0,245,255,0.04), transparent 55%), var(--panel);
   border-radius:10px;
   padding:80px 24px;
   overflow:hidden;
@@ -313,9 +313,7 @@ button:disabled:active{transform:none;}
 }
 .empty-note p{
   position:relative;
-  display: inline-flex;
-
-  margin:0;
+  margin:0 auto;
   max-width:340px;
   color:var(--muted);
   font-size:13.5px;
@@ -405,7 +403,12 @@ button:disabled:active{transform:none;}
 .del-btn:hover{color:var(--error);}
 
 /* --- CTA: почати розіграш --- */
-.cta-bar{position:sticky;bottom:18px;}
+.cta-bar{
+  position:sticky;
+  bottom:18px;
+  background:var(--panel);
+  border-radius:6px;
+}
 .hex-btn{
   width:100%;
   padding:26px 20px;
@@ -425,6 +428,7 @@ button:disabled:active{transform:none;}
 }
 .hex-btn:hover:not(:disabled){filter:brightness(1.08);}
 .hex-btn:disabled{
+  opacity:1;
   background:#171c20;
   color:#4a5a5c;
   box-shadow:none;
