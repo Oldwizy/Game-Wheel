@@ -105,7 +105,7 @@
     font-family:var(--font-mono);
     text-align:center;
   }
-  input:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  input:focus{outline:2px solid var(--amber);outline-offset:0px;}
   .add-row input::placeholder{color:var(--muted);}
 
   button{

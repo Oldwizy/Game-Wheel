@@ -178,7 +178,8 @@ body{
   padding:14px 0;
 }
 
-input:focus{outline:1px solid var(--cyan);outline-offset:0;}
+input:focus{  outline: none;
+  box-shadow: none;}
 
 button{
   font-family:var(--font-mono);
