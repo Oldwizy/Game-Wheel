@@ -214,26 +214,75 @@
     statusLine.className = 'status-line' + (mode ? ' ' + mode : '');
   }
 
-  function logLine(text, isWin) {
-    // Додає один запис до журналу; переможний запис виділяється окремим стилем.
-    logEntries.push({ text, isWin: !!isWin });
+  function buildLogLi(entry) {
+    // Будує один рядок журналу; якщо запис стосується повного вилучення гри
+    // (entry.canReturn), додає кнопку повернення цієї гри в пул розіграшу.
     const li = document.createElement('li');
-    li.innerHTML = text;
-    if (isWin) li.classList.add('win-line');
-    logEl.appendChild(li);
+    const textSpan = document.createElement('span');
+    textSpan.className = 'log-text';
+    textSpan.innerHTML = entry.text;
+    li.appendChild(textSpan);
+    if (entry.isWin) li.classList.add('win-line');
+    if (entry.canReturn) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'log-return-btn' + (entry.returned ? ' returned' : '');
+      btn.textContent = entry.returned ? 'Повернуто' : '↺ Повернути';
+      btn.disabled = !!entry.returned;
+      btn.addEventListener('click', () => returnGameToPool(entry, btn));
+      li.appendChild(btn);
+    }
+    return li;
+  }
+
+  function logLine(text, isWin, meta) {
+    // Додає один запис до журналу; переможний запис виділяється окремим стилем.
+    const entry = { text, isWin: !!isWin };
+    if (meta) {
+      entry.gameId = meta.gameId;
+      entry.gameName = meta.gameName;
+      entry.canReturn = true;
+      entry.returned = false;
+    }
+    logEntries.push(entry);
+    logEl.appendChild(buildLogLi(entry));
     logEl.scrollTop = logEl.scrollHeight;
     persist();
   }
 
   function renderLogFromEntries() {
     logEl.innerHTML = '';
-    logEntries.forEach(entry => {
-      const li = document.createElement('li');
-      li.innerHTML = entry.text;
-      if (entry.isWin) li.classList.add('win-line');
-      logEl.appendChild(li);
-    });
+    logEntries.forEach(entry => logEl.appendChild(buildLogLi(entry)));
     logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function setLogReturnButtonsDisabled(disabled) {
+    logEl.querySelectorAll('.log-return-btn:not(.returned)').forEach(btn => { btn.disabled = disabled; });
+  }
+
+  // Повертає раніше вилучену гру назад у пул розіграшу (з 1 копією). Якщо
+  // розіграш вже було завершено (показано банер переможця), знімає це
+  // завершення і знову дає змогу запускати раунди.
+  function returnGameToPool(entry, btn) {
+    if (roundActive || entry.returned) return;
+    if (!games.some(g => g.id === entry.gameId)) {
+      games.push({ id: entry.gameId, name: entry.gameName, copies: 1 });
+    }
+    entry.returned = true;
+
+    winnerBanner.classList.remove('show');
+    startRoundBtn.disabled = false;
+    instantWinToggle.disabled = false;
+    backBtn.disabled = false;
+
+    renderDrawGrid();
+    initSlotIdle();
+    updateStatus(`Готово до раунду ${roundCount + 1}. Залишилось ігор: ${games.length}.`);
+    persist();
+
+    btn.classList.add('returned');
+    btn.disabled = true;
+    btn.textContent = 'Повернуто';
   }
 
   function cardEl(id) {
@@ -257,8 +306,8 @@
     return games[Math.floor(Math.random() * games.length)];
   }
 
-  function slotItemHtml(g) {
-    return `<div class="slot-item"><span style="color:${Common.colorForGame(g)}">${Common.escapeHtml(g.name)}</span></div>`;
+  function slotItemHtml(g, isCenter) {
+    return `<div class="slot-item${isCenter ? ' slot-item-center' : ''}"><span style="color:${isCenter ? '' : Common.colorForGame(g)}">${Common.escapeHtml(g.name)}</span></div>`;
   }
 
   // Пул для заповнення стрічки, де кожна копія кожної гри трапляється рівно
@@ -278,7 +327,7 @@
       items.push(pool[i % pool.length]);
     }
     const centerIndex = Math.min(Math.floor(SLOT_ROWS / 2), items.length - 1);
-    slotStrip.innerHTML = items.map(slotItemHtml).join('');
+    slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === centerIndex)).join('');
     slotStrip.style.transition = 'none';
     const ty = (SLOT_WINDOW_H / 2 - SLOT_ITEM_H / 2) - centerIndex * SLOT_ITEM_H;
     slotStrip.style.transform = `translateY(${ty}px)`;
@@ -300,8 +349,7 @@
       items.push(pool[poolIdx++]);
     }
     items[targetIndex] = target;
-
-    slotStrip.innerHTML = items.map(slotItemHtml).join('');
+    slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === targetIndex)).join('');
 
     slotStrip.style.transition = 'none';
     slotStrip.style.transform = 'translateY(0px)';
@@ -366,6 +414,7 @@
     backBtn.disabled = true;
     instantWinToggle.disabled = true;
     setStepperButtonsDisabled(true);
+    setLogReturnButtonsDisabled(true);
     roundCount++;
     updateStatus(`Раунд ${roundCount} триває...`, 'active');
 
@@ -411,7 +460,7 @@
     if (el) el.classList.add('winner-picked');
 
     if (eliminatedFully) {
-      logLine(`Раунд ${roundCount}: <b>${Common.escapeHtml(target.name)}</b> — вилучено повністю`);
+      logLine(`Раунд ${roundCount}: <b>${Common.escapeHtml(target.name)}</b> — вилучено повністю`, false, { gameId: target.id, gameName: target.name });
       if (el) {
         const stamp = el.querySelector('.stamp');
         if (stamp) stamp.classList.add('show');
@@ -455,7 +504,7 @@
     slotMachine.classList.add('slot-landed');
     slotStrip.classList.remove('spinning');
     const items = [winner, winner, winner];
-    slotStrip.innerHTML = items.map(slotItemHtml).join('');
+    slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === 1)).join('');
     slotStrip.style.transition = 'none';
     const ty = (SLOT_WINDOW_H / 2 - SLOT_ITEM_H / 2) - 1 * SLOT_ITEM_H;
     slotStrip.style.transform = `translateY(${ty}px)`;
@@ -478,6 +527,7 @@
     roundActive = false;
     backBtn.disabled = false;
     setStepperButtonsDisabled(false);
+    setLogReturnButtonsDisabled(false);
 
     if (games.length <= 1) {
       const winner = games[0];

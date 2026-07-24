@@ -38,11 +38,7 @@
   <section class="panel" id="drawPanel">
 
     <div class="round-controls">
-      <button class="btn-ghost" id="backBtn">← До списку</button>
-      <div class="duration-block">
-        <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
-        <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
-      </div>
+      <button class="btn-ghost" id="backBtn"><span class="msi">arrow_back</span>До списку</button>
       <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
         <span class="switch">
           <input type="checkbox" id="instantWinToggle">
@@ -52,6 +48,11 @@
       </label>
     </div>
 
+    <div class="duration-block">
+      <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
+      <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
+    </div>
+
     <!-- Перемикач між двома варіантами відображення розіграшу. -->
     <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
       <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
@@ -59,11 +60,13 @@
     </div>
 
     <div class="status-line" id="statusLine">Готово до першого раунду.</div>
+    <div class="status-divider"></div>
 
     <!-- Візуальна «рулетка», яка анімацією показує випадково обрану гру. -->
     <div class="slot-machine" id="slotMachine">
       <div class="slot-window">
         <div class="slot-fade top"></div>
+
         <div class="slot-center-band" id="slotCenterBand"></div>
         <span class="slot-arrow left">▶</span>
         <span class="slot-arrow right">◀</span>
@@ -80,7 +83,7 @@
 
     <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
       <button class="btn-ghost" id="shuffleVisualsBtn" type="button">Перемішати варіанти</button>
-      <button class="btn-amber" id="startRoundBtn">Почати раунд</button>
+      <button class="btn-amber" id="startRoundBtn">Почати раунд<span class="msi">autorenew</span></button>
     </div>
 
   </section>
@@ -89,7 +92,10 @@
   <section class="panel" id="logPanel">
     <div class="panel-title"><span class="msi">history</span>Історія раундів</div>
     <ul class="log" id="log"></ul>
-
+    <div class="log-sys-footer">
+      <div><span>[SYS]</span>SESSION_ACTIVE</div>
+      <div><span>[SYS]</span>GRID_INITIALIZED_SUCCESS</div>
+    </div>
   </section>
 
   </div>
