@@ -67,7 +67,7 @@
   function applyCardColor(card, game) {
     const color = Common.colorForGame(game);
     card.style.borderLeft = `3px solid ${color}`;
-    card.style.background = `linear-gradient(90deg, ${Common.hexToRgba(color, 0.10)}, transparent 60%)`;
+    card.style.background = `linear-gradient(90deg, ${Common.hexToRgba(color, 0.10)}, transparent 60%), var(--panel)`;
     const tnum = card.querySelector('.tnum');
     if (tnum) tnum.style.color = color;
     const badge = card.querySelector('.copies-badge');

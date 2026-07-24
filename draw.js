@@ -66,7 +66,7 @@
   function applyCardColor(card, game) {
     const color = Common.colorForGame(game);
     card.style.borderLeft = `3px solid ${color}`;
-    card.style.background = `linear-gradient(90deg, ${Common.hexToRgba(color, 0.10)}, transparent 60%)`;
+    card.style.background = `linear-gradient(90deg, ${Common.hexToRgba(color, 0.10)}, transparent 60%), var(--panel-raised)`;
     const tnum = card.querySelector('.tnum');
     if (tnum) tnum.style.color = color;
     const badge = card.querySelector('.copies-badge');
@@ -188,7 +188,7 @@
       const fontSize = Math.max(3.5, Math.min(12, labelLength / Math.max(1, game.name.length * 0.58), labelAngleWidth * 0.72));
       const estimatedWidth = game.name.length * fontSize * 0.58;
       const textLength = Math.min(labelLength, estimatedWidth);
-      return `<path d="${wheelSectorPath(center, center, radius, start, end)}" fill="${Common.colorForGame(game)}" fill-opacity="0.82" stroke="#12161B" stroke-width="1"></path><g transform="rotate(${mid} ${center} ${center})"><text class="wheel-label" style="font-size:${fontSize.toFixed(2)}px" x="${center + labelStart}" y="${center}" textLength="${textLength.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${label}</text></g>`;
+      return `<path d="${wheelSectorPath(center, center, radius, start, end)}" fill="${Common.colorForGame(game)}" fill-opacity="0.82" stroke="#12161B" stroke-width="1"></path><g transform="rotate(${mid} ${center} ${center})"><text class="wheel-label" style="font-size:${fontSize.toFixed(2)}px" x="${center + labelStart + labelLength / 2}" y="${center}" textLength="${textLength.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${label}</text></g>`;
     }).join('');
     wheelStage.innerHTML = `<svg id="wheelSvg" viewBox="0 0 ${size} ${size}" aria-hidden="true">${sectors}<circle class="wheel-hub" cx="${center}" cy="${center}" r="23"></circle><circle fill="var(--amber)" cx="${center}" cy="${center}" r="7"></circle></svg>`;
     return entries;

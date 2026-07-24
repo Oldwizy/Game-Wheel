@@ -448,3 +448,29 @@ button:disabled:active{transform:none;}
   .scanline,.hud-label .dot,.empty-glyph,.hex-btn .msi{animation:none;}
   .ticket{transition:none;}
 }
+
+/* --- Стилізовані, тонші скролбари (замість товстих системних) --- */
+*{
+  scrollbar-width: thin;                       /* Firefox */
+  scrollbar-color: var(--cyan-dim) rgba(0,245,255,0.06);
+}
+*::-webkit-scrollbar{                          /* Chrome/Edge/Safari */
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track{
+  background: rgba(0,245,255,0.05);
+}
+*::-webkit-scrollbar-thumb{
+  background: var(--cyan-dim);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover{
+  background: var(--cyan);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-corner{
+  background: transparent;
+}
