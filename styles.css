@@ -1,4 +1,4 @@
-  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
   /* Глобальна палітра кольорів і шрифти, що використовуються по всій сторінці. */
   :root{
@@ -671,3 +671,198 @@
       margin-bottom: 0; /* .panel додає власний нижній відступ 20px, який тут не потрібен */
     }
   }
+
+  /* ================================================================
+     NEON HUD RESTYLE — центральна панель розіграшу (#drawPanel) та
+     права панель історії (#logPanel), за референсом ціанової теми
+     (та сама тема, що й на index.html/home.css). Ліва панель зі
+     списком учасників навмисно не змінювалась.
+     Примітка: var(--cyan), var(--panel), var(--line), var(--text),
+     var(--muted) тут беруть значення з :root у home.css (він
+     підключений другим у <head> і переозначає ці змінні), тому нижче
+     використовуються саме вони, а не --amber/--teal зі styles.css.
+  ================================================================ */
+
+  #drawPanel, #logPanel{
+
+    border:1px solid rgba(0,245,255,0.18);
+    border-radius:4px;
+    position:relative;
+    overflow:hidden;
+  }
+  #drawPanel::before, #drawPanel::after,
+  #logPanel::before,  #logPanel::after{
+    content:"";
+    position:absolute;
+    width:14px; height:14px;
+    pointer-events:none;
+    z-index:3;
+  }
+  #drawPanel::before, #logPanel::before{ top:10px; left:10px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+  #drawPanel::after,  #logPanel::after { bottom:10px; right:10px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+
+  /* --- Заголовок правої панелі (іконка + напис у стилі HUD) --- */
+  #logPanel .panel-title{
+    color:var(--cyan);
+    letter-spacing:.18em;
+    gap:8px;
+  }
+  #logPanel .panel-title .msi{
+    font-family:'Material Symbols Outlined';
+    font-weight:normal;
+    font-style:normal;
+    font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;
+    font-size:15px;
+    color:var(--cyan);
+  }
+  #logPanel .panel-title::after{ background:rgba(0,245,255,0.18); }
+
+  /* --- Верхня службова смуга центральної панелі --- */
+  .round-controls{
+    border-bottom:1px solid rgba(0,245,255,0.12);
+    padding-bottom:18px;
+  }
+  .round-controls .btn-ghost{
+    border-color:rgba(0,245,255,0.28);
+    color:var(--cyan);
+  }
+  .round-controls .btn-ghost:hover:not(:disabled){
+    border-color:var(--cyan);
+    color:#fff;
+  }
+
+  /* --- Повзунок тривалості раунду --- */
+  .duration-label span.val{ color:var(--cyan); }
+  #drawPanel input[type=range]{ accent-color:var(--cyan); }
+
+  /* --- Перемикач "В один раунд" --- */
+  .switch-label.mode-active{ color:var(--cyan); }
+  .switch input:checked + .switch-slider{
+    background:rgba(0,245,255,0.14);
+    border-color:var(--cyan);
+  }
+  .switch input:checked + .switch-slider::before{ background:var(--cyan); }
+
+  /* --- Перемикач вигляду (Слот-машина / Колесо) — компактні "пігулки" --- */
+  .view-switch:has(#slotViewBtn){
+    border:1px solid rgba(0,245,255,0.28);
+    display:inline-flex;
+    width:fit-content;
+    margin:18px auto 14px;
+    padding:2px;
+  }
+  .view-switch:has(#slotViewBtn) .btn-ghost{
+    border:none;
+    color:var(--cyan);
+  }
+  .view-switch:has(#slotViewBtn) .btn-ghost.active{
+    background:var(--cyan);
+    color:#00181a;
+    box-shadow:0 0 15px rgba(0,245,255,0.35);
+  }
+
+  /* --- Нижній ряд керування (перемішати / почати раунд) --- */
+  .view-switch:has(#shuffleVisualsBtn){
+    gap:14px;
+    margin-top:auto;
+    padding-top:18px;
+  }
+
+  /* --- Статус-рядок --- */
+  .status-line.active{ color:var(--cyan); text-shadow:0 0 10px rgba(0,245,255,0.35); }
+
+  /* --- Слот-машина: темна шахта з ціановим світінням --- */
+  .slot-machine{
+    background:#08090b;
+    border:1px solid rgba(0,245,255,0.22);
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 20px rgba(0,245,255,0.06);
+  }
+  .slot-machine.spinning{ animation:slotGlowCyan 0.9s ease-in-out infinite; }
+  @keyframes slotGlowCyan{
+    0%,100%{ box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,245,255,0.25); }
+    50%{ box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,245,255,0.45), 0 0 0 1px var(--cyan); }
+  }
+  .slot-window{ background:#000; }
+  .slot-fade.top{ background:linear-gradient(to bottom, #08090b, transparent); }
+  .slot-fade.bottom{ background:linear-gradient(to top, #08090b, transparent); }
+  .slot-center-band{
+    border-top:1.5px solid var(--cyan);
+    border-bottom:1.5px solid var(--cyan);
+    background:rgba(0,245,255,0.08);
+  }
+  .slot-center-band::before, .slot-center-band::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:2px;
+    height:16px;
+    background:var(--cyan);
+    opacity:.5;
+    transform:translateY(-50%);
+  }
+  .slot-center-band::before{ left:10px; }
+  .slot-center-band::after{ right:10px; }
+  .slot-arrow{ color:var(--cyan); }
+  .slot-landed .slot-center-band{
+    background:rgba(78,205,196,0.12);
+    border-color:var(--teal);
+  }
+  .slot-landed .slot-center-band::before,
+  .slot-landed .slot-center-band::after{ background:var(--teal); }
+
+  /* --- Колесо --- */
+  .wheel-pointer{ border-top-color:var(--cyan); }
+  .wheel-stage{
+    border-color:rgba(0,245,255,0.28);
+    background:#000;
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,245,255,0.08);
+  }
+  .wheel-hub{ stroke:var(--cyan); }
+  .wheel-machine.spinning .wheel-stage{
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 26px rgba(0,245,255,0.35);
+  }
+
+  /* --- Кнопка запуску раунду --- */
+  .btn-amber{ box-shadow:0 0 18px rgba(0,245,255,0.22); }
+  .btn-amber:hover:not(:disabled){ box-shadow:0 0 26px rgba(0,245,255,0.4); }
+
+  /* --- Права панель: журнал раундів у стилі термінального логу --- */
+  #log{ position:relative }
+  #log:empty::before{
+    content:"ЛОГ-ФАЙЛ ПОРОЖНІЙ.\A ОЧІКУВАННЯ ПЕРШОГО РЕЗУЛЬТАТУ.";
+    white-space:pre-line;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    height:220px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    opacity:.75;
+    margin-top: 12px;
+  }
+  #log li{
+    border-left:2px solid rgba(0,245,255,0.28);
+    color:var(--muted);
+  }
+  #log li b{ color:var(--cyan); }
+  #log li.win-line{ border-left-color:var(--teal); color:var(--teal); }
+
+  /* Декоративний "термінальний" підвал під журналом раундів. */
+  .log-sys-footer{
+    margin-top:14px;
+    padding:12px 14px;
+    background:rgba(0,0,0,0.35);
+    border-left:2px solid var(--cyan);
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--outline, var(--muted));
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .log-sys-footer span{ color:var(--cyan); margin-right:8px; }
