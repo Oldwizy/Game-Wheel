@@ -38,7 +38,7 @@
 
   // Розміри елементів рулетки — потрібні для точного положення стрічки.
   const SLOT_ITEM_H = 56;
-  const SLOT_ROWS = 5;
+  const SLOT_ROWS = 3; // має збігатися з висотою .slot-window у styles.css (56px × 3 = 168px)
   const SLOT_WINDOW_H = SLOT_ITEM_H * SLOT_ROWS;
 
   // ---- Стан застосунку, спільний з index.html через localStorage ----
