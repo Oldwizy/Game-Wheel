@@ -166,7 +166,7 @@
       instantWinMode: false,
       durationValue: 15
     };
-    renderHistory();
+    // renderHistory(); // тимчасово приховано блок "Останні списки"
     renderBuildList();
     persist();
   });
@@ -195,7 +195,7 @@
   window.BuildPage = { addExternalGame };
 
   function init() {
-    renderHistory();
+    // renderHistory(); // тимчасово приховано блок "Останні списки"
     renderBuildList();
   }
 
