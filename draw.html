@@ -39,6 +39,11 @@
 
     <div class="round-controls">
       <button class="btn-ghost" id="backBtn"><span class="msi">arrow_back</span>До списку</button>
+         <!-- Перемикач між двома варіантами відображення розіграшу. -->
+    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
+      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+    </div>
       <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
         <span class="switch">
           <input type="checkbox" id="instantWinToggle">
@@ -53,11 +58,7 @@
       <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
     </div>
 
-    <!-- Перемикач між двома варіантами відображення розіграшу. -->
-    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
-      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
-      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
-    </div>
+
 
     <div class="status-line" id="statusLine">Готово до першого раунду.</div>
     <div class="status-divider"></div>
@@ -96,7 +97,6 @@
   <section class="panel" id="logPanel">
     <div class="panel-title"><span class="msi">history</span>Історія раундів</div>
     <ul class="log" id="log"></ul>
-
   </section>
 
   </div>
