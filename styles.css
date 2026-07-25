@@ -763,9 +763,8 @@
   /* --- Перемикач вигляду (Слот-машина / Колесо) — компактні "пігулки" --- */
   .view-switch:has(#slotViewBtn){
     border:1px solid rgba(0,245,255,0.28);
-    display:inline-flex;
     width:fit-content;
-    margin:18px auto 14px;
+    margin:18px auto 32px;
     padding:2px;
   }
   .view-switch:has(#slotViewBtn) .btn-ghost{
