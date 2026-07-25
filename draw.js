@@ -26,6 +26,13 @@
   const shuffleVisualsBtn = $('#shuffleVisualsBtn');
   const wheelMachine = $('#wheelMachine');
   const wheelStage = $('#wheelStage');
+  const wheelResultPopup = $('#wheelResultPopup');
+  const wheelResultName = $('#wheelResultName');
+
+  // Скільки часу тримати попап з результатом раунду на екрані, перед тим
+  // як сховати його і знову запустити повільне "холосте" обертання колеса.
+  const WHEEL_RESULT_POPUP_MS = 1500;
+  let wheelResultTimer = null;
   const instantWinToggle = $('#instantWinToggle');
   const instantWinLabel = $('#instantWinLabel');
 
@@ -194,6 +201,33 @@
     return entries;
   }
 
+  // ---- Повільне "холосте" обертання колеса, поки раунд не запущено ----
+  // Крутиться сам контейнер .wheel-stage (клас idle-spin, CSS-анімація),
+  // тоді як сам раунд обертає інший елемент — #wheelSvg через inline
+  // transform у spinWheel(). Тому дві анімації одна одній не заважають.
+  function startWheelIdle() {
+    wheelStage.classList.add('idle-spin');
+  }
+  function stopWheelIdle() {
+    wheelStage.classList.remove('idle-spin');
+  }
+
+  // Показує короткий попап з назвою обраного варіанта одразу після зупинки
+  // колеса, а потім ховає його і відновлює холосте обертання (якщо розіграш
+  // ще триває).
+  function showWheelResultPopup(name) {
+    if (wheelResultTimer) clearTimeout(wheelResultTimer);
+    wheelResultName.textContent = name;
+    wheelResultPopup.classList.add('show');
+    wheelResultTimer = setTimeout(() => {
+      wheelResultPopup.classList.remove('show');
+      wheelResultTimer = null;
+      if (visualMode === 'wheel' && !roundActive && games.length > 1) {
+        startWheelIdle();
+      }
+    }, WHEEL_RESULT_POPUP_MS);
+  }
+
   function setVisualMode(mode) {
     if (roundActive) return;
     visualMode = mode;
@@ -204,7 +238,12 @@
     slotViewBtn.setAttribute('aria-pressed', String(!useWheel));
     wheelViewBtn.classList.toggle('active', useWheel);
     wheelViewBtn.setAttribute('aria-pressed', String(useWheel));
-    if (useWheel) renderWheel();
+    if (useWheel) {
+      renderWheel();
+      startWheelIdle();
+    } else {
+      stopWheelIdle();
+    }
     persist();
   }
 
@@ -277,6 +316,7 @@
 
     renderDrawGrid();
     initSlotIdle();
+    if (visualMode === 'wheel') startWheelIdle();
     updateStatus(`Готово до раунду ${roundCount + 1}. Залишилось ігор: ${games.length}.`);
     persist();
 
@@ -418,10 +458,17 @@
     roundCount++;
     updateStatus(`Раунд ${roundCount} триває...`, 'active');
 
+    if (visualMode === 'wheel') {
+      if (wheelResultTimer) { clearTimeout(wheelResultTimer); wheelResultTimer = null; }
+      wheelResultPopup.classList.remove('show');
+      stopWheelIdle();
+    }
+
     const target = instantWinMode ? weightedPick() : uniformPick();
     const spin = visualMode === 'wheel' ? spinWheel : spinSlot;
     spin(target, durationSec, () => {
       const el = cardEl(target.id);
+      if (visualMode === 'wheel') showWheelResultPopup(target.name);
       finishRound(target, el);
     });
   }
@@ -512,6 +559,9 @@
 
   function showFinishedState(winner) {
     // Оформлює екран завершеного розіграшу: банер, підсвітку картки й нерухому рулетку.
+    if (wheelResultTimer) { clearTimeout(wheelResultTimer); wheelResultTimer = null; }
+    wheelResultPopup.classList.remove('show');
+    stopWheelIdle();
     startRoundBtn.disabled = true;
     instantWinToggle.disabled = true;
     setStepperButtonsDisabled(true);

@@ -470,6 +470,58 @@
     box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 26px rgba(255,179,71,0.35);
   }
 
+  /* Повільне обертання колеса, поки розіграш не почався (режим очікування).
+     Крутиться сам контейнер .wheel-stage, а не svg всередині — тому це
+     ніяк не заважає точній анімації обертання під час самого раунду
+     (та анімація крутить #wheelSvg окремим inline-transform). */
+  @keyframes wheelIdleSpin{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+  }
+  .wheel-stage.idle-spin{
+    animation:wheelIdleSpin 26s linear infinite;
+  }
+
+  /* Короткий попап з результатом раунду поверх колеса. */
+  .wheel-result-popup{
+    position:absolute;
+    top:50%;
+    left:50%;
+    z-index:5;
+    max-width:78%;
+    text-align:center;
+    padding:14px 22px;
+    border-radius:8px;
+    background:var(--panel);
+    border:1px solid var(--amber);
+    box-shadow:0 0 30px rgba(255,179,71,0.35), 0 14px 34px rgba(0,0,0,0.5);
+    opacity:0;
+    pointer-events:none;
+    transform:translate(-50%,-50%) scale(0.85);
+    transition:opacity .22s ease, transform .22s ease;
+  }
+  .wheel-result-popup.show{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+  }
+  .wheel-result-popup .wrp-eyebrow{
+    display:block;
+    font-size:10px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:6px;
+  }
+  .wheel-result-popup .wrp-name{
+    display:block;
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:16px;
+    color:var(--text);
+    word-break:break-word;
+    line-height:1.25;
+  }
+
 
   /* Керування раундом: тривалість, запуск і повернення до списку. */
   .round-controls{
@@ -763,8 +815,9 @@
   /* --- Перемикач вигляду (Слот-машина / Колесо) — компактні "пігулки" --- */
   .view-switch:has(#slotViewBtn){
     border:1px solid rgba(0,245,255,0.28);
+    display:inline-flex;
     width:fit-content;
-    margin:18px auto 32px;
+    margin:18px auto 14px;
     padding:2px;
   }
   .view-switch:has(#slotViewBtn) .btn-ghost{
@@ -892,6 +945,11 @@
   .wheel-machine.spinning .wheel-stage{
     box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 26px rgba(0,245,255,0.35);
   }
+  .wheel-result-popup{
+    border-color:var(--cyan);
+    box-shadow:0 0 30px rgba(0,245,255,0.3), 0 14px 34px rgba(0,0,0,0.5);
+  }
+  .wheel-result-popup .wrp-eyebrow{ color:var(--cyan); }
 
   /* --- Кнопка запуску раунду --- */
   .btn-amber{ box-shadow:0 0 18px rgba(0,245,255,0.22); display:flex; align-items:center; gap:8px; }
