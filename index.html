@@ -17,6 +17,39 @@
     <div class="sub">Все просто, вводищ назву, потім тицяєш крутити і вуаля, скамиш</div>
   </header>
 
+  <!-- Панель інтеграції з Twitch: логін і керування нагородою за бали каналу. -->
+  <section class="hud-panel twitch-panel">
+    <div class="hud-panel-head">
+      <span class="hud-label"><span class="dot">●</span> Twitch</span>
+    </div>
+
+    <!-- Стан "не залогінені" -->
+    <div id="twitchLoggedOut" class="twitch-row">
+      <p class="twitch-hint">Увійдіть через Twitch, щоб глядачі могли додавати варіанти в розіграш за бали каналу.</p>
+      <button class="btn-cta twitch-btn" id="twitchLoginBtn"><span class="msi">login</span>Увійти через Twitch</button>
+    </div>
+
+    <!-- Стан "залогінені" -->
+    <div id="twitchLoggedIn" class="twitch-row" style="display:none;">
+      <div class="twitch-user-line">
+        Увійшли як <b id="twitchUserName">—</b>
+        <button class="link-btn" id="twitchLogoutBtn"><span class="msi">logout</span>Вийти</button>
+      </div>
+
+      <div class="twitch-reward-row">
+        <div class="copies-shell" title="Ціна нагороди в балах каналу">
+          <span class="copies-label">БАЛИ</span>
+          <input type="number" id="twitchCostInput" min="1" value="100">
+        </div>
+        <button class="btn-cta twitch-btn" id="twitchCreateRewardBtn"><span class="msi">redeem</span>Створити нагороду «рандом ігор»</button>
+      </div>
+      <div class="twitch-reward-status" id="twitchRewardStatus"></div>
+      <div class="twitch-event-status muted" id="twitchEventStatus">● Прослуховування вимкнене</div>
+
+      <ul class="twitch-redemption-log" id="twitchRedemptionLog"></ul>
+    </div>
+  </section>
+
   <!-- HUD-панель введення нової гри. -->
   <section class="hud-panel">
     <div class="hud-panel-head">
@@ -76,5 +109,6 @@
   <!-- Спільні допоміжні функції, потім логіка цієї сторінки (не змінювалась). -->
   <script src="common.js"></script>
   <script src="build.js"></script>
+  <script src="twitch.js"></script>
 </body>
 </html>

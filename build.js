@@ -175,6 +175,25 @@
   gameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addGame(); });
   copiesInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addGame(); });
 
+  // ---- Додавання гри ззовні (з Twitch-нагороди за бали каналу) ----
+  // Викликається з twitch.js, коли глядач активує нагороду "рандом ігор"
+  // і вписує назву. Якщо така гра вже є в списку — просто +1 копія,
+  // так само як при ручному додаванні.
+  function addExternalGame(name, fromUser) {
+    const clean = Common.normalize(name);
+    if (!clean) return;
+    const existing = findByName(clean);
+    if (existing) {
+      existing.copies += 1;
+    } else {
+      state.games.push({ id: state.nextId++, name: clean, copies: 1, addedBy: fromUser || null });
+    }
+    renderBuildList();
+    persist();
+  }
+
+  window.BuildPage = { addExternalGame };
+
   function init() {
     renderHistory();
     renderBuildList();
