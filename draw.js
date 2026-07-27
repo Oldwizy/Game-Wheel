@@ -37,9 +37,42 @@
   const instantWinLabel = $('#instantWinLabel');
 
   // Розміри елементів рулетки — потрібні для точного положення стрічки.
+  // Висота одного пункту фіксована (56px, як і .slot-item у styles.css),
+  // а от кількість видимих рядів і загальна висота вікна тепер РАХУЮТЬСЯ
+  // з фактичного розміру .slot-window (він росте й заповнює всю висоту
+  // #drawPanel через flex у styles.css) — а не задані наперед константою,
+  // як було, коли вікно мало жорстку висоту 168px.
   const SLOT_ITEM_H = 56;
-  const SLOT_ROWS = 3; // має збігатися з висотою .slot-window у styles.css (56px × 3 = 168px)
-  const SLOT_WINDOW_H = SLOT_ITEM_H * SLOT_ROWS;
+  const slotWindow = slotMachine.querySelector('.slot-window');
+  let slotRows = 3;
+  let SLOT_WINDOW_H = SLOT_ITEM_H * slotRows;
+
+  // Вимірює поточну висоту .slot-window, рахує скільки повних рядів по 56px
+  // у неї влазить (мінімум 3, завжди непарне число — щоб був чіткий
+  // центральний ряд), і виставляє вікну РІВНО таку висоту через inline-style.
+  // Це потрібно викликати перед будь-яким рендером стрічки (idle/спін/фінал),
+  // інакше висота "попливе" між флекс-розкладкою (дробові пікселі) і
+  // математикою центрування (яка рахує рівно на цілі ряди по 56px).
+  function syncSlotWindowMetrics() {
+    // Спочатку повертаємо ріст (на випадок, якщо попередній виклик його
+    // заблокував нижче) і скидаємо висоту, щоб flexbox порахував природну
+    // доступну висоту .slot-window усередині .slot-machine.
+    slotWindow.style.flex = '1 1 auto';
+    slotWindow.style.height = '';
+    const naturalH = slotWindow.clientHeight || SLOT_ITEM_H * 3;
+    let rows = Math.max(3, Math.floor(naturalH / SLOT_ITEM_H));
+    if (rows % 2 === 0) rows -= 1; // непарна кількість — є чіткий центральний ряд
+    slotRows = Math.max(3, rows);
+    SLOT_WINDOW_H = SLOT_ITEM_H * slotRows;
+    // Тепер вимикаємо flex-grow і фіксуємо РІВНО округлену висоту. Без цього
+    // кроку flexbox просто розтягнув би вікно назад на всю доступну висоту
+    // (ігноруючи округлення до цілого ряду), і реальна видима висота не
+    // збігалася б із тим, що закладено в математику центрування нижче —
+    // саме це й показувало зайвий/неправильно розташований рядок.
+    slotWindow.style.flex = '0 0 auto';
+    slotWindow.style.height = SLOT_WINDOW_H + 'px';
+    return SLOT_WINDOW_H;
+  }
 
   // ---- Стан застосунку, спільний з index.html через localStorage ----
   let state = Common.loadState();
@@ -232,7 +265,7 @@
     if (roundActive) return;
     visualMode = mode;
     const useWheel = mode === 'wheel';
-    slotMachine.style.display = useWheel ? 'none' : 'block';
+    slotMachine.style.display = useWheel ? 'none' : 'flex';
     wheelMachine.style.display = useWheel ? 'block' : 'none';
     slotViewBtn.classList.toggle('active', !useWheel);
     slotViewBtn.setAttribute('aria-pressed', String(!useWheel));
@@ -243,6 +276,9 @@
       startWheelIdle();
     } else {
       stopWheelIdle();
+      // Вікно рулетки могло бути display:none (0px заввишки) — перераховуємо
+      // висоту й перемальовуємо стрічку заново під фактичний розмір.
+      initSlotIdle();
     }
     persist();
   }
@@ -361,12 +397,13 @@
   // Показує нерухому рулетку з поточними іграми перед запуском раунду.
   function initSlotIdle() {
     slotMachine.classList.remove('spinning', 'slot-landed');
+    syncSlotWindowMetrics();
     const pool = slotOrder.length ? slotOrder : (games.length ? games : [{ name: '—' }]);
     const items = [];
-    for (let i = 0; i < Math.max(SLOT_ROWS, pool.length); i++) {
+    for (let i = 0; i < Math.max(slotRows, pool.length); i++) {
       items.push(pool[i % pool.length]);
     }
-    const centerIndex = Math.min(Math.floor(SLOT_ROWS / 2), items.length - 1);
+    const centerIndex = Math.min(Math.floor(slotRows / 2), items.length - 1);
     slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === centerIndex)).join('');
     slotStrip.style.transition = 'none';
     const ty = (SLOT_WINDOW_H / 2 - SLOT_ITEM_H / 2) - centerIndex * SLOT_ITEM_H;
@@ -378,9 +415,14 @@
     slotMachine.classList.remove('slot-landed');
     slotMachine.classList.add('spinning');
     slotStrip.classList.add('spinning');
+    syncSlotWindowMetrics();
 
-    const itemsCount = Math.max(24, Math.min(160, Math.round(durationSec * 3)));
-    const targetIndex = itemsCount - 3;
+    const halfRows = Math.floor(slotRows / 2);
+    const itemsCount = Math.max(24, halfRows * 2 + 8, Math.min(160, Math.round(durationSec * 3)));
+    // Позиція зупинки: рівно halfRows елементів має лишитись ПІСЛЯ target,
+    // щоб вікно (яке тепер може бути й вищим за 3 ряди) було повністю
+    // заповнене реальними елементами з обох боків від центру.
+    const targetIndex = itemsCount - 1 - halfRows;
     const items = [];
     let pool = buildCopyPool();
     let poolIdx = 0;
@@ -550,10 +592,12 @@
     slotMachine.classList.remove('spinning');
     slotMachine.classList.add('slot-landed');
     slotStrip.classList.remove('spinning');
-    const items = [winner, winner, winner];
-    slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === 1)).join('');
+    syncSlotWindowMetrics();
+    const centerIndex = Math.floor(slotRows / 2);
+    const items = Array.from({ length: slotRows }, () => winner);
+    slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === centerIndex)).join('');
     slotStrip.style.transition = 'none';
-    const ty = (SLOT_WINDOW_H / 2 - SLOT_ITEM_H / 2) - 1 * SLOT_ITEM_H;
+    const ty = (SLOT_WINDOW_H / 2 - SLOT_ITEM_H / 2) - centerIndex * SLOT_ITEM_H;
     slotStrip.style.transform = `translateY(${ty}px)`;
   }
 
@@ -600,6 +644,23 @@
     refreshVisualOrder();
     initSlotIdle();
     renderWheel();
+  });
+
+  // ---- Перерахунок висоти рулетки при зміні розміру вікна/орієнтації ----
+  // .slot-window тепер динамічно заповнює всю доступну висоту панелі, тому
+  // при resize кількість видимих рядів може змінитись — стрічку потрібно
+  // перебудувати під нову висоту, інакше центрування "попливе".
+  let slotResizeRaf = null;
+  window.addEventListener('resize', () => {
+    if (roundActive || visualMode !== 'slot') return;
+    if (slotResizeRaf) cancelAnimationFrame(slotResizeRaf);
+    slotResizeRaf = requestAnimationFrame(() => {
+      if (slotMachine.classList.contains('slot-landed') && games.length <= 1 && games[0]) {
+        showSlotWinner(games[0]);
+      } else {
+        initSlotIdle();
+      }
+    });
   });
 
   // ---- Початкове відображення сторінки розіграшу ----

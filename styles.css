@@ -34,10 +34,23 @@
     font-family:var(--font-body);
     min-height:100vh;
     padding:32px 20px 80px;
+    /* flex-колонка потрібна, щоб .draw-layout нижче міг рахувати свою
+       висоту через flex:1 (реальний залишок екрана), а не вгадувати
+       пікселі через calc(100vh - N). */
+    display:flex;
+    flex-direction:column;
   }
 
   /* Центральний контейнер, який обмежує ширину інтерфейсу. */
-  .wrap{max-width:960px;margin:0 auto;}
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    width:100%;
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
 
   header{margin-bottom: 12px ;text-align:center;}
   .eyebrow{
@@ -206,7 +219,6 @@
   /* Сітка квитків: карток із назвами ігор та кількістю копій. */
   .tickets{
     display:grid;
-
     grid-template-columns:repeat(auto-fill, minmax(190px,1fr));
     gap:12px;
     margin-top:16px;
@@ -323,6 +335,11 @@
     position:relative;
     margin:44px 0 32px;
     width:100%;
+    flex:1 1 auto; /* росте й заповнює решту висоти #drawPanel по вертикалі */
+    display:flex;
+    flex-direction:column; /* без цього flex:1 у .slot-window росте по ширині, а не по висоті */
+    align-items:stretch; /* .slot-window тягнеться на всю ширину й висоту .slot-machine */
+    justify-content:center; /* draw.js фіксує висоту .slot-window рівно на цілі ряди — залишок від округлення рівномірно розподіляється зверху/знизу, а не лишається порожнечею знизу */
     background:var(--panel-raised);
     border:1px solid var(--line);
     border-radius:24px;
@@ -337,7 +354,8 @@
   }
   .slot-window{
     position:relative;
-    height:  168px;
+    flex:1 1 auto;
+    min-height:168px; /* мінімум 3 ряди (56px) — фактичну висоту виставляє draw.js під ціле число рядів */
     overflow:hidden;
     border-radius:24px;
     background:#0D1114;
@@ -720,7 +738,9 @@
     .draw-layout {
       display: grid;
       grid-template-columns: 1fr 3fr 1fr; /* ліва 20% / центр 60% / права 20% */
-      grid-template-rows: calc(100vh - 200px); /* фіксована висота рядка — єдине джерело істини для висоти всіх трьох колонок */
+      grid-template-rows: minmax(0, 1fr); /* висота рядка = фактична висота .draw-layout (див. flex:1 нижче) */
+      flex: 1 1 auto; /* росте й заповнює .wrap до самого низу екрана — реальний залишок, а не вгадана калькуляція */
+      min-height: 0;
       gap: 20px;
     }
     .draw-layout #drawGamesPanel,
