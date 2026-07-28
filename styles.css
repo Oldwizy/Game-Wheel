@@ -438,16 +438,27 @@
     color:#17120B;
   }
 
-  /* Колесо: стрілка зверху вказує на сектор, що обирається. */
+  /* Колесо: стрілка зверху вказує на сектор, що обирається.
+     .wheel-machine тепер росте так само, як .slot-machine (flex:1 1 auto
+     всередині #drawPanel) і заповнює всю доступну висоту панелі; сам
+     розмір квадратного .wheel-stage (в px) рахує draw.js — див.
+     syncWheelStageMetrics(), — щоб колесо було настільки великим,
+     наскільки дозволяють і висота, і ширина блока одночасно. */
   .wheel-machine{
     position:relative;
-    max-width:460px;
-    margin:0 auto;
-    padding-top:18px;
+    width:100%;
+    margin:44px 0 32px;
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   .wheel-stage{
     width:min(100%, 420px);
     aspect-ratio:1;
+    max-width:100%;
+    max-height:100%;
     margin:0 auto;
     border:8px solid var(--line);
     border-radius:50%;
@@ -482,7 +493,7 @@
   .wheel-label{
     fill:var(--text);
     font-family:var(--font-mono);
-    font-size:10px;
+    font-size:16px;
     font-weight:600;
     text-anchor:middle;
     dominant-baseline:middle;
@@ -791,7 +802,7 @@
     .slot-arrow.left{ left:4px; }
     .slot-arrow.right{ right:4px; }
 
-    .wheel-machine{ max-width:100%; padding-top:14px; }
+    .wheel-machine{ margin:28px 0 22px; }
     .wheel-pointer{
       border-left-width:10px; border-right-width:10px; border-top-width:20px;
       top:2px;

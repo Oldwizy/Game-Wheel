@@ -225,13 +225,30 @@
       const end = start + sectorAngle;
       const mid = start + sectorAngle / 2;
       const label = Common.escapeHtml(game.name);
-      const fontSize = Math.max(3.5, Math.min(12, labelLength / Math.max(1, game.name.length * 0.58), labelAngleWidth * 0.72));
+      const fontSize = Math.max(3.5, Math.min(16, labelLength / Math.max(1, game.name.length * 0.58), labelAngleWidth * 0.85));
       const estimatedWidth = game.name.length * fontSize * 0.58;
       const textLength = Math.min(labelLength, estimatedWidth);
       return `<path d="${wheelSectorPath(center, center, radius, start, end)}" fill="${Common.colorForGame(game)}" fill-opacity="0.82" stroke="#12161B" stroke-width="1"></path><g transform="rotate(${mid} ${center} ${center})"><text class="wheel-label" style="font-size:${fontSize.toFixed(2)}px" x="${center + labelStart + labelLength / 2}" y="${center}" textLength="${textLength.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${label}</text></g>`;
     }).join('');
     wheelStage.innerHTML = `<svg id="wheelSvg" viewBox="0 0 ${size} ${size}" aria-hidden="true">${sectors}<circle class="wheel-hub" cx="${center}" cy="${center}" r="23"></circle><circle fill="var(--amber)" cx="${center}" cy="${center}" r="7"></circle></svg>`;
     return entries;
+  }
+
+  // Вимірює фактично доступний простір .wheel-machine (він росте й заповнює
+  // всю висоту #drawPanel через flex, так само як .slot-window) і виставляє
+  // квадратному .wheel-stage розмір у px, що дорівнює МЕНШІЙ з двох величин —
+  // доступної ширини або доступної висоти. Це потрібно, щоб колесо
+  // масштабувалось на всю висоту блоку, а не лишалось фіксованого розміру
+  // (aspect-ratio сам собою не може одночасно врахувати й ширину, і висоту
+  // контейнера — тому розмір рахує JS, як і для рулетки вище).
+  function syncWheelStageMetrics() {
+    wheelStage.style.width = '';
+    wheelStage.style.height = '';
+    const availW = wheelMachine.clientWidth;
+    const availH = wheelMachine.clientHeight;
+    const size = Math.max(160, Math.min(availW, availH || availW));
+    wheelStage.style.width = size + 'px';
+    wheelStage.style.height = size + 'px';
   }
 
   // ---- Повільне "холосте" обертання колеса, поки раунд не запущено ----
@@ -266,12 +283,15 @@
     visualMode = mode;
     const useWheel = mode === 'wheel';
     slotMachine.style.display = useWheel ? 'none' : 'flex';
-    wheelMachine.style.display = useWheel ? 'block' : 'none';
+    wheelMachine.style.display = useWheel ? 'flex' : 'none';
     slotViewBtn.classList.toggle('active', !useWheel);
     slotViewBtn.setAttribute('aria-pressed', String(!useWheel));
     wheelViewBtn.classList.toggle('active', useWheel);
     wheelViewBtn.setAttribute('aria-pressed', String(useWheel));
     if (useWheel) {
+      // .wheel-machine могло бути display:none (0px) — перераховуємо доступний
+      // розмір панелі, перш ніж малювати колесо в новий розмір .wheel-stage.
+      syncWheelStageMetrics();
       renderWheel();
       startWheelIdle();
     } else {
@@ -418,7 +438,7 @@
     syncSlotWindowMetrics();
 
     const halfRows = Math.floor(slotRows / 2);
-    const itemsCount = Math.max(24, halfRows * 2 + 8, Math.min(160, Math.round(durationSec * 3)));
+    const itemsCount = Math.max(24, halfRows * 2 + 8, Math.min(280, Math.round(durationSec * 6)));
     // Позиція зупинки: рівно halfRows елементів має лишитись ПІСЛЯ target,
     // щоб вікно (яке тепер може бути й вищим за 3 ряди) було повністю
     // заповнене реальними елементами з обох боків від центру.
@@ -431,7 +451,13 @@
       items.push(pool[poolIdx++]);
     }
     items[targetIndex] = target;
-    slotStrip.innerHTML = items.map((g, i) => slotItemHtml(g, i === targetIndex)).join('');
+    // Під час прокрутки жоден елемент НЕ позначається як "центральний"
+    // (isCenter завжди false) — інакше переможний варіант отримував яскраву
+    // підсвітку (клас slot-item-center) одразу при рендері стрічки, і його
+    // було видно заздалегідь, ще коли він тільки пролітав повз вікно, а не
+    // коли реально зупинився. Підсвітку додаємо точково нижче, в момент
+    // реальної зупинки (slotAnim.onfinish).
+    slotStrip.innerHTML = items.map((g) => slotItemHtml(g, false)).join('');
 
     slotStrip.style.transition = 'none';
     slotStrip.style.transform = 'translateY(0px)';
@@ -440,23 +466,42 @@
 
     const finalTy = (SLOT_WINDOW_H / 2 - SLOT_ITEM_H / 2) - targetIndex * SLOT_ITEM_H;
 
-    requestAnimationFrame(() => {
-      slotStrip.style.transition = `transform ${durationSec}s cubic-bezier(0.15, 0.82, 0.22, 1)`;
-      slotStrip.style.transform = `translateY(${finalTy}px)`;
-    });
+    // Двофазний рух через Web Animations API (element.animate) — звичайна
+    // CSS-transition з одним easing на весь час не може дати "рівномірно
+    // швидко, а гальмо тільки в кінці": один-єдиний cubic-bezier завжди
+    // трохи уповільнює рух від самого початку. Тому рухом керують дві фази:
+    //  1) 0 → (durationSec - DECEL_SEC) — линійний рух з постійною швидкістю
+    //     (без жодного уповільнення), тобто "швидко з самого старту";
+    //  2) останні DECEL_SEC секунд — плавне гальмування (криву можна
+    //     підкрутити нижче) точно до цільового елемента.
+    const DECEL_SEC = Math.min(1, durationSec / 2);
+    const fastFraction = Math.max(0, (durationSec - DECEL_SEC) / durationSec);
+    const midTy = finalTy * fastFraction;
+
+    const slotAnim = slotStrip.animate([
+      { transform: 'translateY(0px)', offset: 0, easing: 'linear' },
+      { transform: `translateY(${midTy}px)`, offset: fastFraction, easing: 'cubic-bezier(0.11, 0.42, 0.2, 1)' },
+      { transform: `translateY(${finalTy}px)`, offset: 1 }
+    ], { duration: durationSec * 1000, fill: 'forwards' });
 
     setTimeout(() => {
       slotStrip.classList.remove('spinning');
     }, Math.max(0, durationSec * 1000 - 350));
 
-    const onEnd = (e) => {
-      if (e.propertyName !== 'transform') return;
-      slotStrip.removeEventListener('transitionend', onEnd);
+    slotAnim.onfinish = () => {
+      // "Запікаємо" фінальну позицію у звичайний inline transform і прибираємо
+      // WAAPI-анімацію — далі код сторінки (idle-обертання, наступний раунд
+      // тощо) знову керує slotStrip.style.transform напряму, як і раніше.
+      slotAnim.cancel();
+      slotStrip.style.transform = `translateY(${finalTy}px)`;
+      // Підсвічуємо переможний елемент лише зараз, коли стрічка вже реально
+      // зупинилась — а не раніше, під час прокрутки (див. коментар вище).
+      const landedEl = slotStrip.children[targetIndex];
+      if (landedEl) landedEl.classList.add('slot-item-center');
       slotMachine.classList.remove('spinning');
       slotMachine.classList.add('slot-landed');
       onDone(target);
     };
-    slotStrip.addEventListener('transitionend', onEnd);
   }
 
   // Обертає колесо так, щоб один із секторів обраної гри зупинився під стрілкою.
@@ -467,7 +512,16 @@
     const wheelSvg = $('#wheelSvg');
     const sectorAngle = 360 / entries.length;
     const turns = Math.max(4, Math.round(durationSec * 1.5));
-    const finalRotation = turns * 360 - (targetIndex + 0.5) * sectorAngle;
+    // Раніше колесо завжди зупинялось РІВНО по центру виграшного сектора
+    // (+0.5 * sectorAngle) — через це, коли обертання вже помітно
+    // сповільнювалось, можна було заздалегідь вгадати переможця, бо стрілка
+    // щоразу приходила в одну й ту саму точку сектора. Тепер зупинка —
+    // випадкова точка ВСЕРЕДИНІ сектора (з невеликим відступом від країв,
+    // щоб через ширину самої стрілки не виникало візуальної двозначності
+    // із сусіднім сектором), тому наперед вгадати результат неможливо.
+    const edgeMargin = 0.15; // відступ від країв сектора (частка sectorAngle)
+    const randomFraction = edgeMargin + Math.random() * (1 - 2 * edgeMargin);
+    const finalRotation = turns * 360 - (targetIndex + randomFraction) * sectorAngle;
     wheelMachine.classList.add('spinning');
     wheelSvg.style.transition = 'none';
     wheelSvg.style.transform = 'rotate(0deg)';
@@ -646,15 +700,25 @@
     renderWheel();
   });
 
-  // ---- Перерахунок висоти рулетки при зміні розміру вікна/орієнтації ----
-  // .slot-window тепер динамічно заповнює всю доступну висоту панелі, тому
-  // при resize кількість видимих рядів може змінитись — стрічку потрібно
-  // перебудувати під нову висоту, інакше центрування "попливе".
+  // ---- Перерахунок розміру рулетки/колеса при зміні розміру панелі ----
+  // .slot-window і .wheel-stage тепер динамічно заповнюють всю доступну
+  // висоту панелі, тому кількість видимих рядів (слот) чи сторона квадрата
+  // (колесо) може змінитись — перебудовуємо під нову висоту, інакше
+  // центрування "попливе". Стежимо саме за #drawPanel через ResizeObserver
+  // (а не за window 'resize'), бо його фактичний розмір може змінитись
+  // не тільки через зміну розміру вікна браузера, а й через появу/зникнення
+  // адресного рядка на мобільних, зум сторінки, чи перехід між розкладками
+  // (десктоп/планшет/мобільний) — усе це ResizeObserver ловить однаково.
   let slotResizeRaf = null;
-  window.addEventListener('resize', () => {
-    if (roundActive || visualMode !== 'slot') return;
+  const drawPanelResizeObserver = new ResizeObserver(() => {
+    if (roundActive) return;
     if (slotResizeRaf) cancelAnimationFrame(slotResizeRaf);
     slotResizeRaf = requestAnimationFrame(() => {
+      if (visualMode === 'wheel') {
+        syncWheelStageMetrics();
+        return;
+      }
+      if (visualMode !== 'slot') return;
       if (slotMachine.classList.contains('slot-landed') && games.length <= 1 && games[0]) {
         showSlotWinner(games[0]);
       } else {
@@ -662,6 +726,7 @@
       }
     });
   });
+  drawPanelResizeObserver.observe(drawPanel);
 
   // ---- Початкове відображення сторінки розіграшу ----
   function init() {
