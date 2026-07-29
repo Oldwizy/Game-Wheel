@@ -340,15 +340,21 @@
       entry.returned = false;
     }
     logEntries.push(entry);
-    logEl.appendChild(buildLogLi(entry));
-    logEl.scrollTop = logEl.scrollHeight;
+    const li = buildLogLi(entry);
+    logEl.appendChild(li);
+    // .log має flex-direction:column-reverse (найновіший запис показується
+    // зверху), тому scrollTop = scrollHeight насправді прокручує в
+    // протилежний від потрібного бік і ховає щойно доданий запис.
+    // scrollIntoView не залежить від цієї особливості — просто показує сам
+    // новододаний елемент, тож працює коректно незалежно від напрямку.
+    li.scrollIntoView({ block: 'nearest' });
     persist();
   }
 
   function renderLogFromEntries() {
     logEl.innerHTML = '';
     logEntries.forEach(entry => logEl.appendChild(buildLogLi(entry)));
-    logEl.scrollTop = logEl.scrollHeight;
+    if (logEl.lastElementChild) logEl.lastElementChild.scrollIntoView({ block: 'nearest' });
   }
 
   function setLogReturnButtonsDisabled(disabled) {
@@ -516,12 +522,17 @@
     // (+0.5 * sectorAngle) — через це, коли обертання вже помітно
     // сповільнювалось, можна було заздалегідь вгадати переможця, бо стрілка
     // щоразу приходила в одну й ту саму точку сектора. Тепер зупинка —
-    // випадкова точка ВСЕРЕДИНІ сектора (з невеликим відступом від країв,
-    // щоб через ширину самої стрілки не виникало візуальної двозначності
-    // із сусіднім сектором), тому наперед вгадати результат неможливо.
-    const edgeMargin = 0.15; // відступ від країв сектора (частка sectorAngle)
+    // випадкова точка ВСЕРЕДИНІ сектора, майже впритул до країв (edgeMargin
+    // зовсім невеликий — лишає буквально кілька пікселів запасу, щоб через
+    // товщину самої стрілки та лінії між секторами не виникало візуальної
+    // двозначності з сусіднім сектором), тому наперед вгадати результат
+    // неможливо.
+    const edgeMargin = 0.02; // відступ від країв сектора (частка sectorAngle)
     const randomFraction = edgeMargin + Math.random() * (1 - 2 * edgeMargin);
-    const finalRotation = turns * 360 - (targetIndex + randomFraction) * sectorAngle;
+    // +90: стрілка тепер справа (кут 0), а сектори намальовані від кута -90
+    // (згори) — тому потрібен зсув на чверть кола порівняно з попередньою
+    // формулою, яка цілилась у верх (кут -90).
+    const finalRotation = turns * 360 + 90 - (targetIndex + randomFraction) * sectorAngle;
     wheelMachine.classList.add('spinning');
     wheelSvg.style.transition = 'none';
     wheelSvg.style.transform = 'rotate(0deg)';

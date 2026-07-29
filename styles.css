@@ -472,17 +472,23 @@
     height:100%;
     transform-origin:50% 50%;
   }
+  .wheel-circle-wrap{
+    position:relative;
+    display:inline-flex;
+    max-width:100%;
+    max-height:100%;
+  }
   .wheel-pointer{
     position:absolute;
     z-index:2;
-    top:4px;
-    left:50%;
+    top:50%;
+    right:4px;
     width:0;
     height:0;
-    transform:translateX(-50%);
-    border-left:14px solid transparent;
-    border-right:14px solid transparent;
-    border-top:28px solid var(--amber);
+    transform:translateY(-50%);
+    border-top:14px solid transparent;
+    border-bottom:14px solid transparent;
+    border-right:28px solid var(--amber);
     filter:drop-shadow(0 2px 2px rgba(0,0,0,0.45));
   }
   .wheel-hub{
@@ -493,7 +499,7 @@
   .wheel-label{
     fill:var(--text);
     font-family:var(--font-mono);
-    font-size:16px;
+    font-size:10px;
     font-weight:600;
     text-anchor:middle;
     dominant-baseline:middle;
@@ -804,8 +810,8 @@
 
     .wheel-machine{ margin:28px 0 22px; }
     .wheel-pointer{
-      border-left-width:10px; border-right-width:10px; border-top-width:20px;
-      top:2px;
+      border-top-width:10px; border-bottom-width:10px; border-right-width:20px;
+      right:2px;
     }
     .wheel-result-popup{ padding:10px 14px; max-width:88%; }
     .wheel-result-popup .wrp-name{ font-size:14px; }
@@ -1036,7 +1042,7 @@
 
 
   /* --- Колесо --- */
-  .wheel-pointer{ border-top-color:var(--cyan); }
+  .wheel-pointer{ border-right-color:var(--cyan); }
   .wheel-stage{
     border-color:rgba(0,245,255,0.28);
     background:#000;

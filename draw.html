@@ -78,8 +78,13 @@
 
     <!-- Альтернативний вигляд: колесо, де кожна копія гри є окремим сектором. -->
     <div class="wheel-machine" id="wheelMachine" style="display:none;">
-      <div class="wheel-pointer" aria-hidden="true"></div>
-      <div class="wheel-stage" id="wheelStage" role="img" aria-label="Колесо з усіма копіями ігор"></div>
+      <!-- .wheel-circle-wrap стискається точно під розмір .wheel-stage (він
+           росте/скорочується через JS), тому стрілка (right:4px) завжди
+           прив'язана до фактичного краю кола, а не до всієї ширини панелі. -->
+      <div class="wheel-circle-wrap">
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <div class="wheel-stage" id="wheelStage" role="img" aria-label="Колесо з усіма копіями ігор"></div>
+      </div>
       <div class="wheel-result-popup" id="wheelResultPopup" aria-live="polite">
         <span class="wrp-eyebrow">Випало</span>
         <span class="wrp-name" id="wheelResultName">—</span>
