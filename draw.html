@@ -34,15 +34,16 @@
     <div class="tickets" id="drawTickets"></div>
   </section>
 
-  <!-- Панель раунду: слот-машина або колесо. -->
+  <!-- Панель раунду: слот-машина, колесо або батл-рояль. -->
   <section class="panel" id="drawPanel">
 
     <div class="round-controls">
       <button class="btn-ghost" id="backBtn"><span class="msi">arrow_back</span>До списку</button>
-         <!-- Перемикач між двома варіантами відображення розіграшу. -->
+         <!-- Перемикач між трьома варіантами відображення розіграшу. -->
     <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
       <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
       <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+      <button class="btn-ghost" id="battleViewBtn" type="button" aria-pressed="false">Батл-рояль</button>
     </div>
       <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
         <span class="switch">
@@ -88,7 +89,18 @@
       <div class="wheel-result-popup" id="wheelResultPopup" aria-live="polite">
         <span class="wrp-eyebrow">Випало</span>
         <span class="wrp-name" id="wheelResultName">—</span>
+        <div class="wrp-actions">
+          <button class="btn-ghost" id="wheelKeepBtn" type="button">Залишити</button>
+          <button class="btn-amber" id="wheelRemoveBtn" type="button">Прибрати<span class="msi">delete</span></button>
+        </div>
       </div>
+    </div>
+
+    <!-- Третій вигляд: батл-рояль. Кожна гра — кулька з власним HP,
+         кульки штовхаються й завдають шкоди одна одній при зіткненні;
+         останній, хто лишився з HP > 0 — переможець. -->
+    <div class="battle-machine" id="battleMachine" style="display:none;">
+      <canvas id="battleCanvas"></canvas>
     </div>
 
     <div class="view-switch" role="group" aria-label="Вигляд розіграшу">

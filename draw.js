@@ -28,11 +28,10 @@
   const wheelStage = $('#wheelStage');
   const wheelResultPopup = $('#wheelResultPopup');
   const wheelResultName = $('#wheelResultName');
+  const wheelKeepBtn = $('#wheelKeepBtn');
+  const wheelRemoveBtn = $('#wheelRemoveBtn');
+  const wheelPointerEl = wheelMachine.querySelector('.wheel-pointer');
 
-  // Скільки часу тримати попап з результатом раунду на екрані, перед тим
-  // як сховати його і знову запустити повільне "холосте" обертання колеса.
-  const WHEEL_RESULT_POPUP_MS = 1500;
-  let wheelResultTimer = null;
   const instantWinToggle = $('#instantWinToggle');
   const instantWinLabel = $('#instantWinLabel');
 
@@ -92,6 +91,24 @@
   let roundActive = false;
   let slotOrder = [];
   let wheelEntries = [];
+
+  // ---- Стан режиму "Батл-рояль" ----
+  const battleMachine = $('#battleMachine');
+  const battleCanvas = $('#battleCanvas');
+  const battleViewBtn = $('#battleViewBtn');
+  const durationBlock = document.querySelector('.duration-block');
+  // Швидкість більше не залежить від повзунка тривалості (його для цього
+  // режиму сховано) — множники від розміру арени: idle трохи повільніше,
+  // бій — помітно швидше, але без хаосу ("висока, але не надто").
+  const BATTLE_SPEED_IDLE_FACTOR = 0.16;
+  const BATTLE_SPEED_FIGHT_FACTOR = 0.34;
+  let battleArenaW = 400;
+  let battleArenaH = 300;
+  let battleCtx = null;
+  let battleBalls = [];       // {gameId, name, color, hp, maxHp, r, x, y, vx, vy}
+  let battleAnimId = null;
+  let battleLastTs = null;
+  const battleHitCooldowns = new Map(); // щоб одна пара кульок не била по кілька разів за один дотик
 
   function persist() {
     state.games = games;
@@ -251,51 +268,354 @@
     wheelStage.style.height = size + 'px';
   }
 
+  // ---- HP і розмір кульки ----
+  function ballHp(game) {
+    // 100 за замовчуванням (1 копія), кожна наступна копія +5 HP.
+    // Якщо треба, щоб КОЖНА копія (включно з першою) давала +5 — заміни на:
+    //   return 100 + game.copies * 5;
+    return 100 + Math.max(0, game.copies - 1) * 5;
+  }
+
+  function ballRadius(hp) {
+    return Math.max(20, Math.min(52, 16 + Math.sqrt(hp) * 2.6));
+  }
+
+  // ---- Розмір canvas: арена займає всю ширину й доступну висоту панелі
+  // (на відміну від колеса, тут НЕ квадрат — просто фактичний прямокутник
+  // .battle-machine), тому фізика й малювання рахуються прямо в px цього
+  // прямокутника (battleArenaW × battleArenaH), а не в фіксованій "решітці".
+  function syncBattleCanvasMetrics() {
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(160, battleMachine.clientWidth);
+    const h = Math.max(160, battleMachine.clientHeight);
+    battleCanvas.style.width = w + 'px';
+    battleCanvas.style.height = h + 'px';
+    battleCanvas.width = Math.round(w * dpr);
+    battleCanvas.height = Math.round(h * dpr);
+    battleCtx = battleCanvas.getContext('2d');
+    battleCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    battleArenaW = w;
+    battleArenaH = h;
+  }
+
+  // Розставляє кульки для всіх ігор у games. Швидкість тепер НЕ залежить від
+  // повзунка тривалості (його для цього режиму просто немає в інтерфейсі) —
+  // задається константою-множником від розміру арени: idle-режим трохи
+  // повільніший, сам бій — помітно швидший, але без хаосу.
+  function initBattleBalls(speedFactor) {
+    battleHitCooldowns.clear();
+    const speed = Math.hypot(battleArenaW, battleArenaH) * speedFactor;
+    const balls = [];
+    games.forEach(g => {
+      const hp = ballHp(g);
+      const r = ballRadius(hp);
+      let x, y, tries = 0;
+      do {
+        x = r + Math.random() * (battleArenaW - r * 2);
+        y = r + Math.random() * (battleArenaH - r * 2);
+        tries++;
+      } while (tries < 30 && balls.some(b => Math.hypot(b.x - x, b.y - y) < b.r + r + 4));
+      const angle = Math.random() * Math.PI * 2;
+      balls.push({
+        gameId: g.id, name: g.name, color: Common.colorForGame(g),
+        hp, maxHp: hp, r, x, y,
+        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed
+      });
+    });
+    battleBalls = balls;
+  }
+
+  // Один крок фізики: рух, відбиття від країв арени, зіткнення кулька-кулька.
+  // dealDamage=false у режимі очікування (кульки просто літають без шкоди).
+  function stepBattlePhysics(dt, dealDamage) {
+    const now = performance.now();
+    battleBalls.forEach(b => {
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      if (b.x - b.r < 0) { b.x = b.r; b.vx *= -1; }
+      if (b.x + b.r > battleArenaW) { b.x = battleArenaW - b.r; b.vx *= -1; }
+      if (b.y - b.r < 0) { b.y = b.r; b.vy *= -1; }
+      if (b.y + b.r > battleArenaH) { b.y = battleArenaH - b.r; b.vy *= -1; }
+    });
+    for (let i = 0; i < battleBalls.length; i++) {
+      for (let j = i + 1; j < battleBalls.length; j++) {
+        const a = battleBalls[i], b = battleBalls[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy) || 0.001;
+        const minDist = a.r + b.r;
+        if (dist < minDist) {
+          const overlap = (minDist - dist) / 2;
+          const nx = dx / dist, ny = dy / dist;
+          a.x -= nx * overlap; a.y -= ny * overlap;
+          b.x += nx * overlap; b.y += ny * overlap;
+          // пружне відбиття (рівна маса — обмін швидкістю вздовж нормалі)
+          const avn = a.vx * nx + a.vy * ny;
+          const bvn = b.vx * nx + b.vy * ny;
+          a.vx += (bvn - avn) * nx; a.vy += (bvn - avn) * ny;
+          b.vx += (avn - bvn) * nx; b.vy += (avn - bvn) * ny;
+          if (dealDamage) {
+            const pairKey = a.gameId < b.gameId ? a.gameId + '_' + b.gameId : b.gameId + '_' + a.gameId;
+            const last = battleHitCooldowns.get(pairKey) || 0;
+            if (now - last > 350) {
+              battleHitCooldowns.set(pairKey, now);
+              const dmg = 6 + Math.random() * 8;
+              a.hp -= dmg; b.hp -= dmg;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function drawBattleFrame() {
+    if (!battleCtx) return;
+    const ctx = battleCtx;
+    ctx.clearRect(0, 0, battleArenaW, battleArenaH);
+    battleBalls.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = Common.hexToRgba(b.color, 0.85);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = b.color;
+      ctx.stroke();
+
+      const pct = Math.max(0, b.hp / b.maxHp);
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 4, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+      ctx.strokeStyle = pct > 0.3 ? '#4ECDC4' : '#E85D5D';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#EDEFF2';
+      ctx.font = `${Math.max(9, Math.min(13, b.r * 0.42))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      let label = b.name;
+      const maxChars = Math.max(4, Math.floor(b.r / 3));
+      if (label.length > maxChars) label = label.slice(0, maxChars - 1) + '…';
+      ctx.fillText(label, b.x, b.y);
+    });
+  }
+
+  function stopBattleLoop() {
+    if (battleAnimId) { cancelAnimationFrame(battleAnimId); battleAnimId = null; }
+    battleLastTs = null;
+  }
+
+  function battleIdleLoop(ts) {
+    if (!battleLastTs) battleLastTs = ts;
+    const dt = Math.min(0.05, (ts - battleLastTs) / 1000);
+    battleLastTs = ts;
+    stepBattlePhysics(dt, false);
+    drawBattleFrame();
+    battleAnimId = requestAnimationFrame(battleIdleLoop);
+  }
+
+  // Показує кульки, що просто мирно літають до старту бою (трохи повільніше,
+  // ніж під час самого бою — див. BATTLE_SPEED_IDLE_FACTOR нижче).
+  function initBattleIdle() {
+    stopBattleLoop();
+    battleMachine.classList.remove('active');
+    if (!games.length) { if (battleCtx) battleCtx.clearRect(0, 0, battleArenaW, battleArenaH); return; }
+    syncBattleCanvasMetrics();
+    initBattleBalls(BATTLE_SPEED_IDLE_FACTOR);
+    battleLastTs = null;
+    battleAnimId = requestAnimationFrame(battleIdleLoop);
+  }
+
+  function eliminateBattleBall(b) {
+    roundCount++;
+    const el = cardEl(b.gameId);
+    if (el) {
+      const stamp = el.querySelector('.stamp');
+      if (stamp) stamp.classList.add('show');
+    }
+    logLine(`Раунд ${roundCount}: <b>${Common.escapeHtml(b.name)}</b> — вибув з бою (HP вичерпано)`, false, { gameId: b.gameId, gameName: b.name });
+    // Спершу лише позначаємо картку (стемп "ВИЛУЧЕНО"), а саму гру з масиву
+    // й картку з DOM прибираємо трохи згодом — після короткої анімації
+    // зникнення (клас .eliminated). Раніше клас додавався одразу, але сам
+    // елемент лишався в сітці аж до кінця всього бою (renderDrawGrid()
+    // викликався тільки у finishBattle()) — картка ставала невидимою
+    // (opacity:0), та .tickets — це CSS-грід, тому порожнє місце під неї
+    // так і лишалось зарезервованим до фіналу, і сітка "дірявіла" з кожним
+    // вибулим учасником. Видалення з games + перерендер сітки одразу після
+    // анімації прибирає цю порожню комірку й підтягує решту карток разом.
+    setTimeout(() => {
+      if (el) el.classList.add('eliminated');
+      setTimeout(() => {
+        games = games.filter(g => g.id !== b.gameId);
+        renderDrawGrid();
+        persist();
+      }, 380);
+    }, 550);
+  }
+
+  function battleFightLoop(ts) {
+    if (!battleLastTs) battleLastTs = ts;
+    const dt = Math.min(0.05, (ts - battleLastTs) / 1000);
+    battleLastTs = ts;
+    stepBattlePhysics(dt, true);
+
+    const dead = battleBalls.filter(b => b.hp <= 0);
+    if (dead.length) {
+      dead.forEach(b => eliminateBattleBall(b));
+      battleBalls = battleBalls.filter(b => b.hp > 0);
+    }
+
+    drawBattleFrame();
+
+    if (battleBalls.length <= 1) {
+      stopBattleLoop();
+      finishBattle();
+      return;
+    }
+    battleAnimId = requestAnimationFrame(battleFightLoop);
+  }
+
+  // Швидкість бою тепер завжди фіксована (висока, але не надмірна) — повзунок
+  // тривалості для цього режиму прибрано з інтерфейсу, тому параметр не потрібен.
+  function startBattle() {
+    roundActive = true;
+    startRoundBtn.disabled = true;
+    backBtn.disabled = true;
+    instantWinToggle.disabled = true;
+    setStepperButtonsDisabled(true);
+    setLogReturnButtonsDisabled(true);
+    battleMachine.classList.add('active');
+    updateStatus('Батл-рояль триває...', 'active');
+    stopBattleLoop();
+    syncBattleCanvasMetrics();
+    initBattleBalls(BATTLE_SPEED_FIGHT_FACTOR);
+    battleLastTs = null;
+    battleAnimId = requestAnimationFrame(battleFightLoop);
+  }
+
+  function finishBattle() {
+    roundActive = false;
+    battleMachine.classList.remove('active');
+    backBtn.disabled = false;
+    setStepperButtonsDisabled(false);
+    setLogReturnButtonsDisabled(false);
+    renderDrawGrid();
+    drawBattleFrame();
+    const winner = games[0];
+    if (winner) {
+      logLine(`Переможець: <b>${Common.escapeHtml(winner.name)}</b>`, true);
+      showFinishedState(winner);
+    }
+    persist();
+  }
+
+  // Для батл-рояля ховаємо повзунок тривалості раунду (замінений фіксованою
+  // швидкістю) і перемикач "В один раунд" (тут завжди бій до останньої кульки).
+  function updateBattleModeUI(active) {
+    instantWinLabel.style.display = active ? 'none' : '';
+    if (durationBlock) durationBlock.style.display = active ? 'none' : '';
+  }
+
   // ---- Повільне "холосте" обертання колеса, поки раунд не запущено ----
   // Крутиться сам контейнер .wheel-stage (клас idle-spin, CSS-анімація),
   // тоді як сам раунд обертає інший елемент — #wheelSvg через inline
   // transform у spinWheel(). Тому дві анімації одна одній не заважають.
   function startWheelIdle() {
     wheelStage.classList.add('idle-spin');
+    // У режимі очікування стрілка не показує "поточний" сектор (колесо не
+    // крутиться цілеспрямовано до конкретної цілі) — повертаємо їй базовий
+    // колір із CSS замість кольору сектора, на якому вона зупинилась раніше.
+    if (wheelPointerEl) wheelPointerEl.style.borderRightColor = '';
   }
   function stopWheelIdle() {
     wheelStage.classList.remove('idle-spin');
   }
 
-  // Показує короткий попап з назвою обраного варіанта одразу після зупинки
-  // колеса, а потім ховає його і відновлює холосте обертання (якщо розіграш
-  // ще триває).
-  function showWheelResultPopup(name) {
-    if (wheelResultTimer) clearTimeout(wheelResultTimer);
-    wheelResultName.textContent = name;
+  // Читає РЕАЛЬНИЙ поточний кут повороту #wheelSvg безпосередньо з
+  // обчисленого CSS-транформу (браузер сам інтерполює анімацію за
+  // cubic-bezier — тому це набагато точніше й простіше, ніж намагатися
+  // порахувати проміжний кут вручну за тим самим easing).
+  function getSvgRotationDeg(el) {
+    const t = getComputedStyle(el).transform;
+    if (!t || t === 'none') return 0;
+    const m = t.match(/^matrix\(([^)]+)\)$/);
+    if (!m) return 0;
+    const v = m[1].split(',').map(Number);
+    let deg = Math.atan2(v[1], v[0]) * 180 / Math.PI;
+    if (deg < 0) deg += 360;
+    return deg;
+  }
+
+  // Поки колесо крутиться, щокадрово визначає, який сектор зараз фактично
+  // навпроти нерухомої стрілки (стрілка стоїть на екранному куті 0 — справа),
+  // і фарбує стрілку в колір саме цього сектора. Цикл сам зупиняється, щойно
+  // з .wheel-machine прибирають клас "spinning" (тобто обертання завершилось).
+  function trackWheelArrowColor(entries, sectorAngle) {
+    const wheelSvg = $('#wheelSvg');
+    if (!wheelSvg || !wheelMachine.classList.contains('spinning')) return;
+    const rotation = getSvgRotationDeg(wheelSvg);
+    // Сектори намальовані у "сирих" (до повороту) координатах від -90°.
+    // Точка, що зараз навпроти стрілки (екранний кут 0), у сирих координатах
+    // лежить на куті (-rotation), зсунутому на +90° так само, як і в
+    // формулі фінального повороту в spinWheel().
+    const rawAngle = ((-rotation % 360) + 360) % 360;
+    const adjusted = ((rawAngle + 90) % 360 + 360) % 360;
+    const idx = Math.min(entries.length - 1, Math.floor(adjusted / sectorAngle));
+    if (wheelPointerEl && entries[idx]) {
+      wheelPointerEl.style.borderRightColor = Common.colorForGame(entries[idx]);
+    }
+    requestAnimationFrame(() => trackWheelArrowColor(entries, sectorAngle));
+  }
+
+  // Показує попап із результатом раунду і чекає, поки користувач сам
+  // натисне "Прибрати" або "Залишити" — на відміну від попереднього
+  // авто-приховування за таймером, тепер саме людина вирішує фінал раунду.
+  function showWheelResultPopup(target, el) {
+    wheelResultName.textContent = target.name;
     wheelResultPopup.classList.add('show');
-    wheelResultTimer = setTimeout(() => {
+
+    wheelKeepBtn.onclick = () => {
       wheelResultPopup.classList.remove('show');
-      wheelResultTimer = null;
-      if (visualMode === 'wheel' && !roundActive && games.length > 1) {
-        startWheelIdle();
-      }
-    }, WHEEL_RESULT_POPUP_MS);
+      logLine(`Раунд ${roundCount}: <b>${Common.escapeHtml(target.name)}</b> — залишено в грі без змін`);
+      afterRoundCleanup();
+    };
+    wheelRemoveBtn.onclick = () => {
+      wheelResultPopup.classList.remove('show');
+      finishRound(target, el);
+    };
   }
 
   function setVisualMode(mode) {
     if (roundActive) return;
     visualMode = mode;
     const useWheel = mode === 'wheel';
-    slotMachine.style.display = useWheel ? 'none' : 'flex';
+    const useBattle = mode === 'battle';
+    const useSlot = !useWheel && !useBattle;
+
+    slotMachine.style.display = useSlot ? 'flex' : 'none';
     wheelMachine.style.display = useWheel ? 'flex' : 'none';
-    slotViewBtn.classList.toggle('active', !useWheel);
-    slotViewBtn.setAttribute('aria-pressed', String(!useWheel));
+    battleMachine.style.display = useBattle ? 'flex' : 'none';
+
+    slotViewBtn.classList.toggle('active', useSlot);
+    slotViewBtn.setAttribute('aria-pressed', String(useSlot));
     wheelViewBtn.classList.toggle('active', useWheel);
     wheelViewBtn.setAttribute('aria-pressed', String(useWheel));
+    battleViewBtn.classList.toggle('active', useBattle);
+    battleViewBtn.setAttribute('aria-pressed', String(useBattle));
+
+    updateBattleModeUI(useBattle);
+
     if (useWheel) {
+      stopBattleLoop();
       // .wheel-machine могло бути display:none (0px) — перераховуємо доступний
       // розмір панелі, перш ніж малювати колесо в новий розмір .wheel-stage.
       syncWheelStageMetrics();
       renderWheel();
       startWheelIdle();
+    } else if (useBattle) {
+      stopWheelIdle();
+      initBattleIdle();
     } else {
       stopWheelIdle();
+      stopBattleLoop();
       // Вікно рулетки могло бути display:none (0px заввишки) — перераховуємо
       // висоту й перемальовуємо стрічку заново під фактичний розмір.
       initSlotIdle();
@@ -379,6 +699,7 @@
     renderDrawGrid();
     initSlotIdle();
     if (visualMode === 'wheel') startWheelIdle();
+    if (visualMode === 'battle') initBattleIdle();
     updateStatus(`Готово до раунду ${roundCount + 1}. Залишилось ігор: ${games.length}.`);
     persist();
 
@@ -541,6 +862,9 @@
       wheelSvg.style.transition = `transform ${durationSec}s cubic-bezier(0.15, 0.82, 0.22, 1)`;
       wheelSvg.style.transform = `rotate(${finalRotation}deg)`;
     });
+    // Стрілка з самого початку обертання підсвічується кольором сектора, що
+    // фактично навпроти неї в кожен момент часу (див. trackWheelArrowColor).
+    requestAnimationFrame(() => trackWheelArrowColor(entries, sectorAngle));
     wheelSvg.addEventListener('transitionend', function onEnd(e) {
       if (e.propertyName !== 'transform') return;
       wheelSvg.removeEventListener('transitionend', onEnd);
@@ -551,6 +875,10 @@
 
   startRoundBtn.addEventListener('click', () => {
     if (roundActive || games.length < 2) return;
+    if (visualMode === 'battle') {
+      startBattle();
+      return;
+    }
     runRound(parseInt(durationRange.value, 10));
   });
 
@@ -566,7 +894,6 @@
     updateStatus(`Раунд ${roundCount} триває...`, 'active');
 
     if (visualMode === 'wheel') {
-      if (wheelResultTimer) { clearTimeout(wheelResultTimer); wheelResultTimer = null; }
       wheelResultPopup.classList.remove('show');
       stopWheelIdle();
     }
@@ -577,12 +904,21 @@
     // завжди: більше копій — вищий шанс потрапити в раунд, як і має бути,
     // якщо копія = "додатковий квиток" гри в розіграші.
     const target = weightedPick();
-    const spin = visualMode === 'wheel' ? spinWheel : spinSlot;
-    spin(target, durationSec, () => {
-      const el = cardEl(target.id);
-      if (visualMode === 'wheel') showWheelResultPopup(target.name);
-      finishRound(target, el);
-    });
+
+    if (visualMode === 'wheel') {
+      // Для колеса результат більше НЕ застосовується автоматично: після
+      // зупинки показуємо попап і чекаємо, поки людина сама натисне
+      // "Прибрати" чи "Залишити" (див. showWheelResultPopup).
+      spinWheel(target, durationSec, () => {
+        const el = cardEl(target.id);
+        showWheelResultPopup(target, el);
+      });
+    } else {
+      spinSlot(target, durationSec, () => {
+        const el = cardEl(target.id);
+        finishRound(target, el);
+      });
+    }
   }
 
   function finishRound(target, el) {
@@ -690,7 +1026,6 @@
 
   function showFinishedState(winner) {
     // Оформлює екран завершеного розіграшу: банер, підсвітку картки й нерухому рулетку.
-    if (wheelResultTimer) { clearTimeout(wheelResultTimer); wheelResultTimer = null; }
     wheelResultPopup.classList.remove('show');
     stopWheelIdle();
     startRoundBtn.disabled = true;
@@ -720,14 +1055,17 @@
       startRoundBtn.disabled = false;
       instantWinToggle.disabled = false;
       updateStatus(`Готово до раунду ${roundCount + 1}. Залишилось ігор: ${games.length}.`);
+      if (visualMode === 'wheel') startWheelIdle();
     }
     persist();
   }
 
   slotViewBtn.addEventListener('click', () => setVisualMode('slot'));
   wheelViewBtn.addEventListener('click', () => setVisualMode('wheel'));
+  battleViewBtn.addEventListener('click', () => setVisualMode('battle'));
   shuffleVisualsBtn.addEventListener('click', () => {
     if (roundActive) return;
+    if (visualMode === 'battle') { initBattleIdle(); return; }
     refreshVisualOrder();
     initSlotIdle();
     renderWheel();
@@ -753,6 +1091,10 @@
     slotResizeRaf = requestAnimationFrame(() => {
       if (visualMode === 'wheel') {
         syncWheelStageMetrics();
+        return;
+      }
+      if (visualMode === 'battle') {
+        syncBattleCanvasMetrics();
         return;
       }
       if (visualMode !== 'slot') return;
