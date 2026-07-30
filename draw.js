@@ -228,7 +228,7 @@
       const fontSize = Math.max(3.5, Math.min(16, labelLength / Math.max(1, game.name.length * 0.58), labelAngleWidth * 0.85));
       const estimatedWidth = game.name.length * fontSize * 0.58;
       const textLength = Math.min(labelLength, estimatedWidth);
-      return `<path d="${wheelSectorPath(center, center, radius, start, end)}" fill="${Common.colorForGame(game)}" fill-opacity="0.82" stroke="#12161B" stroke-width="1"></path><g transform="rotate(${mid} ${center} ${center})"><text class="wheel-label" style="font-size:${fontSize.toFixed(2)}px" x="${center + labelStart + labelLength / 2}" y="${center}" textLength="${textLength.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${label}</text></g>`;
+      return `<path d="${wheelSectorPath(center, center, radius, start, end)}" fill="${Common.colorForGame(game)}" fill-opacity="0.82" stroke="#12161B" stroke-width="1"></path><g transform="rotate(${mid} ${center} ${center})"><text class="wheel-label" style="font-size:${fontSize.toFixed(2)}px" x="${center + labelStart + labelLength}" y="${center}" textLength="${textLength.toFixed(1)}" lengthAdjust="spacingAndGlyphs">${label}</text></g>`;
     }).join('');
     wheelStage.innerHTML = `<svg id="wheelSvg" viewBox="0 0 ${size} ${size}" aria-hidden="true">${sectors}<circle class="wheel-hub" cx="${center}" cy="${center}" r="23"></circle><circle fill="var(--amber)" cx="${center}" cy="${center}" r="7"></circle></svg>`;
     return entries;
@@ -506,7 +506,13 @@
 
   // Обертає колесо так, щоб один із секторів обраної гри зупинився під стрілкою.
   function spinWheel(target, durationSec, onDone) {
-    const entries = shuffle(games.flatMap(g => Array.from({ length: g.copies }, () => g)));
+    // Записуємо в СПІЛЬНУ wheelEntries (а не лише в локальну змінну), щоб
+    // після завершення раунду finishRound() міг прибрати з неї рівно один
+    // (чи всі — для вибулої повністю/миттєвого переможця) запис виграної
+    // гри й одразу перемалювати колесо — без повного перемішування решти
+    // секторів і без ризику працювати зі застарілими даними.
+    wheelEntries = shuffle(games.flatMap(g => Array.from({ length: g.copies }, () => g)));
+    const entries = wheelEntries;
     const targetIndex = entries.findIndex(g => g.id === target.id);
     renderWheel(entries);
     const wheelSvg = $('#wheelSvg');
@@ -580,6 +586,23 @@
   }
 
   function finishRound(target, el) {
+    // Якщо зараз показане колесо — прибираємо виграний сектор одразу, щойно
+    // відомий результат раунду (а не чекаємо, поки перемалює наступний
+    // spinWheel() на старті наступного раунду). Просто видаляємо потрібні
+    // записи з wheelEntries (без повного перемішування), тому решта
+    // секторів лишається на своїх місцях.
+    if (visualMode === 'wheel') {
+      if (instantWinMode) {
+        wheelEntries = wheelEntries.filter(g => g.id === target.id);
+      } else if (target.copies <= 1) {
+        wheelEntries = wheelEntries.filter(g => g.id !== target.id);
+      } else {
+        const idx = wheelEntries.findIndex(g => g.id === target.id);
+        if (idx !== -1) wheelEntries = wheelEntries.slice(0, idx).concat(wheelEntries.slice(idx + 1));
+      }
+      renderWheel(wheelEntries);
+    }
+
     if (instantWinMode) {
       // Режим миттєвого переможця: обрана гра одразу стає фінальним переможцем,
       // усі інші ігри вилучаються одним раундом.
@@ -710,17 +733,21 @@
     renderWheel();
   });
 
-  // ---- Перерахунок розміру рулетки/колеса при зміні розміру панелі ----
+  // ---- Перерахунок розміру рулетки/колеса при зміні розміру вікна ----
   // .slot-window і .wheel-stage тепер динамічно заповнюють всю доступну
   // висоту панелі, тому кількість видимих рядів (слот) чи сторона квадрата
   // (колесо) може змінитись — перебудовуємо під нову висоту, інакше
-  // центрування "попливе". Стежимо саме за #drawPanel через ResizeObserver
-  // (а не за window 'resize'), бо його фактичний розмір може змінитись
-  // не тільки через зміну розміру вікна браузера, а й через появу/зникнення
-  // адресного рядка на мобільних, зум сторінки, чи перехід між розкладками
-  // (десктоп/планшет/мобільний) — усе це ResizeObserver ловить однаково.
+  // центрування "попливе".
+  // ВАЖЛИВО: тут навмисно window 'resize', а НЕ ResizeObserver на #drawPanel.
+  // ResizeObserver, що стежить за #drawPanel, і калбек якого сам змінює
+  // висоту нащадків (.slot-window/.wheel-stage) — на вузьких/планшетних
+  // екранах, де #drawPanel не має власної фіксованої висоти,— це створює
+  // зациклення: наш же перерахунок трохи змінює висоту #drawPanel, це знову
+  // тригерить обсервер, і так по колу, через що сторінка нескінченно росла
+  // вгору. window 'resize' реагує лише на реальну зміну розміру вікна
+  // браузера і фізично не може самотригеритись від наших власних правок DOM.
   let slotResizeRaf = null;
-  const drawPanelResizeObserver = new ResizeObserver(() => {
+  window.addEventListener('resize', () => {
     if (roundActive) return;
     if (slotResizeRaf) cancelAnimationFrame(slotResizeRaf);
     slotResizeRaf = requestAnimationFrame(() => {
@@ -736,7 +763,6 @@
       }
     });
   });
-  drawPanelResizeObserver.observe(drawPanel);
 
   // ---- Початкове відображення сторінки розіграшу ----
   function init() {

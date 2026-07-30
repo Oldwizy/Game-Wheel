@@ -32,7 +32,16 @@
       var(--bg);
     color:var(--text);
     font-family:var(--font-body);
-    min-height:100vh;
+    /* ВАЖЛИВО: тут навмисно height (не min-height). min-height не робить
+       висоту "визначеною" (definite) для CSS — а без визначеної висоти десь
+       у ланцюжку .wrap → .draw-layout → #logPanel{height:100%} ця
+       height:100% теж рахується як auto, тобто підлаштовується під вміст.
+       Саме тому журнал ігнорував overflow-y:auto і просто ріс разом із
+       кількістю раундів (навіть після фіксу зациклення ResizeObserver) —
+       не було жодної реально зафіксованої висоти, від якої можна порахувати
+       100%. height:100vh цю визначену висоту нарешті дає.
+    */
+    height:100vh;
     padding:32px 20px 80px;
     /* flex-колонка потрібна, щоб .draw-layout нижче міг рахувати свою
        висоту через flex:1 (реальний залишок екрана), а не вгадувати
@@ -500,8 +509,8 @@
     fill:var(--text);
     font-family:var(--font-mono);
     font-size:10px;
-    font-weight:600;
-    text-anchor:middle;
+    font-weight:400;
+    text-anchor:end;
     dominant-baseline:middle;
     paint-order:stroke;
     stroke:rgba(18,22,27,0.7);
@@ -684,7 +693,12 @@
     display:flex;
     flex-direction:column-reverse;
     gap:6px;
-    max-height: 50vh;
+    /* Раніше тут був фіксований max-height:50vh — тепер #log завжди
+       заповнює всю фактичну висоту свого батька #logPanel через flex
+       (той сам обмежений висотою екрана — див. #logPanel нижче: sticky +
+       max-height на вузьких екранах, height:100% від сітки на широких). */
+    flex:1 1 auto;
+    min-height:0;
     overflow-y:auto;
   }
   .log li{
@@ -773,6 +787,20 @@
     }
   }
 
+  /* Вузькі/планшетні екрани (<1100px): учасники й панель раунду лишаються у
+     звичайному потоці сторінки (як і були, зі своїм звичайним скролом
+     сторінки), а ЖУРНАЛ окремо "прилипає" (position:sticky) і сам займає
+     решту висоти екрана з внутрішнім скролом — так сторінка не росте
+     разом із кількістю раундів у журналі. */
+  @media (max-width: 1099px) {
+    .draw-layout #logPanel{
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+  }
+
   /* Планшети/середні екрани: замість однієї колонки — панель раунду зверху
      на всю ширину, а знизу список учасників та журнал поряд у два стовпці.
      Без цього макет одразу стрибав з мобільної одної колонки до десктопної
@@ -824,7 +852,6 @@
 
     #log li{ font-size:11.5px; padding:4px 8px; }
     #log:empty::before{ height:160px; font-size:10px; }
-    .log{ max-height:40vh; }
 
     .winner-name{ font-size:clamp(22px,7vw,32px); }
   }
@@ -852,6 +879,13 @@
      панелі, коли на широких екранах висота #drawPanel фіксована й вища за
      вміст — інакше зайвий простір лишався порожнім під кнопками. */
   #drawPanel{
+    display:flex;
+    flex-direction:column;
+  }
+  /* #logPanel так само: щоб #log (список) міг рости на всю доступну висоту
+     панелі через flex, а не триматись фіксованих 50vh (див. .log нижче
+     та override у @media (min-width:1100px)). */
+  #logPanel{
     display:flex;
     flex-direction:column;
   }
