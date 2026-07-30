@@ -402,12 +402,6 @@
     return games[games.length - 1];
   }
 
-  // Рівноймовірний вибір: кожна гра має однаковий шанс потрапити в раунд незалежно
-  // від кількості копій.
-  function uniformPick() {
-    return games[Math.floor(Math.random() * games.length)];
-  }
-
   function slotItemHtml(g, isCenter) {
     return `<div class="slot-item${isCenter ? ' slot-item-center' : ''}"><span style="color:${isCenter ? '' : Common.colorForGame(g)}">${Common.escapeHtml(g.name)}</span></div>`;
   }
@@ -571,7 +565,12 @@
       stopWheelIdle();
     }
 
-    const target = instantWinMode ? weightedPick() : uniformPick();
+    // Раніше в звичайному режимі шанс не залежав від кількості копій
+    // (uniformPick — кожна гра 1/N незалежно від copies), і лише миттєвий
+    // режим ("В один раунд") ураховував копії. Тепер копії враховуються
+    // завжди: більше копій — вищий шанс потрапити в раунд, як і має бути,
+    // якщо копія = "додатковий квиток" гри в розіграші.
+    const target = weightedPick();
     const spin = visualMode === 'wheel' ? spinWheel : spinSlot;
     spin(target, durationSec, () => {
       const el = cardEl(target.id);
