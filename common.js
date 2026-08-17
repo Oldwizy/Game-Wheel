@@ -107,6 +107,29 @@
     return shuffled;
   }
 
+    // Best-effort виправлення "стику" по колу: якщо перший і останній елемент
+  // (сусіди в круговій розкладці на кшталт секторів колеса) однакові —
+  // шукає елемент усередині масиву, з яким можна поміняти місцями останній,
+  // не створивши при цьому нову пару однакових сусідів.
+  function fixCircularAdjacency(result, keyFn) {
+    const n = result.length;
+    if (keyFn(result[0]) !== keyFn(result[n - 1])) return;
+    for (let i = 1; i < n - 1; i++) {
+      const a = result[i], b = result[n - 1];
+      if (keyFn(a) === keyFn(b)) continue;
+      const prevOk = keyFn(result[i - 1]) !== keyFn(b);
+      const nextOk = i + 1 < n - 1 ? keyFn(result[i + 1]) !== keyFn(b) : true;
+      const tailPrevOk = keyFn(result[n - 2]) !== keyFn(a);
+      if (prevOk && nextOk && tailPrevOk) {
+        result[i] = b;
+        result[n - 1] = a;
+        return;
+      }
+    }
+    // Не знайшли безпечний обмін — лишаємо як є (рідкісний край, коли один
+    // варіант домінує настільки, що уникнути стику фізично неможливо).
+  }
+
   // Перемішує масив так, щоб (по можливості) сусідні елементи не мали
   // однакового ключа (keyFn) — наприклад, щоб дві копії однієї гри не
   // стояли поруч у стрічці рулетки чи серед секторів колеса.
@@ -148,28 +171,7 @@
     return result;
   }
 
-  // Best-effort виправлення "стику" по колу: якщо перший і останній елемент
-  // (сусіди в круговій розкладці на кшталт секторів колеса) однакові —
-  // шукає елемент усередині масиву, з яким можна поміняти місцями останній,
-  // не створивши при цьому нову пару однакових сусідів.
-  function fixCircularAdjacency(result, keyFn) {
-    const n = result.length;
-    if (keyFn(result[0]) !== keyFn(result[n - 1])) return;
-    for (let i = 1; i < n - 1; i++) {
-      const a = result[i], b = result[n - 1];
-      if (keyFn(a) === keyFn(b)) continue;
-      const prevOk = keyFn(result[i - 1]) !== keyFn(b);
-      const nextOk = i + 1 < n - 1 ? keyFn(result[i + 1]) !== keyFn(b) : true;
-      const tailPrevOk = keyFn(result[n - 2]) !== keyFn(a);
-      if (prevOk && nextOk && tailPrevOk) {
-        result[i] = b;
-        result[n - 1] = a;
-        return;
-      }
-    }
-    // Не знайшли безпечний обмін — лишаємо як є (рідкісний край, коли один
-    // варіант домінує настільки, що уникнути стику фізично неможливо).
-  }
+
 
 global.Common = {
     loadState, saveState,
