@@ -212,9 +212,14 @@
   }
 
   // Формує спільний випадковий порядок для слот-машини та окремих секторів колеса.
-  function refreshVisualOrder() {
+function refreshVisualOrder() {
     slotOrder = shuffle(games);
-    wheelEntries = shuffle(slotOrder.flatMap(g => Array.from({ length: g.copies }, () => g)));
+wheelEntries = Common.shuffleNoAdjacent(
+      games.flatMap(g => Array.from({ length: g.copies }, () => g)),
+      g => g.id,
+      { circular: true }
+    );
+    const entries = wheelEntries;
   }
 
   function wheelSectorPath(cx, cy, r, start, end) {
@@ -731,8 +736,9 @@
   // стільки разів, скільки копій є насправді (як і сектори колеса) — на
   // відміну від незалежних випадкових вибірок, тут гра з 1 копією не може
   // "випадково" з'явитися в стрічці кілька разів за один прохід пулу.
-  function buildCopyPool() {
-    return shuffle(games.flatMap(g => Array.from({ length: g.copies }, () => g)));
+function buildCopyPool(avoidKey) {
+    const items = games.flatMap(g => Array.from({ length: g.copies }, () => g));
+    return Common.shuffleNoAdjacent(items, g => g.id, { avoidFirstKey: avoidKey });
   }
 
   // Показує нерухому рулетку з поточними іграми перед запуском раунду.
@@ -768,7 +774,11 @@
     let pool = buildCopyPool();
     let poolIdx = 0;
     for (let i = 0; i < itemsCount; i++) {
-      if (poolIdx >= pool.length) { pool = buildCopyPool(); poolIdx = 0; }
+      if (poolIdx >= pool.length) {
+        const lastKey = pool.length ? pool[pool.length - 1].id : null;
+        pool = buildCopyPool(lastKey);
+        poolIdx = 0;
+      }
       items.push(pool[poolIdx++]);
     }
     items[targetIndex] = target;

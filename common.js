@@ -97,10 +97,85 @@
 
   function normalize(name) { return name.trim().replace(/\s+/g, ' '); }
 
-  global.Common = {
+  // ---- Допоміжний внутрішній шафл (той самий Фішер-Єйтс, що й у build.js/draw.js) ----
+  function shuffleArr(items) {
+    const shuffled = [...items];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // Перемішує масив так, щоб (по можливості) сусідні елементи не мали
+  // однакового ключа (keyFn) — наприклад, щоб дві копії однієї гри не
+  // стояли поруч у стрічці рулетки чи серед секторів колеса.
+  // Якщо один варіант зустрічається задосить часто (більше половини всіх
+  // елементів), уникнути повторів взагалі неможливо — тоді функція просто
+  // розставляє елементи настільки рівномірно, наскільки це реально виходить.
+  // options.avoidFirstKey — не починати з цього ключа (для стику між
+  // послідовними наповненнями пулу стрічки рулетки).
+  // options.circular — додатково стежить, щоб перший і останній елемент
+  // (сусіди по колу — актуально для секторів колеса) теж не збігались.
+  function shuffleNoAdjacent(items, keyFn, options) {
+    const opts = options || {};
+    if (items.length <= 1) return items.slice();
+
+    const groups = new Map();
+    items.forEach(it => {
+      const k = keyFn(it);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(it);
+    });
+    groups.forEach((arr, k) => groups.set(k, shuffleArr(arr)));
+
+    const result = [];
+    let lastKey = opts.avoidFirstKey != null ? opts.avoidFirstKey : null;
+
+    for (let i = 0; i < items.length; i++) {
+      const candidates = [...groups.entries()].filter(([, arr]) => arr.length > 0);
+      if (!candidates.length) break;
+      const nonLast = candidates.filter(([k]) => k !== lastKey);
+      const pool = nonLast.length ? nonLast : candidates;
+      const maxCount = Math.max(...pool.map(([, arr]) => arr.length));
+      const topPool = pool.filter(([, arr]) => arr.length === maxCount);
+      const [key, arr] = topPool[Math.floor(Math.random() * topPool.length)];
+      result.push(arr.shift());
+      lastKey = key;
+    }
+
+    if (opts.circular && result.length > 2) fixCircularAdjacency(result, keyFn);
+    return result;
+  }
+
+  // Best-effort виправлення "стику" по колу: якщо перший і останній елемент
+  // (сусіди в круговій розкладці на кшталт секторів колеса) однакові —
+  // шукає елемент усередині масиву, з яким можна поміняти місцями останній,
+  // не створивши при цьому нову пару однакових сусідів.
+  function fixCircularAdjacency(result, keyFn) {
+    const n = result.length;
+    if (keyFn(result[0]) !== keyFn(result[n - 1])) return;
+    for (let i = 1; i < n - 1; i++) {
+      const a = result[i], b = result[n - 1];
+      if (keyFn(a) === keyFn(b)) continue;
+      const prevOk = keyFn(result[i - 1]) !== keyFn(b);
+      const nextOk = i + 1 < n - 1 ? keyFn(result[i + 1]) !== keyFn(b) : true;
+      const tailPrevOk = keyFn(result[n - 2]) !== keyFn(a);
+      if (prevOk && nextOk && tailPrevOk) {
+        result[i] = b;
+        result[n - 1] = a;
+        return;
+      }
+    }
+    // Не знайшли безпечний обмін — лишаємо як є (рідкісний край, коли один
+    // варіант домінує настільки, що уникнути стику фізично неможливо).
+  }
+
+global.Common = {
     loadState, saveState,
     loadHistory, saveHistory, addToHistory, formatSavedAt,
     colorForGame, hexToRgba, escapeHtml, normalize,
+    shuffleNoAdjacent,
     PALETTE_COLORS
   };
 })(window);
