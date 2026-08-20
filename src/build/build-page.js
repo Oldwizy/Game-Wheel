@@ -186,7 +186,7 @@ async function createReward(type, config) {
     };
     rewardStatuses = {
       ...rewardStatuses,
-      [type]: { state: 'ok', message: 'Нагороду додано. Чат може починати скам.' }
+      [type]: { state: 'ok', message: 'Нагороду додано. Чат може починати замовляти.' }
     };
     persistTwitch();
     twitch.syncRewards(twitchState.rewards);

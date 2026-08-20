@@ -116,7 +116,7 @@ export function createTwitchRequestView(root, {
       get('twitchPendingPanel'),
       currentState.pending,
       pendingCard,
-      'Поки тихо. Чат ще нічого не заскамив.'
+      'Поки тихо. Чат ще нічого не замовив.'
     );
     const historyPanel = get('twitchHistoryPanel');
     renderPanel(
