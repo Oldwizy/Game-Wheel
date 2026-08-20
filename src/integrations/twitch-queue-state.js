@@ -25,13 +25,13 @@ export function createDefaultTwitchState() {
         rewardId: null,
         title: DEFAULT_REWARD_TITLES[REWARD_TYPES.GAME_OR_CHANCE],
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       },
       [REWARD_TYPES.CHANCE_ONLY]: {
         rewardId: null,
         title: DEFAULT_REWARD_TITLES[REWARD_TYPES.CHANCE_ONLY],
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       }
     },
     pending: [],
@@ -53,7 +53,9 @@ function isRewardConfig(config) {
     && config.title.trim().length <= 45
     && Number.isInteger(config.cost)
     && config.cost >= 1
-    && (config.maxPerStream === null || (Number.isInteger(config.maxPerStream) && config.maxPerStream >= 1))
+    && (config.maxPerUserPerStream === null || (
+      Number.isInteger(config.maxPerUserPerStream) && config.maxPerUserPerStream >= 1
+    ))
   );
 }
 

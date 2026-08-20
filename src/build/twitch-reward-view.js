@@ -36,17 +36,19 @@ export function createTwitchRewardView(root, {
     const title = get(ids.title).value.trim();
     const cost = Number(get(ids.cost).value);
     const maxRaw = get(ids.max).value.trim();
-    const maxPerStream = maxRaw === '' ? null : Number(maxRaw);
+    const maxPerUserPerStream = maxRaw === '' ? null : Number(maxRaw);
     if (!title || title.length > 45) {
       throw new TypeError('Назва нагороди має містити від 1 до 45 символів.');
     }
     if (!Number.isInteger(cost) || cost < 1) {
       throw new TypeError('Бали мають бути цілим числом від 1.');
     }
-    if (maxPerStream !== null && (!Number.isInteger(maxPerStream) || maxPerStream < 1)) {
+    if (maxPerUserPerStream !== null && (
+      !Number.isInteger(maxPerUserPerStream) || maxPerUserPerStream < 1
+    )) {
       throw new TypeError('Ліміт має бути цілим числом від 1 або порожнім.');
     }
-    return { title, cost, maxPerStream };
+    return { title, cost, maxPerUserPerStream };
   }
 
   async function handleRewardAction(button) {
@@ -99,7 +101,9 @@ export function createTwitchRewardView(root, {
         const isCreated = Boolean(config.rewardId);
         get(ids.title).value = config.title;
         get(ids.cost).value = String(config.cost);
-        get(ids.max).value = config.maxPerStream === null ? '' : String(config.maxPerStream);
+        get(ids.max).value = config.maxPerUserPerStream === null
+          ? ''
+          : String(config.maxPerUserPerStream);
         for (const id of [ids.title, ids.cost, ids.max]) get(id).readOnly = isCreated;
         const action = get(ids.action);
         action.textContent = isCreated ? 'Видалити нагороду' : 'Додати нагороду';

@@ -92,12 +92,16 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     if (!Number.isInteger(config.cost) || config.cost < 1) {
       throw new TypeError('Кількість балів має бути цілим числом від 1.');
     }
-    if (config.maxPerStream !== null && (
-      !Number.isInteger(config.maxPerStream) || config.maxPerStream < 1
+    if (config.maxPerUserPerStream !== null && (
+      !Number.isInteger(config.maxPerUserPerStream) || config.maxPerUserPerStream < 1
     )) {
       throw new TypeError('Вкажи ліміт використань цілим числом від 1 або залиш поле порожнім.');
     }
-    return { title, cost: config.cost, maxPerStream: config.maxPerStream };
+    return {
+      title,
+      cost: config.cost,
+      maxPerUserPerStream: config.maxPerUserPerStream
+    };
   }
 
   async function init(rewardSlots = {}) {
@@ -163,9 +167,11 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
       cost: validated.cost,
       is_user_input_required: true,
       should_redemptions_skip_request_queue: false,
-      is_max_per_stream_enabled: validated.maxPerStream !== null
+      is_max_per_user_per_stream_enabled: validated.maxPerUserPerStream !== null
     };
-    if (validated.maxPerStream !== null) body.max_per_stream = validated.maxPerStream;
+    if (validated.maxPerUserPerStream !== null) {
+      body.max_per_user_per_stream = validated.maxPerUserPerStream;
+    }
 
     const data = await api(
       `channel_points/custom_rewards?broadcaster_id=${encodeURIComponent(broadcasterId)}`,

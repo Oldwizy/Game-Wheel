@@ -73,27 +73,27 @@ describe('Twitch reward creation', () => {
   test.each([
     [
       REWARD_TYPES.GAME_OR_CHANCE,
-      { title: 'Додати гру або копію', cost: 100, maxPerStream: null },
+      { title: 'Додати гру або копію', cost: 100, maxPerUserPerStream: null },
       {
         title: 'Додати гру або копію',
         prompt: 'Введи назву гри',
         cost: 100,
         is_user_input_required: true,
         should_redemptions_skip_request_queue: false,
-        is_max_per_stream_enabled: false
+        is_max_per_user_per_stream_enabled: false
       }
     ],
     [
       REWARD_TYPES.CHANCE_ONLY,
-      { title: 'Додати тільки копію', cost: 250, maxPerStream: 12 },
+      { title: 'Додати тільки копію', cost: 250, maxPerUserPerStream: 12 },
       {
         title: 'Додати тільки копію',
         prompt: 'Введи назву гри',
         cost: 250,
         is_user_input_required: true,
         should_redemptions_skip_request_queue: false,
-        is_max_per_stream_enabled: true,
-        max_per_stream: 12
+        is_max_per_user_per_stream_enabled: true,
+        max_per_user_per_stream: 12
       }
     ]
   ])('creates %s with its exact Twitch payload', async (type, config, expectedBody) => {
@@ -109,10 +109,10 @@ describe('Twitch reward creation', () => {
   });
 
   test.each([
-    [{ title: '', cost: 100, maxPerStream: null }, 'назв'],
-    [{ title: 'x'.repeat(46), cost: 100, maxPerStream: null }, '45'],
-    [{ title: 'Reward', cost: 0, maxPerStream: null }, 'бал'],
-    [{ title: 'Reward', cost: 100, maxPerStream: 0 }, 'ліміт']
+    [{ title: '', cost: 100, maxPerUserPerStream: null }, 'назв'],
+    [{ title: 'x'.repeat(46), cost: 100, maxPerUserPerStream: null }, '45'],
+    [{ title: 'Reward', cost: 0, maxPerUserPerStream: null }, 'бал'],
+    [{ title: 'Reward', cost: 100, maxPerUserPerStream: 0 }, 'ліміт']
   ])('rejects invalid config before a Twitch request', async (config, message) => {
     const fetch = apiFetch();
     const twitch = integration(fetch);

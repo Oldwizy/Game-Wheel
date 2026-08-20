@@ -34,13 +34,13 @@ export function twitchState(overrides = {}) {
         rewardId: null,
         title: 'Додати гру або копію',
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       },
       chanceOnly: {
         rewardId: null,
         title: 'Додати тільки копію',
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       }
     },
     pending: [],

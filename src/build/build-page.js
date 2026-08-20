@@ -33,6 +33,7 @@ let connectionStatus = { state: 'muted', message: 'Прослуховуванн�
 let refreshingRequests = false;
 let refreshStatus = null;
 let cleanedUp = false;
+let startingDraw = false;
 
 const gameListView = createGameListView(ui, {
   onRemove: remove,
@@ -178,9 +179,7 @@ async function createReward(type, config) {
           rewardId: reward.id,
           title: reward.title ?? config.title,
           cost: reward.cost ?? config.cost,
-          maxPerStream: reward.is_max_per_stream_enabled
-            ? reward.max_per_stream?.max_per_stream ?? reward.max_per_stream ?? config.maxPerStream
-            : config.maxPerStream
+          maxPerUserPerStream: config.maxPerUserPerStream
         }
       }
     };
@@ -307,6 +306,32 @@ function cleanup() {
   twitch.destroy();
 }
 
+async function deleteCreatedRewards() {
+  const configured = Object.entries(twitchState.rewards)
+    .filter(([, reward]) => reward.rewardId);
+  const results = await Promise.allSettled(configured.map(([type, reward]) => (
+    twitch.deleteReward(type, reward.rewardId)
+  )));
+  let rewards = twitchState.rewards;
+  const failures = [];
+  results.forEach((result, index) => {
+    const [type, reward] = configured[index];
+    if (result.status === 'rejected') {
+      failures.push(reward.title);
+      return;
+    }
+    rewards = {
+      ...rewards,
+      [type]: { ...reward, rewardId: null }
+    };
+  });
+  if (rewards !== twitchState.rewards) {
+    twitchState = { ...twitchState, rewards };
+    persistTwitch();
+  }
+  return failures;
+}
+
 ui.add.addEventListener('click', () => {
   addGame(ui.input.value, ui.copies.value);
   ui.input.value = '';
@@ -324,11 +349,18 @@ ui.reset.addEventListener('click', () => {
   persist();
   render();
 });
-ui.lock.addEventListener('click', () => {
+ui.lock.addEventListener('click', async () => {
+  if (startingDraw) return;
+  startingDraw = true;
+  ui.lock.disabled = true;
   twitch.destroy();
+  const failedRewards = twitchUser ? await deleteCreatedRewards() : [];
   archive();
   state = { ...state, roundCount: 0, logEntries: [] };
   persist();
+  if (failedRewards.length) {
+    alert(`Не вдалося видалити з Twitch: ${failedRewards.join(', ')}. Перевір нагороди вручну.`);
+  }
   location.href = 'draw.html';
 });
 

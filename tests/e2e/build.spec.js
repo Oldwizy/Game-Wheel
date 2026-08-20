@@ -98,13 +98,13 @@ test('starting a draw closes Twitch listening before navigation', async ({ page 
         rewardId: 'reward-game',
         title: 'Додати гру або копію',
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       },
       chanceOnly: {
         rewardId: null,
         title: 'Додати тільки копію',
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       }
     }
   });
@@ -128,9 +128,16 @@ test('starting a draw closes Twitch listening before navigation', async ({ page 
   await page.route('https://id.twitch.tv/oauth2/validate', route => route.fulfill({
     json: { login: 'streamer', user_id: 'broadcaster' }
   }));
-  await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards?**', route => route.fulfill({
-    json: { data: [{ id: 'reward-game', title: 'Додати гру або копію' }] }
-  }));
+  const deletedRewardIds = [];
+  await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards?**', route => {
+    if (route.request().method() === 'DELETE') {
+      deletedRewardIds.push(new URL(route.request().url()).searchParams.get('id'));
+      return route.fulfill({ status: 204, body: '' });
+    }
+    return route.fulfill({
+      json: { data: [{ id: 'reward-game', title: 'Додати гру або копію' }] }
+    });
+  });
   await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?**', route => route.fulfill({
     json: { data: [], pagination: {} }
   }));
@@ -144,4 +151,58 @@ test('starting a draw closes Twitch listening before navigation', async ({ page 
     count: Number(sessionStorage.getItem('twitchClosedCount')),
     path: sessionStorage.getItem('twitchClosedPath')
   }))).toEqual({ count: 1, path: '/index.html' });
+  expect(deletedRewardIds).toEqual(['reward-game']);
+  expect(await page.evaluate(() => (
+    JSON.parse(localStorage.getItem('twitch_rewards_state_v1')).rewards.gameOrChance.rewardId
+  ))).toBeNull();
+});
+
+test('starting a draw warns but continues when Twitch cannot delete a reward', async ({ page }) => {
+  await seedDrawState(page);
+  await seedTwitchState(page, {
+    rewards: {
+      gameOrChance: {
+        rewardId: 'reward-game',
+        title: 'Мій скам',
+        cost: 100,
+        maxPerUserPerStream: null
+      },
+      chanceOnly: {
+        rewardId: null,
+        title: 'Додати тільки копію',
+        cost: 100,
+        maxPerUserPerStream: null
+      }
+    }
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
+    window.WebSocket = class { close() {} };
+  });
+  await page.route('https://id.twitch.tv/oauth2/validate', route => route.fulfill({
+    json: { login: 'streamer', user_id: 'broadcaster' }
+  }));
+  await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards?**', route => (
+    route.request().method() === 'DELETE'
+      ? route.fulfill({ status: 503, json: { message: 'Twitch приліг' } })
+      : route.fulfill({ json: { data: [{ id: 'reward-game', title: 'Мій скам' }] } })
+  ));
+  await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?**', route => (
+    route.fulfill({ json: { data: [], pagination: {} } })
+  ));
+  let warning = '';
+  page.on('dialog', async dialog => {
+    warning = dialog.message();
+    await dialog.accept();
+  });
+  await page.goto('/index.html');
+  await expect(page.locator('#twitchUserName')).toHaveText('streamer');
+
+  await page.locator('#lockBtn').click();
+
+  await expect(page).toHaveURL(/draw\.html$/);
+  expect(warning).toBe('Не вдалося видалити з Twitch: Мій скам. Перевір нагороди вручну.');
+  expect(await page.evaluate(() => (
+    JSON.parse(localStorage.getItem('twitch_rewards_state_v1')).rewards.gameOrChance.rewardId
+  ))).toBe('reward-game');
 });

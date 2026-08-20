@@ -37,7 +37,7 @@
         <button class="link-btn" id="twitchLogoutBtn"><span class="msi" aria-hidden="true">↩</span>Вийти</button>
       </div>
 
-      <p class="twitch-workflow-note">Заявки глядачів з’являються у вкладці «Нові». Після обробки вони переходять в «Історію». Статус використання нагороди в Twitch сайт не змінює.</p>
+      <p class="twitch-workflow-note">Заявки глядачів з’являються у вкладці «Нові». Після обробки вони переходять в «Історію». Після старту розіграшу ми перестанемо слухати заявки й автоматично видалимо створені Twitch-нагороди. Якщо Twitch вирішить покапризувати — перевір нагороди вручну.</p>
 
       <div class="twitch-rewards-grid">
         <form class="twitch-reward-card" data-reward-type="gameOrChance" novalidate>
@@ -53,8 +53,8 @@
               <input type="number" id="twitchGameOrChanceCost" min="1" step="1" value="100" aria-label="Вартість нагороди «Гра або копія» в балах">
             </label>
             <label class="twitch-field" for="twitchGameOrChanceMax">
-              <span>ЛІМІТ ЗА СТРІМ</span>
-              <input type="number" id="twitchGameOrChanceMax" min="1" step="1" inputmode="numeric" placeholder="БЕЗ ЛІМІТУ" aria-label="Ліміт нагороди «Гра або копія» за стрім">
+              <span>ЛІМІТ НА ГЛЯДАЧА ЗА СТРІМ</span>
+              <input type="number" id="twitchGameOrChanceMax" min="1" step="1" inputmode="numeric" placeholder="БЕЗ ЛІМІТУ" aria-label="Ліміт нагороди «Гра або копія» на одного глядача за стрім">
             </label>
           </div>
           <button type="button" class="btn-cta twitch-btn twitch-reward-action" id="twitchGameOrChanceAction">Додати нагороду</button>
@@ -74,8 +74,8 @@
               <input type="number" id="twitchChanceOnlyCost" min="1" step="1" value="100" aria-label="Вартість нагороди «Тільки копія» в балах">
             </label>
             <label class="twitch-field" for="twitchChanceOnlyMax">
-              <span>ЛІМІТ ЗА СТРІМ</span>
-              <input type="number" id="twitchChanceOnlyMax" min="1" step="1" inputmode="numeric" placeholder="БЕЗ ЛІМІТУ" aria-label="Ліміт нагороди «Тільки копія» за стрім">
+              <span>ЛІМІТ НА ГЛЯДАЧА ЗА СТРІМ</span>
+              <input type="number" id="twitchChanceOnlyMax" min="1" step="1" inputmode="numeric" placeholder="БЕЗ ЛІМІТУ" aria-label="Ліміт нагороди «Тільки копія» на одного глядача за стрім">
             </label>
           </div>
           <button type="button" class="btn-cta twitch-btn twitch-reward-action" id="twitchChanceOnlyAction">Додати нагороду</button>

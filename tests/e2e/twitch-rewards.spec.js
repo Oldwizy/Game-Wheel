@@ -72,8 +72,9 @@ test('logged-in streamer sees two configurable reward forms', async ({ page }) =
   await expect(page.locator('#twitchChanceOnlyCost')).toHaveValue('100');
   await expect(page.locator('#twitchGameOrChanceMax')).toHaveValue('');
   await expect(page.locator('#twitchChanceOnlyMax')).toHaveValue('');
+  await expect(page.getByText('ЛІМІТ НА ГЛЯДАЧА ЗА СТРІМ')).toHaveCount(2);
   await expect(page.getByText(
-    'Заявки глядачів з’являються у вкладці «Нові». Після обробки вони переходять в «Історію». Статус використання нагороди в Twitch сайт не змінює.'
+    'Заявки глядачів з’являються у вкладці «Нові». Після обробки вони переходять в «Історію». Після старту розіграшу ми перестанемо слухати заявки й автоматично видалимо створені Twitch-нагороди. Якщо Twitch вирішить покапризувати — перевір нагороди вручну.'
   )).toBeVisible();
   await expect(page.getByRole('button', { name: 'Додати нагороду' })).toHaveCount(2);
 
@@ -98,7 +99,12 @@ test('streamer can create and delete a reward from the live page', async ({ page
   await expect(page.locator('#twitchGameOrChanceTitle')).toHaveAttribute('readonly', '');
   expect(await page.evaluate(() => (
     JSON.parse(localStorage.getItem('twitch_rewards_state_v1')).rewards.gameOrChance
-  ))).toEqual({ rewardId: 'created-reward', title: 'Мій скам', cost: 250, maxPerStream: 5 });
+  ))).toEqual({
+    rewardId: 'created-reward',
+    title: 'Мій скам',
+    cost: 250,
+    maxPerUserPerStream: 5
+  });
 
   let confirmation = '';
   page.once('dialog', dialog => {
@@ -151,7 +157,7 @@ test('manual refresh recovers recent Twitch requests without duplicates', async 
     id: 'reward-game',
     title: 'Додати гру або копію',
     cost: 100,
-    is_max_per_stream_enabled: false
+    is_max_per_user_per_stream_enabled: false
   };
   await seedTwitchState(page, {
     rewards: {
@@ -159,13 +165,13 @@ test('manual refresh recovers recent Twitch requests without duplicates', async 
         rewardId: reward.id,
         title: reward.title,
         cost: reward.cost,
-        maxPerStream: null
+        maxPerUserPerStream: null
       },
       chanceOnly: {
         rewardId: null,
         title: 'Додати тільки копію',
         cost: 100,
-        maxPerStream: null
+        maxPerUserPerStream: null
       }
     },
     pending: [pendingRequest()]

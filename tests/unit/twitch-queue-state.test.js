@@ -44,13 +44,13 @@ describe('Twitch queue state persistence', () => {
           rewardId: null,
           title: 'Додати гру або копію',
           cost: 100,
-          maxPerStream: null
+          maxPerUserPerStream: null
         },
         chanceOnly: {
           rewardId: null,
           title: 'Додати тільки копію',
           cost: 100,
-          maxPerStream: null
+          maxPerUserPerStream: null
         }
       },
       pending: [],
@@ -88,7 +88,7 @@ describe('Twitch queue state persistence', () => {
       rewardId: 'reward-game',
       title: 'Моя нагорода',
       cost: 250,
-      maxPerStream: 12
+      maxPerUserPerStream: 12
     };
 
     expect(saveTwitchState(saved, state)).toEqual({ value: state, error: null });
