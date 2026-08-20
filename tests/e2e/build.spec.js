@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { drawState, STORAGE_KEY } from '../helpers/state-fixtures.js';
+import {
+  drawState,
+  seedDrawState,
+  seedTwitchState,
+  STORAGE_KEY
+} from '../helpers/state-fixtures.js';
 
 test('duplicate normalized names add copies instead of cards', async ({ page }) => {
   await page.goto('/index.html');
@@ -13,17 +18,29 @@ test('duplicate normalized names add copies instead of cards', async ({ page }) 
   await expect(page.locator('#tickets .copies-badge')).toHaveText('× 5');
 });
 
-test('clear archives the list and history load assigns fresh IDs', async ({ page }) => {
+test('clear-list action is not offered', async ({ page }) => {
+  await page.goto('/index.html');
+
+  await expect(page.getByRole('button', { name: 'ОЧИСТИТИ СПИСОК' })).toHaveCount(0);
+});
+
+test('reset archives the list so it can be loaded again', async ({ page }) => {
   await page.goto('/index.html');
   for (const name of ['Alpha', 'Beta']) {
     await page.locator('#gameInput').fill(name);
     await page.locator('#addBtn').click();
   }
-  await page.locator('#clearBtn').click();
+  let confirmation = '';
+  page.once('dialog', dialog => {
+    confirmation = dialog.message();
+    dialog.accept();
+  });
+  await page.locator('#resetAllBtn').click();
+  expect(confirmation).toBe('Скинути все й почати заново? Буде очищено список, налаштування та прогрес.');
   await expect(page.locator('#historyList .history-item')).toHaveCount(1);
+  await expect(page.locator('#historyList .h-date')).toContainText('2 гри');
   await page.locator('#historyList .history-item button').click();
-  const ids = await page.locator('#tickets .ticket').evaluateAll(cards => cards.map(card => Number(card.dataset.id)));
-  expect(ids).toEqual([3, 4]);
+  await expect(page.locator('#tickets .tname')).toHaveText(['Alpha', 'Beta']);
 });
 
 test('reset stores schema-versioned defaults', async ({ page }) => {
@@ -71,4 +88,60 @@ test('starting a draw clears prior round progress and preserves configuration', 
     durationValue: 15
   });
   await expect(page.locator('#log li')).toHaveCount(0);
+});
+
+test('starting a draw closes Twitch listening before navigation', async ({ page }) => {
+  await seedDrawState(page);
+  await seedTwitchState(page, {
+    rewards: {
+      gameOrChance: {
+        rewardId: 'reward-game',
+        title: 'Додати гру або копію',
+        cost: 100,
+        maxPerStream: null
+      },
+      chanceOnly: {
+        rewardId: null,
+        title: 'Додати тільки копію',
+        cost: 100,
+        maxPerStream: null
+      }
+    }
+  });
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('twitch_token_v1')) {
+      localStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
+    }
+    window.__socketCount = 0;
+    window.WebSocket = class {
+      constructor() {
+        window.__socketCount += 1;
+      }
+      close() {
+        sessionStorage.setItem('twitchClosedCount', String(
+          Number(sessionStorage.getItem('twitchClosedCount') ?? 0) + 1
+        ));
+        sessionStorage.setItem('twitchClosedPath', location.pathname);
+      }
+    };
+  });
+  await page.route('https://id.twitch.tv/oauth2/validate', route => route.fulfill({
+    json: { login: 'streamer', user_id: 'broadcaster' }
+  }));
+  await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards?**', route => route.fulfill({
+    json: { data: [{ id: 'reward-game', title: 'Додати гру або копію' }] }
+  }));
+  await page.route('https://api.twitch.tv/helix/channel_points/custom_rewards/redemptions?**', route => route.fulfill({
+    json: { data: [], pagination: {} }
+  }));
+  await page.goto('/index.html');
+  await expect.poll(() => page.evaluate(() => window.__socketCount)).toBe(1);
+
+  await page.locator('#lockBtn').click();
+  await expect(page).toHaveURL(/draw\.html$/);
+
+  expect(await page.evaluate(() => ({
+    count: Number(sessionStorage.getItem('twitchClosedCount')),
+    path: sessionStorage.getItem('twitchClosedPath')
+  }))).toEqual({ count: 1, path: '/index.html' });
 });

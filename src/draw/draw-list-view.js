@@ -33,7 +33,7 @@ export function createDrawListView(element, { onCopyDelta }) {
       minus.className = 'step-btn minus-btn';
       minus.type = 'button';
       minus.dataset.delta = '-1';
-      minus.setAttribute('aria-label', 'Менше копій');
+      minus.setAttribute('aria-label', `Зменшити кількість копій ${game.name}`);
       minus.textContent = '−';
       minus.disabled = disabled || game.copies <= 1;
       const badge = document.createElement('span');
@@ -45,7 +45,7 @@ export function createDrawListView(element, { onCopyDelta }) {
       plus.className = 'step-btn plus-btn';
       plus.type = 'button';
       plus.dataset.delta = '1';
-      plus.setAttribute('aria-label', 'Більше копій');
+      plus.setAttribute('aria-label', `Збільшити кількість копій ${game.name}`);
       plus.textContent = '+';
       plus.disabled = disabled;
       stepper.append(minus, badge, plus);
