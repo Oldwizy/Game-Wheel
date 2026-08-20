@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лохотрон ігор і не тільки — розіграш</title>
+  <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+<div class="scanline" aria-hidden="true"></div>
+<div class="wrap">
+
+  <!-- Шапка сторінки: назва та коротке пояснення правил розіграшу. -->
+  <!-- <header class="site-header">
+    <h1 class="glitch-title"><span class="accent">ЧАС</span> КРУТИТИ</h1>
+    <div class="sub">Ну що давайте оберемо щось, всяке може статись але будемо вірити в краще</div>
+  </header> -->
+
+  <!-- Банер показується після завершення розіграшу з назвою переможця. -->
+  <div class="winner-banner" id="winnerBanner">
+    <div class="winner-eyebrow">Обрано</div>
+    <div class="winner-name" id="winnerName">—</div>
+  </div>
+
+  <!-- Обгортка для екрану розіграшу: ліва колонка (керування раундом +
+       учасники/історія) і панель раунду розташовуються в дві колонки на
+       широких екранах (через CSS-грід .draw-layout, styles.css), і одна
+       під одною на вузьких. -->
+  <div class="draw-layout">
+
+  <!-- Ліва колонка: керування раундом і перемикач учасники/історія. -->
+  <section class="panel" id="drawSidePanel">
+
+    <div class="round-controls">
+      <button class="btn-ghost" id="backBtn"><span class="msi">arrow_back</span>До списку</button>
+      <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
+        <span class="switch">
+          <input type="checkbox" id="instantWinToggle">
+          <span class="switch-slider"></span>
+        </span>
+        <span>В один раунд</span>
+      </label>
+    </div>
+
+    <!-- Перемикач між трьома варіантами відображення розіграшу. -->
+    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
+      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+      <button class="btn-ghost" id="battleViewBtn" type="button" aria-pressed="false">Батл-рояль</button>
+    </div>
+
+    <div class="duration-block">
+      <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
+      <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
+    </div>
+
+    <!-- Перемикач між списком учасників і журналом раундів. -->
+    <div class="view-switch" role="group" aria-label="Учасники або історія">
+      <button class="btn-ghost active" id="participantsTabBtn" type="button" aria-pressed="true">Учасники</button>
+      <button class="btn-ghost" id="historyTabBtn" type="button" aria-pressed="false">Історія</button>
+    </div>
+
+    <div class="tickets" id="drawTickets"></div>
+    <ul class="log" id="log" hidden></ul>
+
+  </section>
+
+  <!-- Панель раунду: слот-машина, колесо або батл-рояль. -->
+  <section class="panel" id="drawPanel">
+
+    <div class="status-line" id="statusLine">Готово до першого раунду.</div>
+    <div class="status-divider"></div>
+
+    <!-- Візуальна «рулетка», яка анімацією показує випадково обрану гру. -->
+    <div class="slot-machine" id="slotMachine">
+      <div class="slot-window">
+        <div class="slot-fade top"></div>
+
+        <div class="slot-center-band" id="slotCenterBand"></div>
+        <span class="slot-arrow left">▶</span>
+        <span class="slot-arrow right">▶</span>
+        <div class="slot-fade bottom"></div>
+        <div class="slot-strip" id="slotStrip"></div>
+      </div>
+    </div>
+
+    <!-- Альтернативний вигляд: колесо, де кожна копія гри є окремим сектором. -->
+    <div class="wheel-machine" id="wheelMachine" style="display:none;">
+      <!-- .wheel-circle-wrap стискається точно під розмір .wheel-stage (він
+           росте/скорочується через JS), тому стрілка (right:4px) завжди
+           прив'язана до фактичного краю кола, а не до всієї ширини панелі. -->
+      <div class="wheel-circle-wrap">
+        <div class="wheel-pointer" aria-hidden="true"></div>
+        <div class="wheel-stage" id="wheelStage" role="img" aria-label="Колесо з усіма копіями ігор"></div>
+      </div>
+      <div class="wheel-result-popup" id="wheelResultPopup" aria-live="polite">
+        <span class="wrp-eyebrow">Випало</span>
+        <span class="wrp-name" id="wheelResultName">—</span>
+        <div class="wrp-actions">
+          <button class="btn-ghost" id="wheelKeepBtn" type="button">Залишити</button>
+          <button class="btn-amber" id="wheelRemoveBtn" type="button">Прибрати<span class="msi">delete</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Третій вигляд: батл-рояль. Кожна гра — кулька з власним HP,
+         кульки штовхаються й завдають шкоди одна одній при зіткненні;
+         останній, хто лишився з HP > 0 — переможець. -->
+    <div class="battle-machine" id="battleMachine" style="display:none;">
+      <canvas id="battleCanvas"></canvas>
+    </div>
+
+    <div class="view-switch" role="group" aria-label="Дії розіграшу">
+      <button class="btn-ghost" id="shuffleVisualsBtn" type="button">Перемішати варіанти</button>
+      <button class="btn-amber" id="startRoundBtn">Почати раунд<span class="msi">autorenew</span></button>
+    </div>
+
+  </section>
+
+  </div>
+
+</div>
+  <script type="module" src="src/draw/draw-page.js"></script>
+</body>
+</html>
