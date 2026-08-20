@@ -34,7 +34,7 @@
     font-family:var(--font-body);
     /* ВАЖЛИВО: тут навмисно height (не min-height). min-height не робить
        висоту "визначеною" (definite) для CSS — а без визначеної висоти десь
-       у ланцюжку .wrap → .draw-layout → #logPanel{height:100%} ця
+       у ланцюжку .wrap → .draw-layout → #drawSidePanel{height:100%} ця
        height:100% теж рахується як auto, тобто підлаштовується під вміст.
        Саме тому журнал ігнорував overflow-y:auto і просто ріс разом із
        кількістю раундів (навіть після фіксу зациклення ResizeObserver) —
@@ -696,8 +696,8 @@
     flex-direction:column-reverse;
     gap:6px;
     /* Раніше тут був фіксований max-height:50vh — тепер #log завжди
-       заповнює всю фактичну висоту свого батька #logPanel через flex
-       (той сам обмежений висотою екрана — див. #logPanel нижче: sticky +
+       заповнює всю фактичну висоту свого батька #drawSidePanel через flex
+       (той сам обмежений висотою екрана — див. #drawSidePanel нижче: sticky +
        max-height на вузьких екранах, height:100% від сітки на широких). */
     flex:1 1 auto;
     min-height:0;
@@ -712,6 +712,16 @@
   }
   .log li b{color:var(--text);font-weight:600;}
   .log li.win-line{border-left-color:var(--teal);color:var(--teal);}
+
+  /* Перемикач Учасники/Історія ховає неактивну вкладку через атрибут
+     [hidden]. Без цього правила .tickets{display:grid} і .log{display:flex}
+     вище перебивають стандартне [hidden]{display:none} браузера (авторський
+     CSS завжди має пріоритет над стилем браузера за замовчуванням), і обидва
+     блоки лишались би видимими одночасно незалежно від вибраної вкладки. */
+  #drawSidePanel #drawTickets[hidden],
+  #drawSidePanel #log[hidden]{
+    display:none;
+  }
 
   /* Фінальний банер із назвою гри-переможця. */
   .winner-banner{
@@ -745,11 +755,12 @@
   }
 
   /* --- draw.html layout --- */
-  /* Розкладка для екрану розіграшу: зліва список ігор, по центру панель
-     раунду (колесо/слот), справа історія раундів. На вузьких екранах —
-     одна колонка, і панель раунду показується першою (найважливіша).
-     Блок навмисно "виривається" з обмеженої ширини .wrap, щоб зайняти
-     всю ширину сторінки — прийом з від'ємними марджинами на 50vw. */
+  /* Розкладка для екрану розіграшу: зліва керування раундом та перемикач
+     учасники/історія (#drawSidePanel), справа панель раунду з візуалізацією
+     (#drawPanel). На вузьких екранах — одна колонка, і панель раунду
+     показується першою (найважливіша). Блок навмисно "виривається" з
+     обмеженої ширини .wrap, щоб зайняти всю ширину сторінки — прийом з
+     від'ємними марджинами на 50vw. */
   .draw-layout {
     display: flex;
     flex-direction: column;
@@ -764,21 +775,19 @@
     box-sizing: border-box;
   }
   .draw-layout #drawPanel { order: 1; }
-  .draw-layout #drawGamesPanel { order: 2; }
-  .draw-layout #logPanel { order: 3; }
+  .draw-layout #drawSidePanel { order: 2; }
 
   @media (min-width: 1100px) {
     .draw-layout {
       display: grid;
-      grid-template-columns: 1fr 3fr 1fr; /* ліва 20% / центр 60% / права 20% */
+      grid-template-columns: 1fr 3fr; /* ліва 25% / права 75% */
       grid-template-rows: minmax(0, 1fr); /* висота рядка = фактична висота .draw-layout (див. flex:1 нижче) */
       flex: 1 1 auto; /* росте й заповнює .wrap до самого низу екрана — реальний залишок, а не вгадана калькуляція */
       min-height: 0;
       gap: 20px;
     }
-    .draw-layout #drawGamesPanel,
-    .draw-layout #drawPanel,
-    .draw-layout #logPanel {
+    .draw-layout #drawSidePanel,
+    .draw-layout #drawPanel {
       order: 0; /* на широких екранах порядок задає сама сітка (DOM-порядок) */
       position: sticky;
       top: 20px;
@@ -787,38 +796,6 @@
       overflow-y: auto;
       margin-bottom: 0; /* .panel додає власний нижній відступ 20px, який тут не потрібен */
     }
-  }
-
-  /* Вузькі/планшетні екрани (<1100px): учасники й панель раунду лишаються у
-     звичайному потоці сторінки (як і були, зі своїм звичайним скролом
-     сторінки), а ЖУРНАЛ окремо "прилипає" (position:sticky) і сам займає
-     решту висоти екрана з внутрішнім скролом — так сторінка не росте
-     разом із кількістю раундів у журналі. */
-  @media (max-width: 1099px) {
-    .draw-layout #logPanel{
-      position: sticky;
-      top: 20px;
-      max-height: calc(100vh - 40px);
-      overflow-y: auto;
-    }
-  }
-
-  /* Планшети/середні екрани: замість однієї колонки — панель раунду зверху
-     на всю ширину, а знизу список учасників та журнал поряд у два стовпці.
-     Без цього макет одразу стрибав з мобільної одної колонки до десктопної
-     3-колонкової сітки лише на 1100px, і на планшетах виглядав розтягнутим. */
-  @media (min-width: 720px) and (max-width: 1099px) {
-    .draw-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-areas:
-        "round round"
-        "games log";
-      gap: 20px;
-    }
-    .draw-layout #drawPanel { grid-area: round; order: 0; margin-bottom: 0; }
-    .draw-layout #drawGamesPanel { grid-area: games; order: 0; margin-bottom: 0; }
-    .draw-layout #logPanel { grid-area: log; order: 0; margin-bottom: 0; }
   }
 
   /* Вузькі екрани (телефони): зменшуємо відступи й декоративні елементи
@@ -861,17 +838,16 @@
   }
 
   /* ================================================================
-     NEON HUD RESTYLE — центральна панель розіграшу (#drawPanel) та
-     права панель історії (#logPanel), за референсом ціанової теми
-     (та сама тема, що й на index.html/home.css). Ліва панель зі
-     списком учасників навмисно не змінювалась.
+     NEON HUD RESTYLE — панель раунду (#drawPanel) та бічна панель
+     керування й учасників/історії (#drawSidePanel), за референсом
+     ціанової теми (та сама тема, що й на index.html/home.css).
      Примітка: var(--cyan), var(--panel), var(--line), var(--text),
      var(--muted) тут беруть значення з :root у home.css (він
      підключений другим у <head> і переозначає ці змінні), тому нижче
      використовуються саме вони, а не --amber/--teal зі styles.css.
   ================================================================ */
 
-  #drawPanel, #logPanel{
+  #drawPanel, #drawSidePanel{
 
     border:1px solid rgba(0,245,255,0.18);
     border-radius:4px;
@@ -886,39 +862,23 @@
     display:flex;
     flex-direction:column;
   }
-  /* #logPanel так само: щоб #log (список) міг рости на всю доступну висоту
-     панелі через flex, а не триматись фіксованих 50vh (див. .log нижче
-     та override у @media (min-width:1100px)). */
-  #logPanel{
+  /* #drawSidePanel так само: щоб видима частина (#drawTickets або #log)
+     могла рости на всю доступну висоту панелі через flex, а не триматись
+     фіксованих 50vh (див. .log нижче та override у @media (min-width:1100px)). */
+  #drawSidePanel{
     display:flex;
     flex-direction:column;
   }
   #drawPanel::before, #drawPanel::after,
-  #logPanel::before,  #logPanel::after{
+  #drawSidePanel::before,  #drawSidePanel::after{
     content:"";
     position:absolute;
     width:14px; height:14px;
     pointer-events:none;
     z-index:3;
   }
-  #drawPanel::before, #logPanel::before{ top:10px; left:10px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
-  #drawPanel::after,  #logPanel::after { bottom:10px; right:10px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
-
-  /* --- Заголовок правої панелі (іконка + напис у стилі HUD) --- */
-  #logPanel .panel-title{
-    color:var(--cyan);
-    letter-spacing:.18em;
-    gap:8px;
-  }
-  #logPanel .panel-title .msi{
-    font-family:'Material Symbols Outlined';
-    font-weight:normal;
-    font-style:normal;
-    font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;
-    font-size:15px;
-    color:var(--cyan);
-  }
-  #logPanel .panel-title::after{ background:rgba(0,245,255,0.18); }
+  #drawPanel::before, #drawSidePanel::before{ top:10px; left:10px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+  #drawPanel::after,  #drawSidePanel::after { bottom:10px; right:10px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
 
   /* --- Верхня службова смуга центральної панелі --- */
   .round-controls{
@@ -958,18 +918,22 @@
   }
   .switch input:checked + .switch-slider::before{ background:var(--cyan); }
 
-  /* --- Перемикач вигляду (Слот-машина / Колесо) — компактні "пігулки" --- */
-  .view-switch:has(#slotViewBtn){
+  /* --- Перемикачі вигляду (Слот-машина/Колесо/Рояль та Учасники/Історія) —
+     компактні "пігулки"; той самий стиль застосовано до обох перемикачів. --- */
+  .view-switch:has(#slotViewBtn),
+  .view-switch:has(#participantsTabBtn){
     border:1px solid rgba(0,245,255,0.28);
     width:fit-content;
     margin:18px auto 14px;
     padding:2px;
   }
-  .view-switch:has(#slotViewBtn) .btn-ghost{
+  .view-switch:has(#slotViewBtn) .btn-ghost,
+  .view-switch:has(#participantsTabBtn) .btn-ghost{
     border:none;
     color:var(--cyan);
   }
-  .view-switch:has(#slotViewBtn) .btn-ghost.active{
+  .view-switch:has(#slotViewBtn) .btn-ghost.active,
+  .view-switch:has(#participantsTabBtn) .btn-ghost.active{
     background:var(--cyan);
     color:#00181a;
     box-shadow:0 0 15px rgba(0,245,255,0.35);

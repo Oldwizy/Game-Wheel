@@ -39,7 +39,9 @@ const elements = {
   battleCanvas: byId('battleCanvas'),
   winnerBanner: byId('winnerBanner'),
   winnerName: byId('winnerName'),
-  log: byId('log')
+  log: byId('log'),
+  participantsTab: byId('participantsTabBtn'),
+  historyTab: byId('historyTabBtn')
 };
 
 let { value: state, error: loadError } = loadState(localStorage);
@@ -254,6 +256,16 @@ function startDrawPage() {
     return { finished: Boolean(winner) };
   }
 
+  function setSideTab(tab) {
+    const showParticipants = tab === 'participants';
+    elements.drawTickets.hidden = !showParticipants;
+    elements.log.hidden = showParticipants;
+    elements.participantsTab.classList.toggle('active', showParticipants);
+    elements.participantsTab.setAttribute('aria-pressed', String(showParticipants));
+    elements.historyTab.classList.toggle('active', !showParticipants);
+    elements.historyTab.setAttribute('aria-pressed', String(!showParticipants));
+  }
+
   function setMode(mode, save = true) {
     if (controller.phase !== 'idle' && controller.phase !== 'finished') return;
     state = { ...state, visualMode: mode };
@@ -289,6 +301,8 @@ function startDrawPage() {
       durationMs: Number(state.durationValue) * 1000
     }).catch(error => { if (error.name !== 'AbortError') console.error(error); });
   });
+  elements.participantsTab.addEventListener('click', () => setSideTab('participants'));
+  elements.historyTab.addEventListener('click', () => setSideTab('history'));
   elements.wheelKeep.addEventListener('click', () => controller.decideWheel('keep'));
   elements.wheelRemove.addEventListener('click', () => controller.decideWheel('remove'));
   elements.back.addEventListener('click', () => {
@@ -306,6 +320,7 @@ function startDrawPage() {
   }, { once: true });
 
   renderState();
+  setSideTab('participants');
   if (loadError) updateStatus('Збережений стан було відновлено з помилкою.');
   else updateStatus(`Готово до раунду ${state.roundCount + 1}. Залишилось ігор: ${state.games.length}.`);
 }

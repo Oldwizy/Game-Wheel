@@ -23,28 +23,17 @@
     <div class="winner-name" id="winnerName">—</div>
   </div>
 
-  <!-- Обгортка для екрану розіграшу: список ігор, панель раунду (колесо/слот)
-       і журнал розташовуються в три колонки на широких екранах (через CSS-грід
-       .draw-layout, styles.css), і одна під одною на вузьких. -->
+  <!-- Обгортка для екрану розіграшу: ліва колонка (керування раундом +
+       учасники/історія) і панель раунду розташовуються в дві колонки на
+       широких екранах (через CSS-грід .draw-layout, styles.css), і одна
+       під одною на вузьких. -->
   <div class="draw-layout">
 
-  <!-- Ліва колонка: список ігор-учасників поточного розіграшу. -->
-  <section class="panel" id="drawGamesPanel">
-    <div class="panel-title">Учасники розіграшу</div>
-    <div class="tickets" id="drawTickets"></div>
-  </section>
-
-  <!-- Панель раунду: слот-машина, колесо або батл-рояль. -->
-  <section class="panel" id="drawPanel">
+  <!-- Ліва колонка: керування раундом і перемикач учасники/історія. -->
+  <section class="panel" id="drawSidePanel">
 
     <div class="round-controls">
       <button class="btn-ghost" id="backBtn"><span class="msi">arrow_back</span>До списку</button>
-         <!-- Перемикач між трьома варіантами відображення розіграшу. -->
-    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
-      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
-      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
-      <button class="btn-ghost" id="battleViewBtn" type="button" aria-pressed="false">Батл-рояль</button>
-    </div>
       <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
         <span class="switch">
           <input type="checkbox" id="instantWinToggle">
@@ -54,12 +43,31 @@
       </label>
     </div>
 
+    <!-- Перемикач між трьома варіантами відображення розіграшу. -->
+    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
+      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+      <button class="btn-ghost" id="battleViewBtn" type="button" aria-pressed="false">Батл-рояль</button>
+    </div>
+
     <div class="duration-block">
       <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
       <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
     </div>
 
+    <!-- Перемикач між списком учасників і журналом раундів. -->
+    <div class="view-switch" role="group" aria-label="Учасники або історія">
+      <button class="btn-ghost active" id="participantsTabBtn" type="button" aria-pressed="true">Учасники</button>
+      <button class="btn-ghost" id="historyTabBtn" type="button" aria-pressed="false">Історія</button>
+    </div>
 
+    <div class="tickets" id="drawTickets"></div>
+    <ul class="log" id="log" hidden></ul>
+
+  </section>
+
+  <!-- Панель раунду: слот-машина, колесо або батл-рояль. -->
+  <section class="panel" id="drawPanel">
 
     <div class="status-line" id="statusLine">Готово до першого раунду.</div>
     <div class="status-divider"></div>
@@ -103,17 +111,11 @@
       <canvas id="battleCanvas"></canvas>
     </div>
 
-    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+    <div class="view-switch" role="group" aria-label="Дії розіграшу">
       <button class="btn-ghost" id="shuffleVisualsBtn" type="button">Перемішати варіанти</button>
       <button class="btn-amber" id="startRoundBtn">Почати раунд<span class="msi">autorenew</span></button>
     </div>
 
-  </section>
-
-  <!-- Журнал містить результат кожного завершеного раунду. -->
-  <section class="panel" id="logPanel">
-    <div class="panel-title"><span class="msi">history</span>Історія раундів</div>
-    <ul class="log" id="log"></ul>
   </section>
 
   </div>
