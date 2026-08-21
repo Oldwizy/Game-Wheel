@@ -14,7 +14,7 @@
   <!-- Шапка сторінки: назва та коротке пояснення правил розіграшу. -->
   <!-- <header class="site-header">
     <h1 class="glitch-title"><span class="accent">ЧАС</span> КРУТИТИ</h1>
-    <div class="sub">Ну що давайте оберемо щось, всяке може статись але будемо вірити в краще</div>
+    <div class="sub">Ну що, давайте щось оберемо. Усяке може статися, але віритимемо в краще.</div>
   </header> -->
 
   <!-- Банер показується після завершення розіграшу з назвою переможця. -->
@@ -33,13 +33,13 @@
   <section class="panel" id="drawSidePanel">
 
     <div class="round-controls">
-      <button class="btn-ghost" id="backBtn"><span class="msi">arrow_back</span>До списку</button>
+      <button class="btn-ghost" id="backBtn"><span class="msi" aria-hidden="true">←</span>До списку</button>
       <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
         <span class="switch">
           <input type="checkbox" id="instantWinToggle">
           <span class="switch-slider"></span>
         </span>
-        <span>В один раунд</span>
+        <span>Одразу переможець</span>
       </label>
     </div>
 
@@ -51,18 +51,21 @@
     </div>
 
     <div class="duration-block">
-      <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 сек</span></div>
-      <input type="range" id="durationRange" min="2" max="60" value="15" step="1">
+      <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 с</span></div>
+      <input type="range" id="durationRange" min="2" max="60" value="15" step="1" aria-label="Тривалість раунду в секундах">
     </div>
 
     <!-- Перемикач між списком учасників і журналом раундів. -->
-    <div class="view-switch" role="group" aria-label="Учасники або історія">
-      <button class="btn-ghost active" id="participantsTabBtn" type="button" aria-pressed="true">Учасники</button>
-      <button class="btn-ghost" id="historyTabBtn" type="button" aria-pressed="false">Історія</button>
-    </div>
+    <details class="participants-drawer" id="participantsDrawer" open>
+      <summary>Учасники та історія</summary>
+      <div class="view-switch" role="group" aria-label="Учасники або історія">
+        <button class="btn-ghost active" id="participantsTabBtn" type="button" aria-pressed="true">Учасники</button>
+        <button class="btn-ghost" id="historyTabBtn" type="button" aria-pressed="false">Історія</button>
+      </div>
 
-    <div class="tickets" id="drawTickets"></div>
-    <ul class="log" id="log" hidden></ul>
+      <div class="tickets" id="drawTickets"></div>
+      <ul class="log" id="log" hidden></ul>
+    </details>
 
   </section>
 
@@ -99,7 +102,7 @@
         <span class="wrp-name" id="wheelResultName">—</span>
         <div class="wrp-actions">
           <button class="btn-ghost" id="wheelKeepBtn" type="button">Залишити</button>
-          <button class="btn-amber" id="wheelRemoveBtn" type="button">Прибрати<span class="msi">delete</span></button>
+          <button class="btn-amber" id="wheelRemoveBtn" type="button">Прибрати<span class="msi" aria-hidden="true">×</span></button>
         </div>
       </div>
     </div>
@@ -113,7 +116,7 @@
 
     <div class="view-switch" role="group" aria-label="Дії розіграшу">
       <button class="btn-ghost" id="shuffleVisualsBtn" type="button">Перемішати варіанти</button>
-      <button class="btn-amber" id="startRoundBtn">Почати раунд<span class="msi">autorenew</span></button>
+      <button class="btn-amber" id="startRoundBtn">Почати раунд<span class="msi" aria-hidden="true">↻</span></button>
     </div>
 
   </section>

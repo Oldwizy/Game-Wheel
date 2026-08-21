@@ -41,7 +41,8 @@ const elements = {
   winnerName: byId('winnerName'),
   log: byId('log'),
   participantsTab: byId('participantsTabBtn'),
-  historyTab: byId('historyTabBtn')
+  historyTab: byId('historyTabBtn'),
+  participantsDrawer: byId('participantsDrawer')
 };
 
 let { value: state, error: loadError } = loadState(localStorage);
@@ -55,6 +56,10 @@ function startDrawPage() {
   let provisionalTarget = null;
   let destroyed = false;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const mobileLayout = matchMedia('(max-width: 640px)');
+  const syncParticipantDrawer = event => { elements.participantsDrawer.open = !event.matches; };
+  syncParticipantDrawer(mobileLayout);
+  mobileLayout.addEventListener?.('change', syncParticipantDrawer);
   const localTestConfig = ['127.0.0.1', 'localhost'].includes(location.hostname)
     ? window.__GAME_WHEEL_TEST__?.battle
     : undefined;
@@ -174,7 +179,7 @@ function startDrawPage() {
     elements.instant.checked = state.instantWinMode;
     elements.instantLabel.classList.toggle('mode-active', state.instantWinMode);
     elements.duration.value = String(state.durationValue);
-    elements.durationValue.textContent = `${state.durationValue} сек`;
+    elements.durationValue.textContent = `${state.durationValue} с`;
     if (!preserveActiveVisualization) renderMode();
     else if (state.visualMode === 'wheel') wheel.render({ games: state.games });
     renderPhase(controller.phase);
@@ -205,7 +210,7 @@ function startDrawPage() {
         const eliminated = games.find(game => game.id === id);
         if (!eliminated) continue;
         state.roundCount += 1;
-        addLog(`Раунд ${state.roundCount}: <b>${eliminated.name}</b> — вибув з бою (HP вичерпано)`, false, {
+        addLog(`Раунд ${state.roundCount}: <b>${eliminated.name}</b> вибуває з бою — HP вичерпано`, false, {
           gameId: eliminated.id,
           gameName: eliminated.name
         });
@@ -223,7 +228,7 @@ function startDrawPage() {
     if (!target) throw new RangeError(`Unknown committed target ${result.targetId}`);
     state.roundCount += 1;
     if (result.kind === 'wheel-complete' && result.decision === 'keep') {
-      addLog(`Раунд ${state.roundCount}: <b>${target.name}</b> — залишено в грі без змін`);
+      addLog(`Раунд ${state.roundCount}: <b>${target.name}</b> залишається в грі без змін`);
     } else if (state.instantWinMode) {
       const resolved = resolveInstantWinner(state.games, target.id);
       state = { ...state, games: resolved.games };
@@ -232,7 +237,7 @@ function startDrawPage() {
       } else {
         for (const id of resolved.eliminatedIds) wheel.reconcile(state.games, { type: 'remove-game', gameId: id });
       }
-      addLog(`Раунд ${state.roundCount}: <b>${target.name}</b> — переможець обраний миттєво`, true);
+      addLog(`Раунд ${state.roundCount}: <b>${target.name}</b> — переможця обрано миттєво`, true);
     } else {
       const removed = removeRoundCopy(state.games, target.id);
       state = { ...state, games: removed.games };
@@ -241,8 +246,8 @@ function startDrawPage() {
         : { type: removed.eliminated ? 'remove-game' : 'decrease', gameId: target.id });
       addLog(
         removed.eliminated
-          ? `Раунд ${state.roundCount}: <b>${target.name}</b> — вилучено повністю`
-          : `Раунд ${state.roundCount}: <b>${target.name}</b> — знято копію, залишилось ${removed.target.copies}`,
+          ? `Раунд ${state.roundCount}: варіант <b>${target.name}</b> вилучено повністю`
+          : `Раунд ${state.roundCount}: для <b>${target.name}</b> знято копію; лишилося копій: ${removed.target.copies}`,
         false,
         removed.eliminated ? { gameId: target.id, gameName: target.name } : null
       );
@@ -252,7 +257,7 @@ function startDrawPage() {
     if (winner && !state.logEntries.at(-1)?.text.startsWith('Переможець:')) addLog(`Переможець: <b>${winner.name}</b>`, true);
     persistAndRender({ preserveActiveVisualization: true });
     if (winner) showFinishedState(winner);
-    else updateStatus(`Готово до раунду ${state.roundCount + 1}. Залишилось ігор: ${state.games.length}.`);
+    else updateStatus(`Раунд ${state.roundCount + 1} готовий. У грі: ${state.games.length}.`);
     return { finished: Boolean(winner) };
   }
 
@@ -277,7 +282,7 @@ function startDrawPage() {
   elements.slotMode.addEventListener('click', () => setMode('slot'));
   elements.wheelMode.addEventListener('click', () => setMode('wheel'));
   elements.battleMode.addEventListener('click', () => setMode('battle'));
-  elements.duration.addEventListener('input', () => { elements.durationValue.textContent = `${elements.duration.value} сек`; });
+  elements.duration.addEventListener('input', () => { elements.durationValue.textContent = `${elements.duration.value} с`; });
   elements.duration.addEventListener('change', () => {
     state = { ...state, durationValue: Number(elements.duration.value) };
     persist();
@@ -317,10 +322,11 @@ function startDrawPage() {
     Object.values(visualizations).forEach(visualization => visualization.destroy());
     drawList.destroy();
     drawLog.destroy();
+    mobileLayout.removeEventListener?.('change', syncParticipantDrawer);
   }, { once: true });
 
   renderState();
   setSideTab('participants');
-  if (loadError) updateStatus('Збережений стан було відновлено з помилкою.');
-  else updateStatus(`Готово до раунду ${state.roundCount + 1}. Залишилось ігор: ${state.games.length}.`);
+  if (loadError) updateStatus('Не вдалося повністю відновити збережений стан.');
+  else updateStatus(`Раунд ${state.roundCount + 1} готовий. У грі: ${state.games.length}.`);
 }

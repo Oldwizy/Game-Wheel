@@ -777,6 +777,14 @@
   .draw-layout #drawPanel { order: 1; }
   .draw-layout #drawSidePanel { order: 2; }
 
+  .participants-drawer{
+    display:flex;
+    flex:1 1 auto;
+    min-height:0;
+    flex-direction:column;
+  }
+  .participants-drawer > summary{display:none;}
+
   @media (min-width: 1100px) {
     .draw-layout {
       display: grid;
@@ -807,6 +815,22 @@
   @media (max-width: 640px) {
     body{ padding:20px 12px 60px; }
     .panel{ padding:16px 14px 20px; border-radius:12px; }
+    .draw-layout #drawSidePanel{order:1;}
+    .draw-layout #drawPanel{order:2;}
+    .participants-drawer{display:block;flex:none;margin-top:8px;}
+    .participants-drawer > summary{
+      display:block;
+      cursor:pointer;
+      border:1px solid rgba(0,245,255,0.28);
+      border-radius:4px;
+      color:var(--cyan);
+      font-family:var(--font-mono);
+      font-size:12px;
+      letter-spacing:.04em;
+      padding:10px 12px;
+      text-align:center;
+    }
+    .participants-drawer > summary::marker{color:var(--cyan);}
 
     .slot-machine{ margin:28px 0 22px; border-radius:16px; }
     .slot-window{ border-radius:16px; }
@@ -1069,7 +1093,7 @@
   /* --- Права панель: журнал раундів у стилі термінального логу --- */
   #log{ position:relative }
   #log:empty::before{
-    content:"ЛОГ-ФАЙЛ ПОРОЖНІЙ.\A ОЧІКУВАННЯ ПЕРШОГО РЕЗУЛЬТАТУ.";
+    content:"ЖУРНАЛ ПОРОЖНІЙ.\A ЧЕКАЮ НА ПЕРШИЙ РЕЗУЛЬТАТ.";
     white-space:pre-line;
     align-items:center;
     justify-content:center;

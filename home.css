@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block');
 
 /* ------------------------------------------------------------------
    Тема "термінал/сканер" тільки для index.html (сторінка списку ігор).
@@ -57,10 +56,8 @@ body{
 }
 
 .msi{
-  font-family:'Material Symbols Outlined';
-  font-weight:normal;
+  font-family:inherit;
   font-style:normal;
-  font-variation-settings:'FILL' 0,'wght' 500,'GRAD' 0,'opsz' 24;
   line-height:1;
   vertical-align:-3px;
   display:inline-block;
@@ -178,8 +175,12 @@ body{
   padding:14px 0;
 }
 
-input:focus{  outline: none;
-  box-shadow: none;}
+button:focus-visible,
+input:focus-visible{
+  outline:2px solid var(--cyan);
+  outline-offset:3px;
+  box-shadow:0 0 0 3px rgba(0,245,255,0.14);
+}
 
 button{
   font-family:var(--font-mono);
@@ -210,13 +211,60 @@ button:disabled:active{transform:none;}
 .twitch-panel{border-left-color:#9146FF;}
 .twitch-panel .hud-label{color:#c9a6ff;}
 .twitch-panel .hud-label .dot{color:#9146FF;}
+.twitch-summary{cursor:pointer;list-style:none;margin-bottom:0;}
+.twitch-summary::-webkit-details-marker{display:none;}
+.twitch-panel[open] .twitch-summary{margin-bottom:20px;}
+.twitch-summary-action{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.twitch-summary-action::before{content:'+';color:#c9a6ff;margin-right:7px;}
+.twitch-panel[open] .twitch-summary-action::before{content:'−';}
 .twitch-row{display:flex;flex-direction:column;gap:12px;}
 .twitch-hint{color:var(--muted);font-size:12.5px;line-height:1.5;margin:0;}
 .twitch-btn{background:#9146FF;color:#fff;}
 .twitch-btn:hover:not(:disabled){background:#a970ff;box-shadow:0 0 24px rgba(145,70,255,0.35);}
 .twitch-user-line{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:13px;color:var(--text);}
 .twitch-user-line b{color:#c9a6ff;}
-.twitch-reward-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.twitch-workflow-note{
+  margin:0;
+  padding:10px 12px;
+  border-left:2px solid #9146FF;
+  background:rgba(145,70,255,.07);
+  color:var(--muted);
+  font-size:11.5px;
+  line-height:1.55;
+}
+.twitch-rewards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.twitch-reward-card{
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+  min-width:0;
+  padding:14px;
+  border:1px solid rgba(145,70,255,.24);
+  background:rgba(0,0,0,.25);
+}
+.twitch-reward-card h3{margin:0;color:#c9a6ff;font-size:12px;letter-spacing:.12em;}
+.twitch-reward-card > p{min-height:34px;margin:0;color:var(--muted);font-size:10.5px;line-height:1.5;}
+.twitch-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.twitch-field > span{color:var(--muted);font-size:9px;letter-spacing:.1em;}
+.twitch-field input{
+  width:100%;
+  min-width:0;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:2px;
+  background:rgba(0,0,0,.35);
+  color:var(--text);
+  font-family:var(--font-mono);
+}
+.twitch-field input[readonly]{color:var(--muted);cursor:not-allowed;}
+.twitch-number-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;}
+.twitch-number-fields input{color:#c9a6ff;}
+.twitch-reward-action{min-height:42px;justify-content:center;padding:10px 14px;}
 .twitch-reward-status{font-size:11.5px;color:var(--muted);}
 .twitch-reward-status.ok{color:#69B56B;}
 .twitch-reward-status.error{color:var(--error);}
@@ -278,7 +326,18 @@ button:disabled:active{transform:none;}
 }
 .history-item button:hover{color:var(--cyan);border-color:var(--cyan-dim);}
 
+.build-feedback{
+  min-height:18px;
+  margin-top:10px;
+  color:var(--cyan-dim);
+  font-size:11px;
+  line-height:1.4;
+}
+#storageStatus{color:var(--error);}
+
 /* --- Заголовок і дії секції списку --- */
+.build-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.8fr);gap:24px;align-items:start;}
+.build-columns.without-twitch{grid-template-columns:minmax(0,1fr);}
 .list-section{display:flex;flex-direction:column;gap:18px;margin-bottom:36px;}
 .list-head{
   display:flex;
@@ -317,6 +376,51 @@ button:disabled:active{transform:none;}
 .link-btn:hover:not(:disabled){color:var(--cyan);}
 .link-btn.danger:hover:not(:disabled){color:var(--error);}
 .link-btn .msi{font-size:16px;}
+
+/* --- Черга Twitch-заявок --- */
+.twitch-request-section{min-width:0;}
+.twitch-request-head h2{font-size:16px;}
+.twitch-request-head h2 .msi{color:#9146FF;}
+.twitch-refresh:hover:not(:disabled){color:#c9a6ff;}
+.twitch-refresh-status{margin-top:-8px;color:var(--muted);font-size:10px;line-height:1.4;}
+.twitch-refresh-status.ok{color:#69B56B;}
+.twitch-refresh-status.error{color:var(--error);}
+.twitch-request-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid rgba(145,70,255,.24);}
+.twitch-request-tabs button{
+  padding:10px 8px;
+  border-bottom:2px solid transparent;
+  background:transparent;
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+}
+.twitch-request-tabs button[aria-selected="true"]{border-bottom-color:#9146FF;color:#c9a6ff;}
+.twitch-request-section[hidden],
+.twitch-request-panel[hidden]{display:none;}
+.twitch-request-list{display:flex;flex-direction:column;gap:10px;}
+.twitch-request-card{
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(145,70,255,.2);
+  border-left:2px solid #9146FF;
+  background:linear-gradient(120deg,rgba(145,70,255,.07),transparent 55%),var(--panel);
+}
+.twitch-request-meta{display:flex;justify-content:space-between;gap:8px;align-items:start;}
+.twitch-request-reward{min-width:0;color:#c9a6ff;font-size:10px;font-weight:700;overflow-wrap:anywhere;}
+.twitch-request-time{flex:0 0 auto;color:var(--muted);font-size:9px;}
+.twitch-request-viewer{margin-top:7px;color:var(--muted);font-size:10px;}
+.twitch-request-viewer::before{content:'@';color:#9146FF;}
+.twitch-request-input{margin:9px 0 0;color:var(--text);font-size:13px;line-height:1.45;overflow-wrap:anywhere;}
+.twitch-request-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+.twitch-request-actions button{padding:8px 10px;font-size:9px;text-transform:uppercase;}
+.twitch-request-primary{background:#9146FF;color:#fff;font-weight:700;}
+.twitch-request-copy{border:1px solid var(--line);background:transparent;color:var(--cyan-dim);}
+.twitch-request-copy:hover{border-color:var(--cyan-dim);color:var(--cyan);}
+.twitch-request-discard{border:1px solid rgba(255,107,107,.35);background:transparent;color:var(--error);}
+.twitch-request-result{margin-top:10px;color:#69B56B;font-size:10px;text-transform:uppercase;overflow-wrap:anywhere;}
+.twitch-request-result.discarded{color:var(--muted);}
+.twitch-request-empty{padding:28px 12px;border:1px dashed var(--line);color:var(--muted);font-size:11px;line-height:1.5;text-align:center;}
+.twitch-clear-history{margin-top:12px;color:var(--error);}
 
 /* --- Порожній стан (сканер) --- */
 .empty-note{
@@ -447,6 +551,7 @@ button:disabled:active{transform:none;}
   bottom:18px;
   background:var(--panel);
   border-radius:6px;
+  overflow:hidden;
 }
 .hex-btn{
   width:100%;
@@ -474,20 +579,28 @@ button:disabled:active{transform:none;}
 }
 .hex-btn .msi{animation:bob 1.6s ease-in-out infinite;}
 .hex-btn:disabled .msi{animation:none;}
+.start-hint{
+  padding:8px 14px 10px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+  text-align:center;
+}
 @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
 
 @media (max-width:640px){
   .wrap{padding:28px 14px 20px;}
   .add-row{flex-direction:column;align-items:stretch;}
+  .add-row > .input-shell{flex:0 0 auto;}
   .copies-shell{justify-content:space-between;}
   .btn-cta{justify-content:center;padding:14px;}
   .hud-panel{padding:16px 14px 18px;}
   .list-head{align-items:flex-start;}
+  .build-columns{grid-template-columns:1fr;gap:0;}
   .empty-note{padding:56px 16px;}
+  .cta-bar{position:static;margin-top:24px;}
   .empty-watermark{font-size:120px;}
-  .twitch-reward-row{width:100%;}
-  .twitch-reward-row .copies-shell{flex:1 1 auto;}
-  .twitch-reward-row .twitch-btn{flex:1 1 auto;justify-content:center;}
+  .twitch-rewards-grid{grid-template-columns:1fr;}
 }
 
 @media (max-width:400px){
