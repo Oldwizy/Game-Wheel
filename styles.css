@@ -1330,22 +1330,13 @@
     .draw-layout{padding:18px;}
   }
 
-  /* Контейнери лишаються без рамок: межі мають лише картки лотів і активні елементи. */
+  /* Без рамок лише дві зовнішні колонки; внутрішні блоки лишаються окресленими. */
   #drawSidePanel,
-  #drawPanel,
-  .round-settings,
-  .participants-section{
+  #drawPanel{
     border:none;
     border-radius:0;
-    background:transparent;
   }
-  .slot-machine,
-  .wheel-stage,
-  .mystery-window{
-    border:none;
-    box-shadow:none;
-  }
-  .slot-machine.spinning,
-  .mystery-machine.spinning .mystery-window{
-    box-shadow:none;
-  }
+  #drawSidePanel::before,
+  #drawSidePanel::after,
+  #drawPanel::before,
+  #drawPanel::after{display:none;}
