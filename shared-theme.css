@@ -20,6 +20,13 @@ body{
   background:transparent;
 }
 
+/* Картки лотів не розтягуються, коли в сітці мало елементів. */
+.tickets{
+  align-content:start;
+  grid-auto-rows:max-content;
+}
+.ticket{align-self:start;}
+
 /* Спільні кольорові рамки лотів на всіх екранах. */
 .ticket:not(.highlight):not(.winner-picked):not(.final-winner):nth-child(4n + 1){
   border-color:#9146ff !important;
