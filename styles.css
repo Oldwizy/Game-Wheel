@@ -1236,3 +1236,96 @@
     border-color:rgba(78,205,196,0.4);
     color:var(--teal);
   }
+
+  /* --- Оформлення екрана розіграшу в стилі головної сторінки --- */
+  :root{
+    --page:#100e1c;
+    --panel:#171627;
+    --panel-raised:#242336;
+    --input:#110f1d;
+    --line:#302d44;
+    --text:#f4f3f7;
+    --muted:#9b96a6;
+    --cyan:#00e2f0;
+    --yellow:#ffd900;
+    --purple:#9146ff;
+    --green:#00ec74;
+  }
+
+  body{
+    background:radial-gradient(circle at 25% 25%,#5746931c,transparent 32%),var(--page);
+    color:var(--text);
+    font-family:Manrope,Inter,sans-serif;
+    padding:26px 0 0;
+  }
+  .wrap{
+    width:min(1920px,calc(100% - 56px));
+    max-width:none;
+    margin:0 auto;
+    background:#11101e;
+    border:1px solid #252139;
+  }
+  .draw-header{
+    min-height:98px;
+    padding:0 63px;
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    border-bottom:1px solid #29263b;
+  }
+  .draw-header .brand{margin:0;font-size:31px;font-weight:800;letter-spacing:-2px;}
+  .draw-header .brand a{color:#fff;text-decoration:none;}
+  .draw-header .brand span{color:var(--yellow);margin-right:4px;}
+  .draw-header nav{display:flex;gap:27px;}
+  .draw-header nav a{position:relative;color:#bcb5c7;text-decoration:none;font:12px 'Roboto Mono',monospace;}
+  .draw-header nav .active{color:var(--cyan);}
+  .draw-header nav .active::after{content:'';position:absolute;inset:auto 0 -9px;height:2px;background:var(--cyan);}
+  .draw-header-status{justify-self:end;color:var(--purple);font:600 11px 'Roboto Mono',monospace;letter-spacing:.08em;}
+
+  .draw-layout{gap:24px;padding:40px 63px 31px;}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:none;
+  }
+  .round-settings,.participants-section{background:var(--input);border:1px solid var(--line);border-radius:12px;}
+  .side-block-title{color:#d8d5df;font-family:Manrope,Inter,sans-serif;font-size:12px;letter-spacing:.04em;}
+  .participants-drawer summary{color:var(--muted);font-family:'Roboto Mono',monospace;}
+  .btn-ghost{border-color:var(--line);color:var(--muted);border-radius:8px;font-family:Manrope,Inter,sans-serif;}
+  .btn-ghost:hover:not(:disabled),.btn-ghost.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,226,240,.06);}
+  .view-switch:has(#slotViewBtn) .btn-ghost.active,
+  .view-switch:has(#participantsTabBtn) .btn-ghost.active{background:var(--cyan);color:#071b10;box-shadow:none;}
+  .btn-amber{background:var(--green);color:#071b10;border-radius:8px;font-family:Manrope,Inter,sans-serif;box-shadow:none;}
+  .btn-amber:hover:not(:disabled){background:#20f28b;box-shadow:0 0 20px rgba(0,236,116,.22);}
+  .status-line{color:var(--muted);font-family:'Roboto Mono',monospace;}
+  .status-line.active{color:var(--cyan);text-shadow:none;}
+  .status-line.win{color:var(--green);}
+  .tickets{gap:14px;}
+  .ticket{background:#242336!important;border:1px solid var(--purple)!important;border-left:4px solid var(--purple)!important;border-radius:8px!important;}
+  .ticket .tname{font-family:Manrope,Inter,sans-serif;color:var(--text);}
+  .copies-badge{background:var(--page);border-color:transparent;color:#fff;}
+  .step-btn{background:#12111f;color:var(--yellow);border-color:transparent;}
+  .slot-machine,.wheel-stage,.mystery-window{background:#100f1d;border-color:var(--line);box-shadow:inset 0 2px 10px rgba(0,0,0,.35);}
+  .slot-center-band{border-color:var(--yellow);background:rgba(255,217,0,.06);box-shadow:0 0 22px rgba(255,217,0,.14);}
+  .slot-item-center span{color:var(--yellow)!important;text-shadow:0 0 18px rgba(255,217,0,.34),0 0 34px rgba(255,217,0,.16);}
+  .slot-arrow,.wheel-pointer{color:var(--yellow);border-right-color:var(--yellow);}
+  .slot-machine.spinning,.mystery-machine.spinning .mystery-window{animation:none;box-shadow:0 0 0 1px var(--yellow),0 0 24px rgba(255,217,0,.22);}
+  .wheel-hub{stroke:var(--yellow);}
+  .draw-result-popup{background:rgba(10,8,20,.82);}
+  .draw-result-popup-card{background:var(--panel);border-color:var(--purple);box-shadow:0 0 36px rgba(145,70,255,.25);}
+
+  @media(max-width:900px){
+    body{padding:0;min-height:100vh;height:auto;}
+    .wrap{width:100%;border:0;}
+    .draw-header{grid-template-columns:1fr auto;padding:22px 24px;min-height:auto;}
+    .draw-header nav{display:none;}
+    .draw-header-status{font-size:9px;}
+    .draw-layout{padding:24px;}
+  }
+  @media(max-width:560px){
+    .draw-header{padding:20px 18px;}
+    .draw-header .brand{font-size:24px;}
+    .draw-header-status{display:none;}
+    .draw-layout{padding:18px;}
+  }
