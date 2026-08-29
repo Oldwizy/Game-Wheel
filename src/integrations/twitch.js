@@ -442,7 +442,6 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
   function logout() {
     disconnect();
     configuredSlots = {};
-    destroyed = true;
     clearToken();
     clearLegacyToken();
     clearOAuthState();
@@ -467,4 +466,3 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     }
   };
 }
-
