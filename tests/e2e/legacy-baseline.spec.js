@@ -20,6 +20,7 @@ test('build page creates two games and unlocks draw navigation', async ({ page }
   expect(failedResponses).toEqual([]);
 });
 
+<<<<<<< HEAD
 test('only the lot cards scroll when the pool exceeds the available height', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 800 });
   await page.goto('/index.html');
@@ -41,6 +42,9 @@ test('only the lot cards scroll when the pool exceeds the available height', asy
 });
 
 test('draw page loads saved copies, all modes, and no runtime errors', async ({ page }) => {
+=======
+test('draw page loads saved copies, available modes, and no runtime errors', async ({ page }) => {
+>>>>>>> origin/dev
   await seedDrawState(page);
   const errors = collectPageErrors(page);
   const failedResponses = [];
@@ -50,8 +54,8 @@ test('draw page loads saved copies, all modes, and no runtime errors', async ({ 
   await expect(page.locator('#slotViewBtn')).toHaveAttribute('aria-pressed', 'true');
   await page.locator('#wheelViewBtn').click();
   await expect(page.locator('#wheelMachine')).toBeVisible();
-  await page.locator('#battleViewBtn').click();
-  await expect(page.locator('#battleMachine')).toBeVisible();
+  await page.locator('#mysteryViewBtn').click();
+  await expect(page.locator('#mysteryMachine')).toBeVisible();
   expect(errors).toEqual([]);
   expect(await page.locator('script[type="module"]').count()).toBe(1);
   expect(failedResponses).toEqual([]);

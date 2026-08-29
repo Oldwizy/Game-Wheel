@@ -1,8 +1,11 @@
+import { CURRENT_SCHEMA_VERSION } from '../../src/core/state.js';
+
 export const STORAGE_KEY = 'lototron_state_v1';
 export const TWITCH_STATE_KEY = 'twitch_rewards_state_v1';
 
 export function drawState(overrides = {}) {
   return {
+    schemaVersion: CURRENT_SCHEMA_VERSION,
     games: [
       { id: 1, name: 'Alpha', copies: 1 },
       { id: 2, name: 'Beta', copies: 2 },

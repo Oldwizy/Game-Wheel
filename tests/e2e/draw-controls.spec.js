@@ -6,7 +6,7 @@ test('all conflicting controls are natively disabled for an active round', async
   await page.goto('/draw.html');
   await page.locator('#startRoundBtn').click();
   for (const selector of [
-    '#slotViewBtn', '#wheelViewBtn', '#battleViewBtn', '#shuffleVisualsBtn',
+    '#slotViewBtn', '#wheelViewBtn', '#mysteryViewBtn', '#shuffleVisualsBtn',
     '#durationRange', '#instantWinToggle', '#startRoundBtn', '#backBtn'
   ]) {
     await expect(page.locator(selector)).toBeDisabled();
@@ -14,16 +14,12 @@ test('all conflicting controls are natively disabled for an active round', async
   await expect(page.locator('#drawTickets .step-btn').first()).toBeDisabled();
 });
 
-test('Wheel play completion does not commit until Keep or Remove', async ({ page }) => {
+test('Wheel play completion commits automatically', async ({ page }) => {
   await seedDrawState(page, { visualMode: 'wheel', durationValue: 2 });
   await page.goto('/draw.html');
   const before = await page.evaluate(() => JSON.parse(localStorage.getItem('lototron_state_v1')));
   await page.locator('#startRoundBtn').click();
-  await expect(page.locator('#wheelResultPopup')).toHaveClass(/show/);
-  const provisional = await page.evaluate(() => JSON.parse(localStorage.getItem('lototron_state_v1')));
-  expect(provisional.roundCount).toBe(before.roundCount);
-  expect(provisional.games).toEqual(before.games);
-  await page.locator('#wheelKeepBtn').click();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('lototron_state_v1')).roundCount)).toBe(before.roundCount + 1);
   const committed = await page.evaluate(() => JSON.parse(localStorage.getItem('lototron_state_v1')));
   expect(committed.roundCount).toBe(before.roundCount + 1);
 });

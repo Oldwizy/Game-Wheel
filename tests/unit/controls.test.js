@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { applyControlState, controlStateForPhase } from '../../src/draw/controls.js';
 
-test.each(['animating', 'awaiting-wheel-decision', 'resolving'])(
+test.each(['animating', 'resolving'])(
   '%s disables every conflicting control', phase => {
     const state = controlStateForPhase(phase);
 
@@ -18,11 +18,6 @@ test.each(['animating', 'awaiting-wheel-decision', 'resolving'])(
   }
 );
 
-test('only Wheel decisions remain enabled while awaiting a decision', () => {
-  expect(controlStateForPhase('awaiting-wheel-decision').wheelDecision).toBe(false);
-  expect(controlStateForPhase('animating').wheelDecision).toBe(true);
-});
-
 test('applyControlState uses native disabled properties for every control group', () => {
   const control = () => ({ disabled: false });
   const elements = {
@@ -33,8 +28,7 @@ test('applyControlState uses native disabled properties for every control group'
     instant: control(),
     start: control(),
     back: control(),
-    logReturnButtons: [control()],
-    wheelDecisionButtons: [control(), control()]
+    logReturnButtons: [control()]
   };
 
   applyControlState(elements, controlStateForPhase('animating'));
@@ -42,5 +36,4 @@ test('applyControlState uses native disabled properties for every control group'
   expect(elements.modeButtons.every(element => element.disabled)).toBe(true);
   expect(elements.copySteppers.every(element => element.disabled)).toBe(true);
   expect(elements.back.disabled).toBe(true);
-  expect(elements.wheelDecisionButtons.every(element => element.disabled)).toBe(true);
 });

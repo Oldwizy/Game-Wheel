@@ -179,6 +179,53 @@ describe('Twitch reward creation', () => {
   });
 });
 
+describe('Twitch authorization lifecycle', () => {
+  test('requires the OAuth state returned by Twitch before saving a token', async () => {
+    const saved = storage(null);
+    const location = {
+      hash: '', origin: 'https://example.test', pathname: '/index.html', search: '', href: ''
+    };
+    const twitch = createTwitchIntegration({
+      fetch: apiFetch(),
+      storage: saved,
+      location,
+      history: { replaceState: vi.fn() },
+      crypto: { getRandomValues: bytes => bytes.fill(7) }
+    });
+
+    twitch.login();
+    const state = new URL(location.href).searchParams.get('state');
+    expect(state).toHaveLength(64);
+    expect(JSON.parse(saved.getItem('twitch_oauth_state_v1')).value).toBe(state);
+
+    location.hash = `#access_token=untrusted-token&state=${state}`;
+    await twitch.init(createDefaultTwitchState().rewards);
+    expect(JSON.parse(saved.getItem('twitch_token_v1')).token).toBe('untrusted-token');
+
+    saved.removeItem('twitch_token_v1');
+    location.hash = '#access_token=another-token&state=invalid';
+    const result = await twitch.init(createDefaultTwitchState().rewards);
+    expect(saved.getItem('twitch_token_v1')).toBeNull();
+    expect(result.oauthError).toBeInstanceOf(Error);
+  });
+
+  test('closes the EventSub socket on logout', async () => {
+    FakeSocket.instances.length = 0;
+    const fetch = apiFetch({ rewards: [{ id: 'game-reward', title: 'Game reward' }] });
+    const slots = createDefaultTwitchState().rewards;
+    slots[REWARD_TYPES.GAME_OR_CHANCE].rewardId = 'game-reward';
+    const twitch = integration(fetch);
+    const { verifiedSlots } = await twitch.init(slots);
+    twitch.syncRewards(verifiedSlots);
+
+    const socket = FakeSocket.instances[0];
+    twitch.logout();
+
+    expect(socket.close).toHaveBeenCalledOnce();
+    expect(socket.onmessage).toBeNull();
+  });
+});
+
 describe('Twitch reward ownership', () => {
   test('keeps only configured reward IDs that still exist on the channel', async () => {
     const slots = createDefaultTwitchState().rewards;

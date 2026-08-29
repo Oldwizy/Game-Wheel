@@ -1,10 +1,15 @@
 import { shuffleNoAdjacent } from '../core/random.js';
-import { createProgressKeyframes, velocityAt } from './motion-profile.js';
+import { velocityAt } from './motion-profile.js';
 
 export { velocityAt } from './motion-profile.js';
 
 const DEFAULT_ROW_HEIGHT = 56;
-const TRAVEL_SPEED_PX_PER_SECOND = 700;
+// Початковий характер слот-машини: компактна стрічка, що швидко стартує
+// і довго, плавно гальмує наприкінці.
+const REEL_ITEMS_PER_SECOND = 3;
+const MIN_REEL_ITEMS = 24;
+const MAX_REEL_ITEMS = 160;
+const ORIGINAL_SLOT_EASING = 'cubic-bezier(0.15, 0.82, 0.22, 1)';
 const REDUCED_MOTION_DURATION_MS = 120;
 const PALETTE = ['#E85D5D', '#4ECDC4', '#FFB347', '#7C8CFF', '#C67CFF', '#69B56B', '#5DC8E8', '#FF8FB1', '#F2C14E', '#F2955A'];
 
@@ -61,10 +66,13 @@ export function buildReelModel({
   if (pool.length === 0) throw new RangeError('Slot has no tickets');
 
   const centerRow = Math.floor(visibleRows / 2);
-  const travelRows = Math.max(
-    12,
-    Math.ceil((TRAVEL_SPEED_PX_PER_SECOND * durationMs / 1000) / rowHeight)
+  const timedItemCount = Math.round(REEL_ITEMS_PER_SECOND * durationMs / 1000);
+  const totalItems = Math.max(
+    MIN_REEL_ITEMS,
+    visibleRows + 2,
+    Math.min(MAX_REEL_ITEMS, timedItemCount)
   );
+  const travelRows = totalItems - visibleRows;
   const targetIndex = travelRows + centerRow;
   const trailingRows = Math.max(centerRow, 2);
   const items = buildSequence(pool, targetIndex + trailingRows + 1, random);
@@ -85,22 +93,15 @@ export function createMotionKeyframes({
   finalTranslateY,
   targetIndex,
   durationMs,
-  samples = 120,
+  samples = 140,
   profile
 }) {
   if (!Number.isFinite(finalTranslateY)) throw new TypeError('Final Slot translation must be finite');
-  const progressMotion = createProgressKeyframes({ durationMs, samples, profile });
-  const keyframes = progressMotion.keyframes.map(({ progress, offset }) => {
-    const translateY = offset === 1
-      ? finalTranslateY
-      : startTranslateY + (finalTranslateY - startTranslateY) * progress;
-    return {
-      transform: `translateY(${translateY}px)`,
-      offset,
-      easing: 'linear'
-    };
-  });
-  return { keyframes, finalTranslateY, targetIndex, profile: progressMotion.profile };
+  const keyframes = [
+    { transform: `translateY(${startTranslateY}px)`, offset: 0, easing: ORIGINAL_SLOT_EASING },
+    { transform: `translateY(${finalTranslateY}px)`, offset: 1 }
+  ];
+  return { keyframes, finalTranslateY, targetIndex, profile, samples, durationMs };
 }
 
 export function createSlotVisualization(elements, {

@@ -1,4 +1,4 @@
-const ACTIVE_PHASES = new Set(['animating', 'awaiting-wheel-decision', 'resolving']);
+const ACTIVE_PHASES = new Set(['animating', 'resolving']);
 
 export function controlStateForPhase(phase) {
   const active = ACTIVE_PHASES.has(phase);
@@ -11,8 +11,7 @@ export function controlStateForPhase(phase) {
     instant: active || finished,
     start: active || finished,
     back: active,
-    logReturn: active,
-    wheelDecision: phase !== 'awaiting-wheel-decision'
+    logReturn: active
   };
 }
 
@@ -35,5 +34,4 @@ export function applyControlState(elements, state) {
   setDisabled(elements.start, state.start);
   setDisabled(elements.back, state.back);
   setDisabled(elements.logReturnButtons, state.logReturn);
-  setDisabled(elements.wheelDecisionButtons, state.wheelDecision);
 }

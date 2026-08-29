@@ -1,6 +1,6 @@
 export const STATE_KEY = 'lototron_state_v1';
 export const HISTORY_KEY = 'lototron_history_v1';
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 const MAX_HISTORY = 3;
 
@@ -11,9 +11,19 @@ const stateMigrations = new Map([
     nextId: Number.isInteger(legacy.nextId) ? legacy.nextId : 1,
     roundCount: Number.isInteger(legacy.roundCount) ? legacy.roundCount : 0,
     logEntries: Array.isArray(legacy.logEntries) ? legacy.logEntries : [],
-    visualMode: ['slot', 'wheel', 'battle'].includes(legacy.visualMode) ? legacy.visualMode : 'slot',
+    visualMode: ['slot', 'wheel'].includes(legacy.visualMode) ? legacy.visualMode : 'slot',
     instantWinMode: Boolean(legacy.instantWinMode),
     durationValue: Number(legacy.durationValue) || 15
+  })],
+  [1, state => ({
+    ...state,
+    schemaVersion: 2,
+    visualMode: state.visualMode === 'wheel' ? 'wheel' : 'slot'
+  })],
+  [2, state => ({
+    ...state,
+    schemaVersion: 3,
+    visualMode: ['slot', 'wheel', 'mystery'].includes(state.visualMode) ? state.visualMode : 'slot'
   })]
 ]);
 
@@ -21,7 +31,9 @@ const historyMigrations = new Map([
   [0, entries => ({
     schemaVersion: 1,
     entries: Array.isArray(entries) ? entries : []
-  })]
+  })],
+  [1, history => ({ ...history, schemaVersion: 2 })],
+  [2, history => ({ ...history, schemaVersion: 3 })]
 ]);
 
 export function createDefaultState() {
@@ -88,7 +100,7 @@ function normalizeState(value) {
   if (!Number.isInteger(normalized.nextId) || normalized.nextId < 1) return null;
   if (!Number.isInteger(normalized.roundCount) || normalized.roundCount < 0) return null;
   if (!Array.isArray(normalized.logEntries)) return null;
-  if (!['slot', 'wheel', 'battle'].includes(normalized.visualMode)) return null;
+  if (!['slot', 'wheel', 'mystery'].includes(normalized.visualMode)) return null;
   if (typeof normalized.instantWinMode !== 'boolean') return null;
   if (!Number.isFinite(Number(normalized.durationValue)) || Number(normalized.durationValue) <= 0) return null;
   normalized.durationValue = Number(normalized.durationValue);

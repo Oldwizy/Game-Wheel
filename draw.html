@@ -18,12 +18,6 @@
     <div class="sub">Ну що, давайте щось оберемо. Усяке може статися, але віритимемо в краще.</div>
   </header> -->
 
-  <!-- Банер показується після завершення розіграшу з назвою переможця. -->
-  <div class="winner-banner" id="winnerBanner">
-    <div class="winner-eyebrow">Обрано</div>
-    <div class="winner-name" id="winnerName">—</div>
-  </div>
-
   <!-- Обгортка для екрану розіграшу: ліва колонка (керування раундом +
        учасники/історія) і панель раунду розташовуються в дві колонки на
        широких екранах (через CSS-грід .draw-layout, styles.css), і одна
@@ -33,31 +27,36 @@
   <!-- Ліва колонка: керування раундом і перемикач учасники/історія. -->
   <section class="panel" id="drawSidePanel">
 
-    <div class="round-controls">
-      <button class="btn-ghost" id="backBtn"><span class="msi" aria-hidden="true">←</span>До списку</button>
-      <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
-        <span class="switch">
-          <input type="checkbox" id="instantWinToggle">
-          <span class="switch-slider"></span>
-        </span>
-        <span>Одразу переможець</span>
-      </label>
-    </div>
+    <section class="round-settings" aria-labelledby="roundSettingsTitle">
+      <h2 class="side-block-title" id="roundSettingsTitle">Налаштування раунду</h2>
+      <div class="round-controls">
+        <button class="btn-ghost" id="backBtn"><span class="msi" aria-hidden="true">←</span>До списку</button>
+        <label class="switch-label" id="instantWinLabel" for="instantWinToggle">
+          <span class="switch">
+            <input type="checkbox" id="instantWinToggle">
+            <span class="switch-slider"></span>
+          </span>
+          <span>Одразу переможець</span>
+        </label>
+      </div>
 
-    <!-- Перемикач між трьома варіантами відображення розіграшу. -->
-    <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
-      <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
-      <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
-      <button class="btn-ghost" id="battleViewBtn" type="button" aria-pressed="false">Батл-рояль</button>
-    </div>
+      <!-- Перемикач між варіантами відображення розіграшу. -->
+      <div class="view-switch" role="group" aria-label="Вигляд розіграшу">
+        <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
+        <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
+        <button class="btn-ghost" id="mysteryViewBtn" type="button" aria-pressed="false">Таємно</button>
+      </div>
 
-    <div class="duration-block">
-      <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 с</span></div>
-      <input type="range" id="durationRange" min="2" max="60" value="15" step="1" aria-label="Тривалість раунду в секундах">
-    </div>
+      <div class="duration-block">
+        <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 с</span></div>
+        <input type="range" id="durationRange" min="2" max="60" value="15" step="1" aria-label="Тривалість раунду в секундах">
+      </div>
+    </section>
 
     <!-- Перемикач між списком учасників і журналом раундів. -->
-    <details class="participants-drawer" id="participantsDrawer" open>
+    <section class="participants-section" id="participantsSection" aria-labelledby="participantsTitle">
+      <h2 class="side-block-title" id="participantsTitle">Учасники та історія</h2>
+      <details class="participants-drawer" id="participantsDrawer" open>
       <summary>Учасники та історія</summary>
       <div class="view-switch" role="group" aria-label="Учасники або історія">
         <button class="btn-ghost active" id="participantsTabBtn" type="button" aria-pressed="true">Учасники</button>
@@ -66,11 +65,12 @@
 
       <div class="tickets" id="drawTickets"></div>
       <ul class="log" id="log" hidden></ul>
-    </details>
+      </details>
+    </section>
 
   </section>
 
-  <!-- Панель раунду: слот-машина, колесо або батл-рояль. -->
+  <!-- Панель раунду: слот-машина або колесо. -->
   <section class="panel" id="drawPanel">
 
     <div class="status-line" id="statusLine">Готово до першого раунду.</div>
@@ -81,9 +81,9 @@
       <div class="slot-window">
         <div class="slot-fade top"></div>
 
-        <div class="slot-center-band" id="slotCenterBand"></div>
-        <span class="slot-arrow left">▶</span>
-        <span class="slot-arrow right">▶</span>
+        <div class="slot-center-band" id="slotCenterBand" aria-hidden="true"></div>
+        <span class="slot-arrow left" aria-hidden="true">▶</span>
+        <span class="slot-arrow right" aria-hidden="true">▶</span>
         <div class="slot-fade bottom"></div>
         <div class="slot-strip" id="slotStrip"></div>
       </div>
@@ -98,21 +98,18 @@
         <div class="wheel-pointer" aria-hidden="true"></div>
         <div class="wheel-stage" id="wheelStage" role="img" aria-label="Колесо з усіма копіями ігор"></div>
       </div>
-      <div class="wheel-result-popup" id="wheelResultPopup" aria-live="polite">
-        <span class="wrp-eyebrow">Випало</span>
-        <span class="wrp-name" id="wheelResultName">—</span>
-        <div class="wrp-actions">
-          <button class="btn-ghost" id="wheelKeepBtn" type="button">Залишити</button>
-          <button class="btn-amber" id="wheelRemoveBtn" type="button">Прибрати<span class="msi" aria-hidden="true">×</span></button>
-        </div>
-      </div>
     </div>
 
-    <!-- Третій вигляд: батл-рояль. Кожна гра — кулька з власним HP,
-         кульки штовхаються й завдають шкоди одна одній при зіткненні;
-         останній, хто лишився з HP > 0 — переможець. -->
-    <div class="battle-machine" id="battleMachine" style="display:none;">
-      <canvas id="battleCanvas"></canvas>
+    <!-- Таємний розіграш: стрічка папок зупиняється на обраному варіанті,
+         а назва відкривається лише після завершення анімації. -->
+    <div class="mystery-machine" id="mysteryMachine" style="display:none;">
+      <div class="mystery-window" aria-label="Таємний розіграш">
+        <div class="mystery-strip" id="mysteryStrip"></div>
+        <div class="mystery-fade mystery-fade-left" aria-hidden="true"></div>
+        <div class="mystery-fade mystery-fade-right" aria-hidden="true"></div>
+        <div class="mystery-marker" aria-hidden="true"></div>
+      </div>
+      <div class="mystery-result" id="mysteryResult" aria-live="polite"></div>
     </div>
 
     <div class="view-switch" role="group" aria-label="Дії розіграшу">
@@ -125,6 +122,13 @@
   </div>
 
 </div>
+  <div class="draw-result-popup" id="drawResultPopup" role="dialog" aria-modal="true" aria-labelledby="drawResultTitle" hidden>
+    <div class="draw-result-popup-card">
+      <div class="draw-result-popup-eyebrow" id="drawResultTitle"></div>
+      <div class="draw-result-popup-name" id="drawResultName"></div>
+      <button class="btn-amber" id="drawResultCloseBtn" type="button">Продовжити</button>
+    </div>
+  </div>
   <script type="module" src="src/draw/draw-page.js"></script>
 </body>
 </html>
