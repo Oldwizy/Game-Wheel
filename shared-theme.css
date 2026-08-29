@@ -1,0 +1,17 @@
+/* Спільні кольорові рамки лотів на всіх екранах. */
+.ticket:not(.highlight):not(.winner-picked):not(.final-winner):nth-child(4n + 1){
+  border-color:#9146ff !important;
+  border-left-color:#9146ff !important;
+}
+.ticket:not(.highlight):not(.winner-picked):not(.final-winner):nth-child(4n + 2){
+  border-color:#00e2f0 !important;
+  border-left-color:#00e2f0 !important;
+}
+.ticket:not(.highlight):not(.winner-picked):not(.final-winner):nth-child(4n + 3){
+  border-color:#ffd900 !important;
+  border-left-color:#ffd900 !important;
+}
+.ticket:not(.highlight):not(.winner-picked):not(.final-winner):nth-child(4n + 4){
+  border-color:#00ec74 !important;
+  border-left-color:#00ec74 !important;
+}
