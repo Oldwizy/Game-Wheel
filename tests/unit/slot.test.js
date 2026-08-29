@@ -71,7 +71,7 @@ test('deceleration is monotonic and reaches zero', () => {
   expect(previous).toBe(0);
 });
 
-test('motion integration lands on the exact final transform', () => {
+test('motion uses the original smooth deceleration and lands exactly on target', () => {
   const result = createMotionKeyframes({
     startTranslateY: 0,
     finalTranslateY: -1120,
@@ -80,8 +80,8 @@ test('motion integration lands on the exact final transform', () => {
   });
 
   expect(result.keyframes.at(-1).transform).toBe('translateY(-1120px)');
+  expect(result.keyframes[0].easing).toBe('cubic-bezier(0.15, 0.82, 0.22, 1)');
   expect(result.finalTranslateY).toBe(-1120);
-  expect(result.profile.deceleration).toBe(0.4);
 });
 
 test.each(['external-abort', 'imperative-cancel'])(
