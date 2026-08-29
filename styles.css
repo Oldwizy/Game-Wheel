@@ -1335,6 +1335,8 @@
   #drawPanel{
     border:none;
     border-radius:0;
+    padding:0;
+    background:transparent;
   }
   #drawSidePanel::before,
   #drawSidePanel::after,
