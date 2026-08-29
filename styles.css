@@ -1329,3 +1329,23 @@
     .draw-header-status{display:none;}
     .draw-layout{padding:18px;}
   }
+
+  /* Контейнери лишаються без рамок: межі мають лише картки лотів і активні елементи. */
+  #drawSidePanel,
+  #drawPanel,
+  .round-settings,
+  .participants-section{
+    border:none;
+    border-radius:0;
+    background:transparent;
+  }
+  .slot-machine,
+  .wheel-stage,
+  .mystery-window{
+    border:none;
+    box-shadow:none;
+  }
+  .slot-machine.spinning,
+  .mystery-machine.spinning .mystery-window{
+    box-shadow:none;
+  }
