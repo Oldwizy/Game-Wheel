@@ -36,6 +36,7 @@ let cleanedUp = false;
 let startingDraw = false;
 let copiedHistory = null;
 let currentMainTab = 'home';
+let authVersion = 0;
 
 const gameListView = createGameListView(ui, {
   onRemove: remove,
@@ -294,12 +295,14 @@ async function refreshRequests() {
 }
 
 async function initializeTwitch() {
+  const initializationAuthVersion = authVersion;
   if (twitchStorageError) {
     ui.storage.hidden = false;
     ui.storage.textContent = 'Збережені Twitch-заявки пошкоджені, тому чергу відновлено з нуля.';
   }
   try {
     const result = await twitch.init(twitchState.rewards);
+    if (initializationAuthVersion !== authVersion) return;
     twitchUser = result.user;
     if (result.oauthError) {
       connectionStatus = { state: 'error', message: result.oauthError.message };
@@ -318,6 +321,7 @@ async function initializeTwitch() {
         : { state: 'muted', message: 'Додай хоча б одну нагороду, щоб слухати заявки.' };
     }
   } catch (error) {
+    if (initializationAuthVersion !== authVersion) return;
     connectionStatus = { state: 'error', message: `Помилка Twitch: ${error.message}` };
   }
   render();
@@ -370,11 +374,15 @@ ui.add.addEventListener('click', () => {
 });
 document.getElementById('twitchHeaderLogin').addEventListener('click', () => twitch.login());
 document.getElementById('twitchLogoutBtn').addEventListener('click', () => {
-  twitch.logout();
-  twitchUser = null;
-  connectionStatus = { state: 'muted', message: 'Прослуховування вимкнено' };
-  ui.actionStatus.textContent = 'Ви вийшли з Twitch.';
-  render();
+  authVersion += 1;
+  try {
+    twitch.logout();
+  } finally {
+    twitchUser = null;
+    connectionStatus = { state: 'muted', message: 'Прослуховування вимкнено' };
+    ui.actionStatus.textContent = 'Ви вийшли з Twitch.';
+    render();
+  }
 });
 document.querySelectorAll('[data-main-tab]').forEach(tab => tab.addEventListener('click', event => {
   event.preventDefault();

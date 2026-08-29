@@ -440,7 +440,9 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
   }
 
   function logout() {
-    disconnect();
+    try {
+      disconnect();
+    } catch {}
     configuredSlots = {};
     clearToken();
     clearLegacyToken();
@@ -448,7 +450,9 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     accessToken = null;
     broadcasterId = null;
     user = null;
-    disconnect();
+    try {
+      disconnect();
+    } catch {}
     render(null);
   }
 
