@@ -3,10 +3,7 @@ import { REWARD_TYPES } from './twitch-queue-state.js';
 const CLIENT_ID = '2xy2z7so34qc9k5i7kvf1e16upnusz';
 const TOKEN_KEY = 'twitch_token_v1';
 const OAUTH_STATE_KEY = 'twitch_oauth_state_v1';
-<<<<<<< HEAD
-=======
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
->>>>>>> origin/dev
 const REWARD_PROMPT = 'Введи назву гри';
 const REWARD_TYPE_VALUES = new Set(Object.values(REWARD_TYPES));
 const EVENTSUB_URL = 'wss://eventsub.wss.twitch.tv/ws';
@@ -66,17 +63,6 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     } catch {}
   }
 
-<<<<<<< HEAD
-  function saveOAuthState(state) {
-    try {
-      session?.setItem(OAUTH_STATE_KEY, state);
-    } catch {}
-  }
-
-  function loadOAuthState() {
-    try {
-      return session?.getItem(OAUTH_STATE_KEY) ?? null;
-=======
   function saveOAuthState(value) {
     try {
       storage?.setItem(OAUTH_STATE_KEY, JSON.stringify({ value, createdAt: Date.now() }));
@@ -88,18 +74,11 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
       const value = JSON.parse(storage?.getItem(OAUTH_STATE_KEY));
       storage?.removeItem(OAUTH_STATE_KEY);
       return value;
->>>>>>> origin/dev
     } catch {
       return null;
     }
   }
 
-<<<<<<< HEAD
-  function clearOAuthState() {
-    try {
-      session?.removeItem(OAUTH_STATE_KEY);
-    } catch {}
-=======
   function createOAuthState() {
     if (typeof cryptoApi?.getRandomValues !== 'function') {
       throw new Error('Браузер не підтримує безпечну Twitch-авторизацію.');
@@ -115,7 +94,6 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
       && Number.isFinite(saved.createdAt)
       && Date.now() - saved.createdAt >= 0
       && Date.now() - saved.createdAt <= OAUTH_STATE_TTL_MS;
->>>>>>> origin/dev
   }
 
   function render(userInfo) {
@@ -170,18 +148,6 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
   }
 
   async function init(rewardSlots = {}) {
-<<<<<<< HEAD
-    clearLegacyToken();
-    const callback = new URLSearchParams(loc.hash?.slice(1));
-    const freshToken = callback.get('access_token');
-    if (freshToken) {
-      const callbackState = callback.get('state');
-      const expectedState = loadOAuthState();
-      clearOAuthState();
-      browserHistory.replaceState?.(null, '', `${loc.pathname ?? ''}${loc.search ?? ''}`);
-      if (callbackState && expectedState && callbackState === expectedState) saveToken(freshToken);
-      else reportConnection('error', 'Не вдалося безпечно підтвердити вхід через Twitch. Спробуй ще раз.');
-=======
     const freshToken = new URLSearchParams(loc.hash?.slice(1)).get('access_token');
     const returnedState = new URLSearchParams(loc.hash?.slice(1)).get('state');
     let oauthError = null;
@@ -193,7 +159,6 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
       } else {
         oauthError = new Error('Не вдалося перевірити Twitch-авторизацію. Спробуй увійти ще раз.');
       }
->>>>>>> origin/dev
     }
 
     accessToken = loadToken();
@@ -460,17 +425,8 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
   }
 
   function login() {
-<<<<<<< HEAD
-    // The authorisation callback always lands on the builder (home) screen.
-    // This also works when the app is deployed under a subdirectory: `/` and
-    // `/randomizer/` become `/index.html` and `/randomizer/index.html`.
-    const redirectPath = String(loc.pathname ?? '/').replace(/[^/]*$/, 'index.html');
-    const redirectUri = `${loc.origin ?? ''}${redirectPath}`;
-    const state = crypto.randomUUID();
-=======
     const redirectUri = `${loc.origin ?? ''}${String(loc.pathname ?? '').replace(/[^/]*$/, 'index.html')}`;
     const state = createOAuthState();
->>>>>>> origin/dev
     saveOAuthState(state);
     loc.href = `https://id.twitch.tv/oauth2/authorize?${new URLSearchParams({
       client_id: CLIENT_ID,
@@ -511,3 +467,4 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     }
   };
 }
+
