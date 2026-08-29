@@ -24,7 +24,7 @@ test('clear-list action is not offered', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'ОЧИСТИТИ СПИСОК' })).toHaveCount(0);
 });
 
-test('reset archives the list so it can be loaded again', async ({ page }) => {
+test('reset archives the list so it can be copied and pasted again', async ({ page }) => {
   await page.goto('/index.html');
   for (const name of ['Alpha', 'Beta']) {
     await page.locator('#gameInput').fill(name);
@@ -36,11 +36,27 @@ test('reset archives the list so it can be loaded again', async ({ page }) => {
     dialog.accept();
   });
   await page.locator('#resetAllBtn').click();
+  await page.getByRole('link', { name: 'Історія' }).click();
   expect(confirmation).toBe('Скинути все й почати заново? Буде очищено список, налаштування та прогрес.');
   await expect(page.locator('#historyList .history-item')).toHaveCount(1);
   await expect(page.locator('#historyList .h-date')).toContainText('2 гри');
   await page.locator('#historyList .history-item button').click();
+  await expect(page.getByRole('button', { name: 'Вставити список' })).toBeVisible();
+  page.once('dialog', dialog => dialog.dismiss());
+  await page.getByRole('button', { name: 'Вставити список' }).click();
+  await expect(page.getByRole('button', { name: 'Додати до пулу' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Історія' }).click();
+  await page.locator('#historyList .history-item button').click();
+  let pasteConfirmation = '';
+  page.once('dialog', dialog => {
+    pasteConfirmation = dialog.message();
+    dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Вставити список' }).click();
+  expect(pasteConfirmation).toBe('Вставити скопійований список? Усі поточні записи буде стерто.');
   await expect(page.locator('#tickets .tname')).toHaveText(['Alpha', 'Beta']);
+  await expect(page.getByRole('button', { name: 'Додати до пулу' })).toBeVisible();
 });
 
 test('reset stores schema-versioned defaults', async ({ page }) => {
@@ -109,8 +125,8 @@ test('starting a draw closes Twitch listening before navigation', async ({ page 
     }
   });
   await page.addInitScript(() => {
-    if (!localStorage.getItem('twitch_token_v1')) {
-      localStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
+    if (!sessionStorage.getItem('twitch_token_v1')) {
+      sessionStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
     }
     window.__socketCount = 0;
     window.WebSocket = class {
@@ -176,7 +192,7 @@ test('starting a draw warns but continues when Twitch cannot delete a reward', a
     }
   });
   await page.addInitScript(() => {
-    localStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
+    sessionStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
     window.WebSocket = class { close() {} };
   });
   await page.route('https://id.twitch.tv/oauth2/validate', route => route.fulfill({
@@ -196,7 +212,7 @@ test('starting a draw warns but continues when Twitch cannot delete a reward', a
     await dialog.accept();
   });
   await page.goto('/index.html');
-  await expect(page.locator('#twitchUserName')).toHaveText('streamer');
+  await expect(page.locator('#twitchHeaderName')).toHaveText('@streamer');
 
   await page.locator('#lockBtn').click();
 

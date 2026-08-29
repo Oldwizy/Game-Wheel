@@ -3,173 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Рандомайзер</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.twitch.tv https://id.twitch.tv wss://eventsub.wss.twitch.tv; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Рандомайзер рандому</title>
   <link rel="stylesheet" href="home.css">
 </head>
 <body>
-<div class="scanline" aria-hidden="true"></div>
-
-<div class="wrap">
-
-  <!-- Шапка сторінки. -->
-  <header class="site-header">
-    <h1 class="glitch-title"><span class="accent">РАНДОМАЙЗЕР</span> РАНДОМУ</h1>
-    <div class="sub">Усе просто: додаєш варіанти, тицяєш «Почати розіграш» — і вуаля, рандомиш.</div>
-  </header>
-
-  <!-- Панель інтеграції з Twitch: логін і керування нагородами за бали каналу. -->
-  <details class="hud-panel twitch-panel" id="twitchPanel">
-    <summary class="hud-panel-head twitch-summary">
-      <span class="hud-label"><span class="dot">●</span> Twitch для стріму</span>
-      <span class="twitch-summary-action">Налаштувати</span>
-    </summary>
-
-    <!-- Стан "не авторизовані" -->
-    <div id="twitchLoggedOut" class="twitch-row">
-      <p class="twitch-hint">Увійди через Twitch, щоб глядачі могли додавати варіанти в розіграш за бали каналу.</p>
-      <button class="btn-cta twitch-btn" id="twitchLoginBtn"><span class="msi" aria-hidden="true">↪</span>Увійти через Twitch</button>
-    </div>
-
-    <!-- Стан "авторизовані" -->
-    <div id="twitchLoggedIn" class="twitch-row" style="display:none;">
-      <div class="twitch-user-line">
-        Вхід у Twitch: <b id="twitchUserName">—</b>
-        <button class="link-btn" id="twitchLogoutBtn"><span class="msi" aria-hidden="true">↩</span>Вийти</button>
+  <div class="wrap">
+    <header class="site-header">
+      <h1 class="brand"><a href="index.html"><span>Рандомайзер</span>рандому</a></h1>
+      <nav aria-label="Основна навігація">
+        <a class="active" aria-current="page" data-main-tab="home" href="#home">Головна</a>
+        <a data-main-tab="history" href="#history">Історія</a>
+      </nav>
+      <div class="account">
+        <button id="twitchHeaderLogin" type="button">Connect Twitch</button>
+        <div id="twitchHeaderUser" aria-live="polite" hidden>Ви увійшли як: <b id="twitchHeaderName">@nick_name</b><button id="twitchLogoutBtn" type="button" aria-label="Вийти з Twitch">⏻</button></div>
       </div>
-
-      <p class="twitch-workflow-note">Заявки глядачів з’являються у вкладці «Нові». Після обробки вони переходять в «Історію». Після старту розіграшу ми перестанемо слухати заявки й автоматично видалимо створені Twitch-нагороди. Якщо Twitch вирішить покапризувати — перевір нагороди вручну.</p>
-
-      <div class="twitch-rewards-grid">
-        <form class="twitch-reward-card" data-reward-type="gameOrChance" novalidate>
-          <h3>ГРА АБО КОПІЯ</h3>
-          <p>Нову гру додасть у список, а грі, яка вже є в списку, докине ще одну копію.</p>
-          <label class="twitch-field" for="twitchGameOrChanceTitle">
-            <span>НАЗВА НАГОРОДИ</span>
-            <input type="text" id="twitchGameOrChanceTitle" maxlength="45" value="Додати гру або копію" aria-label="Назва нагороди «Гра або копія»">
-          </label>
-          <div class="twitch-number-fields">
-            <label class="twitch-field" for="twitchGameOrChanceCost">
-              <span>БАЛИ</span>
-              <input type="number" id="twitchGameOrChanceCost" min="1" step="1" value="100" aria-label="Вартість нагороди «Гра або копія» в балах">
-            </label>
-            <label class="twitch-field" for="twitchGameOrChanceMax">
-              <span>ЛІМІТ НА ГЛЯДАЧА ЗА СТРІМ</span>
-              <input type="number" id="twitchGameOrChanceMax" min="1" step="1" inputmode="numeric" placeholder="БЕЗ ЛІМІТУ" aria-label="Ліміт нагороди «Гра або копія» на одного глядача за стрім">
-            </label>
-          </div>
-          <button type="button" class="btn-cta twitch-btn twitch-reward-action" id="twitchGameOrChanceAction">Додати нагороду</button>
-          <div class="twitch-reward-status" id="twitchGameOrChanceStatus" role="status" aria-live="polite"></div>
-        </form>
-
-        <form class="twitch-reward-card" data-reward-type="chanceOnly" novalidate>
-          <h3>ТІЛЬКИ КОПІЯ</h3>
-          <p>Додасть ще одну копію лише грі, яка вже є у списку.</p>
-          <label class="twitch-field" for="twitchChanceOnlyTitle">
-            <span>НАЗВА НАГОРОДИ</span>
-            <input type="text" id="twitchChanceOnlyTitle" maxlength="45" value="Додати тільки копію" aria-label="Назва нагороди «Тільки копія»">
-          </label>
-          <div class="twitch-number-fields">
-            <label class="twitch-field" for="twitchChanceOnlyCost">
-              <span>БАЛИ</span>
-              <input type="number" id="twitchChanceOnlyCost" min="1" step="1" value="100" aria-label="Вартість нагороди «Тільки копія» в балах">
-            </label>
-            <label class="twitch-field" for="twitchChanceOnlyMax">
-              <span>ЛІМІТ НА ГЛЯДАЧА ЗА СТРІМ</span>
-              <input type="number" id="twitchChanceOnlyMax" min="1" step="1" inputmode="numeric" placeholder="БЕЗ ЛІМІТУ" aria-label="Ліміт нагороди «Тільки копія» на одного глядача за стрім">
-            </label>
-          </div>
-          <button type="button" class="btn-cta twitch-btn twitch-reward-action" id="twitchChanceOnlyAction">Додати нагороду</button>
-          <div class="twitch-reward-status" id="twitchChanceOnlyStatus" role="status" aria-live="polite"></div>
-        </form>
-      </div>
-      <div class="twitch-event-status muted" id="twitchEventStatus">● Прослуховування вимкнено</div>
-    </div>
-  </details>
-
-  <!-- HUD-панель введення нової гри. -->
-  <section class="hud-panel">
-    <div class="hud-panel-head">
-      <span class="hud-label"><span class="dot">●</span> Розіграш у режимі очікування</span>
-      <span class="hud-flag">РЕЖИМ: СКАМ</span>
-    </div>
-
-    <!-- Останні 3 збережені списки — можна швидко відновити попередній набір ігор. -->
-    <div class="history-block" id="historyBlock" style="display:none;">
-      <div class="history-label">Останні списки</div>
-      <div class="history-list" id="historyList"></div>
-    </div>
-
-    <div class="add-row">
-      <div class="input-shell">
-        <span class="msi input-icon" aria-hidden="true">›</span>
-        <input type="text" id="gameInput" placeholder="ВВЕДИ НАЗВУ ГРИ АБО ВАРІАНТА..." maxlength="60" aria-label="Назва гри або варіанта">
-      </div>
-      <div class="copies-shell" title="Кожна копія збільшує шанс випадіння">
-        <span class="copies-label">КОПІЇ</span>
-        <input type="number" id="copiesInput" min="1" value="1" aria-label="Кількість копій">
-      </div>
-      <button class="btn-cta" id="addBtn"><span class="msi" aria-hidden="true">+</span>ДОДАТИ</button>
-    </div>
-    <div class="build-feedback" aria-live="polite">
-      <div id="buildStatus" role="status"></div>
-      <div id="storageStatus" role="status" hidden></div>
-    </div>
-  </section>
-
-  <div class="build-columns">
-  <!-- Список доданих ігор. -->
-  <section class="list-section" id="buildPanel">
-    <div class="list-head">
-      <h2><span class="msi" aria-hidden="true">≡</span>СПИСОК ІГОР</h2>
-      <div class="list-actions">
-        <button class="link-btn" id="resetAllBtn"><span class="msi" aria-hidden="true">↻</span>СКИНУТИ ВСЕ</button>
-      </div>
-    </div>
-
-    <div id="ticketsWrap">
-      <div class="empty-note" id="emptyNote">
-
-        <h3>Сканер порожній</h3>
-        <p>Додай щонайменше 2 варіанти — і можна починати скам.</p>
-      </div>
-      <div class="tickets" id="tickets"></div>
-    </div>
-  </section>
-
-  <section class="list-section twitch-request-section" id="twitchRequests">
-    <div class="list-head twitch-request-head">
-      <h2><span class="msi" aria-hidden="true">⌁</span>TWITCH-ЗАЯВКИ</h2>
-      <button type="button" class="link-btn twitch-refresh" id="twitchRefreshBtn" aria-label="Оновити Twitch-заявки">
-        <span class="msi" aria-hidden="true">↻</span>ОНОВИТИ
-      </button>
-    </div>
-    <div class="twitch-refresh-status" id="twitchRefreshStatus" role="status" hidden></div>
-    <div class="twitch-request-tabs" role="tablist" aria-label="Twitch-заявки">
-      <button type="button" id="twitchPendingTab" role="tab" aria-selected="true" aria-controls="twitchPendingPanel">Нові · 0</button>
-      <button type="button" id="twitchHistoryTab" role="tab" aria-selected="false" aria-controls="twitchHistoryPanel">Історія · 0</button>
-    </div>
-    <div id="twitchPendingPanel" class="twitch-request-panel" role="tabpanel" aria-labelledby="twitchPendingTab">
-      <div class="twitch-request-empty">Поки тихо. Чат ще нічого не замовив.</div>
-    </div>
-    <div id="twitchHistoryPanel" class="twitch-request-panel" role="tabpanel" aria-labelledby="twitchHistoryTab" hidden>
-      <div class="twitch-request-empty">Історія ще чиста, аж підозріло.</div>
-      <button type="button" class="link-btn danger twitch-clear-history" id="twitchClearHistoryBtn">Очистити історію</button>
-    </div>
-  </section>
+    </header>
+    <main class="workspace">
+      <section class="main-board">
+        <section data-main-pane="home">
+          <section class="add-panel">
+            <label for="gameInput">Введіть що ви хочете додати</label>
+            <div class="add-row">
+              <input type="text" id="gameInput" placeholder="Наприклад Відьмак 3..." maxlength="60">
+              <input class="copies-input" type="number" id="copiesInput" min="1" value="1" aria-label="Кількість копій">
+              <button class="btn-cta" id="addBtn" type="button">Додати до пулу</button>
+            </div>
+            <div class="build-feedback" role="status" aria-live="polite"><div id="buildStatus"></div><div id="storageStatus" hidden></div></div>
+          </section>
+          <section class="list-section" id="buildPanel">
+            <div class="list-head" id="listHead"><h2>Список учасників</h2><button class="reset" id="resetAllBtn" type="button">↻ Скинути все</button></div>
+            <div id="ticketsWrap"><div class="empty-note" id="emptyNote"><h2>Сканер порожній</h2><p>Додай щонайменше 2 варіанти</p></div><div class="tickets" id="tickets"></div></div>
+          </section>
+          <section class="cta-bar"><button class="hex-btn" id="lockBtn" type="button" disabled>Почати рандом</button><div id="startHint" aria-live="polite"></div></section>
+        </section>
+        <section class="history-pane" data-main-pane="history" hidden>
+          <h2>Останні списки</h2>
+          <div class="history-block" id="historyBlock"><div class="history-list" id="historyList"></div><p id="historyEmpty">Історія ще порожня.</p></div>
+        </section>
+      </section>
+      <aside class="side-panel" id="twitchPanel" aria-label="Налаштування Twitch" hidden>
+        <div id="twitchLoggedOut" hidden></div>
+        <div id="twitchLoggedIn">
+          <div class="side-tabs" role="tablist" aria-label="Twitch"><button class="side-tab active" type="button" data-side-tab="rewards" role="tab" aria-selected="true" aria-controls="twitchRewardsPane">Налаштування нагород</button><button class="side-tab" type="button" data-side-tab="requests" role="tab" aria-selected="false" aria-controls="twitchRequestsPane">Twitch заявки</button></div>
+          <section id="twitchRewardsPane" data-side-pane="rewards" class="rewards-pane" role="tabpanel">
+            <form class="twitch-reward-card" data-reward-type="gameOrChance"><h2>Додати лот</h2><p>Новий лот додасть у список, а заявки, які вже є в списку, докине ще одну копію.</p><label class="twitch-field"><span>Назва нагороди</span><input id="twitchGameOrChanceTitle" aria-label="Назва нагороди: додати лот" value="Додати гру або копію" maxlength="45"></label><div class="twitch-number-fields"><label class="twitch-field"><span>Вартість</span><input id="twitchGameOrChanceCost" aria-label="Вартість нагороди: додати лот" type="number" min="1" value="100"></label><label class="twitch-field"><span>Ліміт на глядача за стрім</span><input id="twitchGameOrChanceMax" aria-label="Ліміт нагороди: додати лот" type="number" min="1" placeholder="Без ліміту"></label></div><button class="btn-cta twitch-reward-action" id="twitchGameOrChanceAction" type="button">Додати нагороду</button><div class="twitch-reward-status" id="twitchGameOrChanceStatus" role="status" aria-live="polite"></div></form>
+            <form class="twitch-reward-card" data-reward-type="chanceOnly"><h2>Додати копію лота</h2><p>Додасть ще одну копію лише лоту, який вже є у списку.</p><label class="twitch-field"><span>Назва нагороди</span><input id="twitchChanceOnlyTitle" aria-label="Назва нагороди: додати копію" value="Додати тільки копію" maxlength="45"></label><div class="twitch-number-fields"><label class="twitch-field"><span>Вартість</span><input id="twitchChanceOnlyCost" aria-label="Вартість нагороди: додати копію" type="number" min="1" value="100"></label><label class="twitch-field"><span>Ліміт на глядача за стрім</span><input id="twitchChanceOnlyMax" aria-label="Ліміт нагороди: додати копію" type="number" min="1" placeholder="Без ліміту"></label></div><button class="btn-cta twitch-reward-action" id="twitchChanceOnlyAction" type="button">Додати нагороду</button><div class="twitch-reward-status" id="twitchChanceOnlyStatus" role="status" aria-live="polite"></div></form>
+            <div id="twitchEventStatus" role="status" aria-live="polite"></div>
+          </section>
+          <section id="twitchRequestsPane" data-side-pane="requests" role="tabpanel" hidden><section id="twitchRequests"><div class="twitch-request-head"><button class="reset" id="twitchRefreshBtn" type="button">Оновити</button></div><div id="twitchRefreshStatus" role="status" aria-live="polite" hidden></div><div class="twitch-request-tabs"><button id="twitchPendingTab" type="button">Нові · 0</button><button id="twitchHistoryTab" type="button">Історія · 0</button></div><div id="twitchPendingPanel"></div><div id="twitchHistoryPanel" hidden></div></section></section>
+        </div>
+      </aside>
+    </main>
+    <footer><span>Зроблено з гівна і палок</span><span>Зі всіма скаргами сюди → <a href="https://www.twitch.tv/old_wizy">twitch.tv/old_wizy</a></span></footer>
   </div>
-
-  <!-- Перехід до розіграшу. -->
-  <section class="cta-bar">
-    <button class="hex-btn" id="lockBtn" aria-describedby="startHint" disabled>
-      <span class="msi spark" aria-hidden="true">✦</span>
-      ПОЧАТИ РОЗІГРАШ
-      <span class="msi spark" aria-hidden="true">✦</span>
-    </button>
-    <div class="start-hint" id="startHint">Додай щонайменше 2 варіанти</div>
-  </section>
-
-</div>
-  <!-- Спільні допоміжні функції, потім логіка цієї сторінки (не змінювалася). -->
   <script type="module" src="src/build/build-page.js"></script>
 </body>
 </html>

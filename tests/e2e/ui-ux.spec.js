@@ -1,16 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { seedDrawState } from '../helpers/state-fixtures.js';
 
-test('logged-out Twitch tools stay compact until the user expands them', async ({ page }) => {
+test('logged-out Twitch tools do not occupy the workspace', async ({ page }) => {
   await page.goto('/index.html');
 
   const panel = page.locator('#twitchPanel');
-  await expect(panel).toHaveCount(1);
-  await expect(panel).not.toHaveAttribute('open', '');
-  await expect(page.locator('.twitch-hint')).toBeHidden();
-
-  await panel.locator('summary').click();
-  await expect(page.locator('.twitch-hint')).toBeVisible();
+  await expect(panel).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Connect Twitch' })).toBeVisible();
 });
 
 test('build page explains how many variants are still needed', async ({ page }) => {
@@ -58,10 +54,10 @@ test('mobile build controls stay compact instead of inheriting desktop flex heig
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/index.html');
 
-  const inputShell = await page.locator('.input-shell').boundingBox();
+  const input = await page.locator('#gameInput').boundingBox();
 
-  expect(inputShell).not.toBeNull();
-  expect(inputShell.height).toBeLessThanOrEqual(64);
+  expect(input).not.toBeNull();
+  expect(input.height).toBeLessThanOrEqual(64);
 });
 
 test('mobile start action does not cover the empty-state instructions', async ({ page }) => {
@@ -89,12 +85,10 @@ test('icon fallbacks never expose Material Symbol ligature names', async ({ page
 });
 
 test('keyboard users get a visible focus indicator and descriptive field names', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/index.html');
   await page.keyboard.press('Tab');
-  await expect(page.locator('#twitchPanel summary')).toBeFocused();
-  await page.keyboard.press('Enter');
   await page.keyboard.press('Tab');
-  await expect(page.locator('#twitchLoginBtn')).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.locator('#gameInput')).toBeFocused();
 

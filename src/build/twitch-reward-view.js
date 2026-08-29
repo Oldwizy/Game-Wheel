@@ -17,9 +17,7 @@ const REWARD_DOM = Object.freeze({
 
 export function createTwitchRewardView(root, {
   onCreate = () => {},
-  onDelete = () => {},
-  onLogin = () => {},
-  onLogout = () => {}
+  onDelete = () => {}
 } = {}) {
   const get = id => root.getElementById?.(id) ?? root.querySelector?.(`#${id}`);
   const confirmAction = message => (root.defaultView?.confirm ?? globalThis.confirm)(message);
@@ -72,14 +70,6 @@ export function createTwitchRewardView(root, {
   function handleClick(event) {
     const button = event.target.closest?.('button');
     if (!button) return;
-    if (button.id === 'twitchLoginBtn') {
-      onLogin();
-      return;
-    }
-    if (button.id === 'twitchLogoutBtn') {
-      onLogout();
-      return;
-    }
     if (button.classList.contains('twitch-reward-action')) void handleRewardAction(button);
   }
 
@@ -90,7 +80,7 @@ export function createTwitchRewardView(root, {
       const panel = get('twitchPanel');
       const loggedOut = get('twitchLoggedOut');
       const loggedIn = get('twitchLoggedIn');
-      if (panel && user) panel.open = true;
+      if (panel && user && 'open' in panel) panel.open = true;
       if (loggedOut) loggedOut.style.display = user ? 'none' : '';
       if (loggedIn) loggedIn.style.display = user ? '' : 'none';
       if (user && get('twitchUserName')) get('twitchUserName').textContent = user.login;

@@ -19,9 +19,9 @@ const id = value => document.getElementById(value);
 const ui = {
   input: id('gameInput'), copies: id('copiesInput'), add: id('addBtn'), reset: id('resetAllBtn'),
   lock: id('lockBtn'), startHint: id('startHint'), actionStatus: id('buildStatus'),
-  tickets: id('tickets'), empty: id('emptyNote'), historyBlock: id('historyBlock'),
-  historyList: id('historyList'), storage: id('storageStatus'),
-  buildColumns: document.querySelector('.build-columns')
+  tickets: id('tickets'), empty: id('emptyNote'), listHead: id('listHead'), historyBlock: id('historyBlock'),
+  historyList: id('historyList'), historyEmpty: id('historyEmpty'), storage: id('storageStatus'),
+  workspace: document.querySelector('.workspace')
 };
 
 let { value: state } = loadState(localStorage);
@@ -34,23 +34,18 @@ let refreshingRequests = false;
 let refreshStatus = null;
 let cleanedUp = false;
 let startingDraw = false;
+let copiedHistory = null;
+let currentMainTab = 'home';
 
 const gameListView = createGameListView(ui, {
   onRemove: remove,
   onCopyDelta: copies,
-  onLoadHistory: loadArchived
+  onCopyHistory: copyHistory
 });
 
 const rewardView = createTwitchRewardView(document, {
   onCreate: createReward,
-  onDelete: deleteReward,
-  onLogin: () => twitch.login(),
-  onLogout: () => {
-    twitch.logout();
-    twitchUser = null;
-    connectionStatus = { state: 'muted', message: 'Прослуховування вимкнено' };
-    render();
-  }
+  onDelete: deleteReward
 });
 
 const requestView = createTwitchRequestView(document, {
@@ -95,8 +90,20 @@ function persistTwitch() {
 
 function render() {
   gameListView.render(state, history);
+  ui.add.textContent = copiedHistory ? 'Вставити список' : 'Додати до пулу';
+  document.querySelectorAll('[data-main-tab]').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.mainTab === currentMainTab);
+    tab.toggleAttribute('aria-current', tab.dataset.mainTab === currentMainTab);
+  });
+  document.querySelectorAll('[data-main-pane]').forEach(pane => {
+    pane.hidden = pane.dataset.mainPane !== currentMainTab;
+  });
+  ui.workspace.classList.toggle('authenticated', Boolean(twitchUser));
   id('twitchRequests').hidden = !twitchUser;
-  ui.buildColumns.classList.toggle('without-twitch', !twitchUser);
+  id('twitchPanel').hidden = !twitchUser;
+  id('twitchHeaderLogin').hidden = Boolean(twitchUser);
+  id('twitchHeaderUser').hidden = !twitchUser;
+  if (twitchUser) id('twitchHeaderName').textContent = `@${twitchUser.login}`;
   rewardView.render({
     user: twitchUser,
     rewards: twitchState.rewards,
@@ -156,12 +163,28 @@ function archive() {
   history = loadHistory(localStorage).value;
 }
 
-function loadArchived(entryId) {
+function copyHistory(entryId) {
   const entry = history.find(item => item.id === entryId);
-  if (!entry || (state.games.length && !confirm('Завантажити збережений список? Поточний список буде замінено.'))) return;
+  if (!entry) return;
+  copiedHistory = entry.games.map(game => ({ name: game.name, copies: game.copies }));
+  currentMainTab = 'home';
+  ui.actionStatus.textContent = 'Список скопійовано. Натисніть «Вставити список», щоб завантажити його.';
+  render();
+}
+
+function pasteCopiedHistory() {
+  if (!copiedHistory) return;
+  if (!confirm('Вставити скопійований список? Усі поточні записи буде стерто.')) {
+    copiedHistory = null;
+    ui.actionStatus.textContent = 'Вставку списку скасовано.';
+    render();
+    return;
+  }
   let nextId = state.nextId;
-  const games = entry.games.map(game => ({ id: nextId++, name: game.name, copies: game.copies }));
+  const games = copiedHistory.map(game => ({ id: nextId++, name: game.name, copies: game.copies }));
   state = { ...state, nextId, games };
+  copiedHistory = null;
+  ui.actionStatus.textContent = 'Список вставлено.';
   persist();
   render();
 }
@@ -333,11 +356,35 @@ async function deleteCreatedRewards() {
 }
 
 ui.add.addEventListener('click', () => {
+  if (copiedHistory) {
+    pasteCopiedHistory();
+    return;
+  }
   addGame(ui.input.value, ui.copies.value);
   ui.input.value = '';
   ui.copies.value = '1';
   ui.input.focus();
 });
+document.getElementById('twitchHeaderLogin').addEventListener('click', () => twitch.login());
+document.getElementById('twitchLogoutBtn').addEventListener('click', () => {
+  twitch.logout();
+  twitchUser = null;
+  connectionStatus = { state: 'muted', message: 'Прослуховування вимкнено' };
+  render();
+});
+document.querySelectorAll('[data-main-tab]').forEach(tab => tab.addEventListener('click', event => {
+  event.preventDefault();
+  currentMainTab = tab.dataset.mainTab;
+  render();
+}));
+document.querySelectorAll('[data-side-tab]').forEach(tab => tab.addEventListener('click', () => {
+  const name = tab.dataset.sideTab;
+  document.querySelectorAll('[data-side-tab]').forEach(item => {
+    item.classList.toggle('active', item === tab);
+    item.setAttribute('aria-selected', String(item === tab));
+  });
+  document.querySelectorAll('[data-side-pane]').forEach(pane => { pane.hidden = pane.dataset.sidePane !== name; });
+}));
 [ui.input, ui.copies].forEach(input => input.addEventListener('keydown', event => {
   if (event.key === 'Enter') ui.add.click();
 }));

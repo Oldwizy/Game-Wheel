@@ -26,7 +26,7 @@ async function mockLoggedInTwitch(
   redemptions = async () => ({ data: [], pagination: {} })
 ) {
   await page.addInitScript(() => {
-    localStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
+    sessionStorage.setItem('twitch_token_v1', JSON.stringify({ token: 'token' }));
   });
   await page.route('https://id.twitch.tv/oauth2/validate', route => route.fulfill({
     json: {
@@ -60,22 +60,19 @@ test('logged-in streamer sees two configurable reward forms', async ({ page }) =
 
   const forms = page.locator('[data-reward-type]');
   await expect(forms).toHaveCount(2);
-  await expect(page.getByRole('heading', { name: 'ГРА АБО КОПІЯ' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'ТІЛЬКИ КОПІЯ' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Додати лот' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Додати копію лота' })).toBeVisible();
   await expect(page.getByText(
-    'Нову гру додасть у список, а грі, яка вже є в списку, докине ще одну копію.'
+    'Новий лот додасть у список, а заявки, які вже є в списку, докине ще одну копію.'
   )).toBeVisible();
-  await expect(page.getByText('Додасть ще одну копію лише грі, яка вже є у списку.')).toBeVisible();
+  await expect(page.getByText('Додасть ще одну копію лише лоту, який вже є у списку.')).toBeVisible();
   await expect(page.locator('#twitchGameOrChanceTitle')).toHaveValue('Додати гру або копію');
   await expect(page.locator('#twitchChanceOnlyTitle')).toHaveValue('Додати тільки копію');
   await expect(page.locator('#twitchGameOrChanceCost')).toHaveValue('100');
   await expect(page.locator('#twitchChanceOnlyCost')).toHaveValue('100');
   await expect(page.locator('#twitchGameOrChanceMax')).toHaveValue('');
   await expect(page.locator('#twitchChanceOnlyMax')).toHaveValue('');
-  await expect(page.getByText('ЛІМІТ НА ГЛЯДАЧА ЗА СТРІМ')).toHaveCount(2);
-  await expect(page.getByText(
-    'Заявки глядачів з’являються у вкладці «Нові». Після обробки вони переходять в «Історію». Після старту розіграшу ми перестанемо слухати заявки й автоматично видалимо створені Twitch-нагороди. Якщо Twitch вирішить покапризувати — перевір нагороди вручну.'
-  )).toBeVisible();
+  await expect(page.getByText('Ліміт на глядача за стрім')).toHaveCount(2);
   await expect(page.getByRole('button', { name: 'Додати нагороду' })).toHaveCount(2);
 
   const accessibleNames = await forms.locator('input').evaluateAll(inputs => inputs.map(input => (
@@ -84,6 +81,18 @@ test('logged-in streamer sees two configurable reward forms', async ({ page }) =
   expect(accessibleNames.every(Boolean)).toBe(true);
   expect(new Set(accessibleNames).size).toBe(accessibleNames.length);
   expect(pageErrors).toEqual([]);
+});
+
+test('Twitch requests tab does not show reward settings', async ({ page }) => {
+  await mockLoggedInTwitch(page);
+  await page.goto('/index.html');
+
+  await page.getByRole('button', { name: 'Twitch заявки' }).click();
+
+  await expect(page.locator('[data-side-pane="rewards"]')).toBeHidden();
+  await expect(page.locator('[data-side-pane="requests"]')).toBeVisible();
+  await page.getByRole('tab', { name: 'Twitch заявки' }).click();
+  await expect(page.locator('#twitchRequests')).toBeVisible();
 });
 
 test('streamer can create and delete a reward from the live page', async ({ page }) => {
@@ -134,13 +143,18 @@ test('logging out hides Twitch requests without deleting their local data', asyn
   await mockLoggedInTwitch(page);
   await page.goto('/index.html');
 
+  await page.getByRole('tab', { name: 'Twitch заявки' }).click();
   await expect(page.locator('#twitchRequests')).toBeVisible();
   await page.locator('#twitchLogoutBtn').click();
 
   await expect(page.locator('#twitchRequests')).toBeHidden();
   const widths = await page.evaluate(() => ({
-    columns: document.querySelector('.build-columns').getBoundingClientRect().width,
-    gameList: document.getElementById('buildPanel').getBoundingClientRect().width
+    columns: (() => {
+      const workspace = document.querySelector('.workspace');
+      const style = getComputedStyle(workspace);
+      return workspace.getBoundingClientRect().width - Number.parseFloat(style.paddingLeft) - Number.parseFloat(style.paddingRight);
+    })(),
+    gameList: document.querySelector('.main-board').getBoundingClientRect().width
   }));
   expect(widths.gameList).toBeCloseTo(widths.columns, 0);
   expect(await page.evaluate(() => {
@@ -187,8 +201,9 @@ test('manual refresh recovers recent Twitch requests without duplicates', async 
     return refreshResponse;
   });
   await page.goto('/index.html');
+  await page.getByRole('tab', { name: 'Twitch заявки' }).click();
 
-  const refresh = page.getByRole('button', { name: 'Оновити Twitch-заявки' });
+  const refresh = page.getByRole('button', { name: 'Оновити' });
   await refresh.click();
   await expect(refresh).toBeDisabled();
   finishRefresh({
@@ -223,6 +238,7 @@ test('manual refresh recovers recent Twitch requests without duplicates', async 
 
 test('Twitch request tabs show context actions and local history', async ({ page }) => {
   await page.goto('/index.html');
+  await page.waitForTimeout(0);
   await page.evaluate(async () => {
     const { createTwitchRequestView } = await import('/src/build/twitch-request-view.js');
     const request = (overrides = {}) => ({
@@ -272,6 +288,8 @@ test('Twitch request tabs show context actions and local history', async ({ page
       onClearHistory: () => window.requestCalls.push({ kind: 'clear' })
     });
     window.requestView.render(state, [{ id: 1, name: 'Alpha', copies: 1 }]);
+    document.getElementById('twitchPanel').hidden = false;
+    document.getElementById('twitchRequestsPane').hidden = false;
     document.getElementById('twitchRequests').hidden = false;
   });
 
@@ -337,6 +355,7 @@ test('processing Twitch requests updates games, history, and persisted state', a
   });
   await mockLoggedInTwitch(page);
   await page.goto('/index.html');
+  await page.getByRole('tab', { name: 'Twitch заявки' }).click();
 
   const newGame = page.locator('[data-redemption-id="new-game"]');
   await expect(newGame.locator('.twitch-request-input')).toHaveText('Hades II');
@@ -386,6 +405,7 @@ test('processing the 51st request keeps only 50 local history cards', async ({ p
   });
   await mockLoggedInTwitch(page);
   await page.goto('/index.html');
+  await page.getByRole('tab', { name: 'Twitch заявки' }).click();
 
   await page.locator('[data-redemption-id="request-51"]')
     .getByRole('button', { name: 'Видалити' }).click();

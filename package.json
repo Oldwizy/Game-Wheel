@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "serve": "http-server . -p 4173 -c-1",
+    "serve:local": "http-server . -p 3000 -c-1",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "node scripts/run-e2e.js",

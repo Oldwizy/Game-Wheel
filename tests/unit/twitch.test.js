@@ -62,12 +62,66 @@ function integration(fetch, overrides = {}) {
   return createTwitchIntegration({
     fetch,
     WebSocketClass: FakeSocket,
-    storage: storage(),
+    sessionStorage: storage(),
     location: { hash: '', origin: 'https://example.test', pathname: '/index.html', search: '' },
     history: { replaceState: vi.fn() },
     ...overrides
   });
 }
+
+describe('Twitch authorization redirect', () => {
+  test('returns to the home screen after authorization with a CSRF state', () => {
+    const location = { hash: '', origin: 'https://example.test', pathname: '/', search: '' };
+    const sessionStorage = storage(null);
+    const twitch = integration(apiFetch(), { location, sessionStorage });
+
+    twitch.login();
+
+    const authorizationUrl = new URL(location.href);
+    expect(authorizationUrl.searchParams.get('redirect_uri')).toBe('https://example.test/index.html');
+    expect(authorizationUrl.searchParams.get('state')).toBeTruthy();
+    expect(sessionStorage.getItem('twitch_oauth_state_v1')).toBe(authorizationUrl.searchParams.get('state'));
+  });
+
+  test('ignores an OAuth callback with an unexpected state', async () => {
+    const sessionStorage = storage(null);
+    sessionStorage.setItem('twitch_oauth_state_v1', 'expected-state');
+    const location = {
+      hash: '#access_token=attacker-token&state=unexpected-state',
+      origin: 'https://example.test', pathname: '/index.html', search: ''
+    };
+    const fetch = apiFetch();
+    const twitch = integration(fetch, { location, sessionStorage });
+
+    const result = await twitch.init(createDefaultTwitchState().rewards);
+
+    expect(result.user).toBeNull();
+    expect(sessionStorage.getItem('twitch_token_v1')).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+test('keeps a validated session when loading rewards temporarily fails', async () => {
+  const savedStorage = storage();
+  const fetch = vi.fn(async url => {
+    if (url === 'https://id.twitch.tv/oauth2/validate') {
+      return response({ login: 'streamer', user_id: 'broadcaster' });
+    }
+    return response({ message: 'Temporary outage' }, { ok: false, status: 503 });
+  });
+  const twitch = createTwitchIntegration({
+    fetch,
+    WebSocketClass: FakeSocket,
+    sessionStorage: savedStorage,
+    location: { hash: '', origin: 'https://example.test', pathname: '/index.html', search: '' },
+    history: { replaceState: vi.fn() }
+  });
+
+  const result = await twitch.init(createDefaultTwitchState().rewards);
+
+  expect(result.user).toMatchObject({ login: 'streamer', user_id: 'broadcaster' });
+  expect(savedStorage.removeItem).not.toHaveBeenCalled();
+});
 
 describe('Twitch reward creation', () => {
   test.each([
@@ -358,6 +412,22 @@ describe('Twitch EventSub', () => {
     expect(FakeSocket.instances[1].url).toBe('wss://reconnect.test/ws');
     expect(first.close).toHaveBeenCalledOnce();
     expect(FakeSocket.instances[1].close).toHaveBeenCalledOnce();
+  });
+
+  test('closes the active socket and clears the session on logout', async () => {
+    FakeSocket.instances.length = 0;
+    const sessionStorage = storage();
+    const fetch = apiFetch({ rewards: [{ id: 'game-reward', title: 'Game reward' }] });
+    const slots = createDefaultTwitchState().rewards;
+    slots[REWARD_TYPES.GAME_OR_CHANCE].rewardId = 'game-reward';
+    const twitch = integration(fetch, { sessionStorage });
+    const { verifiedSlots } = await twitch.init(slots);
+    twitch.syncRewards(verifiedSlots);
+
+    twitch.logout();
+
+    expect(FakeSocket.instances[0].close).toHaveBeenCalledOnce();
+    expect(sessionStorage.getItem('twitch_token_v1')).toBeNull();
   });
 
   test('cancels a scheduled reconnect when listening is destroyed', async () => {

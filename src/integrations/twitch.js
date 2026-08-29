@@ -2,6 +2,7 @@ import { REWARD_TYPES } from './twitch-queue-state.js';
 
 const CLIENT_ID = '2xy2z7so34qc9k5i7kvf1e16upnusz';
 const TOKEN_KEY = 'twitch_token_v1';
+const OAUTH_STATE_KEY = 'twitch_oauth_state_v1';
 const REWARD_PROMPT = 'Введи назву гри';
 const REWARD_TYPE_VALUES = new Set(Object.values(REWARD_TYPES));
 const EVENTSUB_URL = 'wss://eventsub.wss.twitch.tv/ws';
@@ -16,6 +17,7 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     location: loc = globalThis.location ?? {},
     history: browserHistory = globalThis.history ?? {},
     storage = globalThis.localStorage,
+    sessionStorage: session = globalThis.sessionStorage,
     onRedemption = () => {},
     onStatus = () => {},
     now = () => new Date(),
@@ -35,13 +37,13 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
 
   function saveToken(token) {
     try {
-      storage?.setItem(TOKEN_KEY, JSON.stringify({ token, savedAt: Date.now() }));
+      session?.setItem(TOKEN_KEY, JSON.stringify({ token, savedAt: Date.now() }));
     } catch {}
   }
 
   function loadToken() {
     try {
-      return JSON.parse(storage?.getItem(TOKEN_KEY))?.token ?? null;
+      return JSON.parse(session?.getItem(TOKEN_KEY))?.token ?? null;
     } catch {
       return null;
     }
@@ -49,7 +51,33 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
 
   function clearToken() {
     try {
+      session?.removeItem(TOKEN_KEY);
+    } catch {}
+  }
+
+  function clearLegacyToken() {
+    try {
       storage?.removeItem(TOKEN_KEY);
+    } catch {}
+  }
+
+  function saveOAuthState(state) {
+    try {
+      session?.setItem(OAUTH_STATE_KEY, state);
+    } catch {}
+  }
+
+  function loadOAuthState() {
+    try {
+      return session?.getItem(OAUTH_STATE_KEY) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  function clearOAuthState() {
+    try {
+      session?.removeItem(OAUTH_STATE_KEY);
     } catch {}
   }
 
@@ -105,10 +133,16 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
   }
 
   async function init(rewardSlots = {}) {
-    const freshToken = new URLSearchParams(loc.hash?.slice(1)).get('access_token');
+    clearLegacyToken();
+    const callback = new URLSearchParams(loc.hash?.slice(1));
+    const freshToken = callback.get('access_token');
     if (freshToken) {
-      saveToken(freshToken);
+      const callbackState = callback.get('state');
+      const expectedState = loadOAuthState();
+      clearOAuthState();
       browserHistory.replaceState?.(null, '', `${loc.pathname ?? ''}${loc.search ?? ''}`);
+      if (callbackState && expectedState && callbackState === expectedState) saveToken(freshToken);
+      else reportConnection('error', 'Не вдалося безпечно підтвердити вхід через Twitch. Спробуй ще раз.');
     }
 
     accessToken = loadToken();
@@ -130,17 +164,24 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     user = await validation.json();
     broadcasterId = user.user_id;
     render(user);
-    const rewardData = await api(
-      `channel_points/custom_rewards?broadcaster_id=${encodeURIComponent(broadcasterId)}`
-    );
-    const existingIds = new Set((rewardData.data ?? []).map(reward => reward.id));
-    configuredSlots = Object.fromEntries(Object.entries(rewardSlots).map(([type, config]) => [
-      type,
-      {
-        ...config,
-        rewardId: config.rewardId && existingIds.has(config.rewardId) ? config.rewardId : null
-      }
-    ]));
+    configuredSlots = rewardSlots;
+    try {
+      const rewardData = await api(
+        `channel_points/custom_rewards?broadcaster_id=${encodeURIComponent(broadcasterId)}`
+      );
+      const existingIds = new Set((rewardData.data ?? []).map(reward => reward.id));
+      configuredSlots = Object.fromEntries(Object.entries(rewardSlots).map(([type, config]) => [
+        type,
+        {
+          ...config,
+          rewardId: config.rewardId && existingIds.has(config.rewardId) ? config.rewardId : null
+        }
+      ]));
+    } catch (error) {
+      // A temporary Helix failure must not sign the streamer out: the OAuth
+      // token was already validated and the next refresh can retry this call.
+      reportConnection('error', `Не вдалося завантажити Twitch-нагороди: ${error.message}`);
+    }
     let reconciliation;
     try {
       reconciliation = await reconcileRedemptions();
@@ -367,26 +408,33 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
   }
 
   function login() {
-    const redirectUri = `${loc.origin ?? ''}${String(loc.pathname ?? '').replace(/[^/]*$/, 'index.html')}`;
+    // The authorisation callback always lands on the builder (home) screen.
+    // This also works when the app is deployed under a subdirectory: `/` and
+    // `/randomizer/` become `/index.html` and `/randomizer/index.html`.
+    const redirectPath = String(loc.pathname ?? '/').replace(/[^/]*$/, 'index.html');
+    const redirectUri = `${loc.origin ?? ''}${redirectPath}`;
+    const state = crypto.randomUUID();
+    saveOAuthState(state);
     loc.href = `https://id.twitch.tv/oauth2/authorize?${new URLSearchParams({
       client_id: CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'token',
       scope: 'channel:manage:redemptions channel:read:redemptions',
+      state,
       force_verify: 'true'
     })}`;
   }
 
   function logout() {
     clearToken();
+    clearLegacyToken();
+    clearOAuthState();
     accessToken = null;
     broadcasterId = null;
     user = null;
+    disconnect();
     render(null);
   }
-
-  get('twitchLoginBtn')?.addEventListener('click', login);
-  get('twitchLogoutBtn')?.addEventListener('click', logout);
 
   return {
     init,
