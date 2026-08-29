@@ -1,3 +1,20 @@
+/* Повноекранна основа без окремої картки-обгортки. */
+html,
+body{
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+}
+.wrap{
+  width:100%;
+  max-width:none;
+  min-height:100vh;
+  height:auto;
+  margin:0;
+  border:0;
+  background:transparent;
+}
+
 /* Спільні кольорові рамки лотів на всіх екранах. */
 .ticket:not(.highlight):not(.winner-picked):not(.final-winner):nth-child(4n + 1){
   border-color:#9146ff !important;

@@ -1342,3 +1342,9 @@
   #drawSidePanel::after,
   #drawPanel::before,
   #drawPanel::after{display:none;}
+
+  /* Чорне поле слот-машини заповнює всю висоту, включно з простором між рядами. */
+  .slot-machine{
+    background:#030405;
+    overflow:hidden;
+  }
