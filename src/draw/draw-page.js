@@ -1,10 +1,10 @@
 import { loadState, saveState } from '../core/state.js';
 import { weightedPick } from '../core/random.js';
 import { changeCopies, findTerminalWinner, removeRoundCopy, resolveInstantWinner, returnGame } from '../core/game-rules.js';
-import { createBattleVisualization } from './battle.js';
 import { applyControlState, controlStateForPhase } from './controls.js';
 import { createDrawListView } from './draw-list-view.js';
 import { createDrawLog } from './draw-log.js';
+import { createMysteryVisualization } from './mystery.js';
 import { RoundController } from './round-controller.js';
 import { createSlotVisualization } from './slot.js';
 import { createWheelVisualization } from './wheel.js';
@@ -13,10 +13,10 @@ const byId = id => document.getElementById(id);
 const elements = {
   drawTickets: byId('drawTickets'),
   back: byId('backBtn'),
-  modeButtons: [byId('slotViewBtn'), byId('wheelViewBtn'), byId('battleViewBtn')],
+  modeButtons: [byId('slotViewBtn'), byId('wheelViewBtn'), byId('mysteryViewBtn')],
   slotMode: byId('slotViewBtn'),
   wheelMode: byId('wheelViewBtn'),
-  battleMode: byId('battleViewBtn'),
+  mysteryMode: byId('mysteryViewBtn'),
   instant: byId('instantWinToggle'),
   instantLabel: byId('instantWinLabel'),
   duration: byId('durationRange'),
@@ -31,17 +31,17 @@ const elements = {
   wheelMachine: byId('wheelMachine'),
   wheelStage: byId('wheelStage'),
   wheelPointer: document.querySelector('.wheel-pointer'),
-  wheelPopup: byId('wheelResultPopup'),
-  wheelName: byId('wheelResultName'),
-  wheelKeep: byId('wheelKeepBtn'),
-  wheelRemove: byId('wheelRemoveBtn'),
-  battleMachine: byId('battleMachine'),
-  battleCanvas: byId('battleCanvas'),
-  winnerBanner: byId('winnerBanner'),
-  winnerName: byId('winnerName'),
+  mysteryMachine: byId('mysteryMachine'),
+  mysteryStrip: byId('mysteryStrip'),
+  mysteryResult: byId('mysteryResult'),
+  resultPopup: byId('drawResultPopup'),
+  resultPopupTitle: byId('drawResultTitle'),
+  resultPopupName: byId('drawResultName'),
+  resultPopupClose: byId('drawResultCloseBtn'),
   log: byId('log'),
   participantsTab: byId('participantsTabBtn'),
   historyTab: byId('historyTabBtn'),
+  participantsSection: byId('participantsSection'),
   participantsDrawer: byId('participantsDrawer')
 };
 
@@ -55,15 +55,12 @@ if (state.games.length === 0) {
 function startDrawPage() {
   let provisionalTarget = null;
   let destroyed = false;
+  const resultPopupQueue = [];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const mobileLayout = matchMedia('(max-width: 640px)');
   const syncParticipantDrawer = event => { elements.participantsDrawer.open = !event.matches; };
   syncParticipantDrawer(mobileLayout);
   mobileLayout.addEventListener?.('change', syncParticipantDrawer);
-  const localTestConfig = ['127.0.0.1', 'localhost'].includes(location.hostname)
-    ? window.__GAME_WHEEL_TEST__?.battle
-    : undefined;
-
   const slot = createSlotVisualization({
     machine: elements.slotMachine,
     window: elements.slotWindow,
@@ -74,11 +71,11 @@ function startDrawPage() {
     stage: elements.wheelStage,
     pointer: elements.wheelPointer
   }, { prefersReducedMotion: reducedMotion });
-  const battle = createBattleVisualization({
-    machine: elements.battleMachine,
-    canvas: elements.battleCanvas
-  }, { battleConfig: localTestConfig });
-
+  const mystery = createMysteryVisualization({
+    machine: elements.mysteryMachine,
+    strip: elements.mysteryStrip,
+    result: elements.mysteryResult
+  }, { prefersReducedMotion: reducedMotion });
   wheel.initialize(state.games);
 
   const drawList = createDrawListView(elements.drawTickets, {
@@ -105,7 +102,7 @@ function startDrawPage() {
     }
   });
 
-  const visualizations = { slot, wheel, battle };
+  const visualizations = { slot, wheel, mystery };
   const controller = new RoundController({
     selectTarget(games) {
       provisionalTarget = weightedPick(games);
@@ -145,28 +142,24 @@ function startDrawPage() {
       instant: elements.instant,
       start: elements.start,
       back: elements.back,
-      logReturnButtons: elements.log.querySelectorAll('.log-return-btn'),
-      wheelDecisionButtons: [elements.wheelKeep, elements.wheelRemove]
+      logReturnButtons: elements.log.querySelectorAll('.log-return-btn')
     }, disabled);
     drawList.setDisabled(disabled.copies);
     drawLog.setReturnDisabled(disabled.logReturn);
-    elements.wheelPopup.classList.toggle('show', phase === 'awaiting-wheel-decision');
-    if (phase === 'awaiting-wheel-decision' && provisionalTarget) elements.wheelName.textContent = provisionalTarget.name;
   }
 
   function renderMode() {
     const mode = state.visualMode;
+    const mysteryMode = mode === 'mystery';
     elements.slotMachine.style.display = mode === 'slot' ? 'flex' : 'none';
     elements.wheelMachine.style.display = mode === 'wheel' ? 'flex' : 'none';
-    elements.battleMachine.style.display = mode === 'battle' ? 'flex' : 'none';
+    elements.mysteryMachine.style.display = mysteryMode ? 'flex' : 'none';
+    elements.participantsSection.hidden = mysteryMode;
     elements.modeButtons.forEach(button => {
       const selected = button.id.startsWith(mode);
       button.classList.toggle('active', selected);
       button.setAttribute('aria-pressed', String(selected));
     });
-    const battleMode = mode === 'battle';
-    elements.instantLabel.style.display = battleMode ? 'none' : '';
-    elements.durationBlock.style.display = battleMode ? 'none' : '';
     Object.entries(visualizations).forEach(([name, visualization]) => {
       if (name !== mode) visualization.cancel();
     });
@@ -191,46 +184,40 @@ function startDrawPage() {
   }
 
   function hideFinishedState() {
-    elements.winnerBanner.classList.remove('show');
+    resultPopupQueue.length = 0;
+    elements.resultPopup.hidden = true;
     elements.drawTickets.querySelectorAll('.final-winner').forEach(card => card.classList.remove('final-winner'));
   }
 
   function showFinishedState(winner) {
-    elements.winnerName.textContent = winner.name;
-    elements.winnerBanner.classList.add('show');
     drawList.markWinner(winner.id);
     updateStatus('Розіграш завершено.', 'win');
   }
 
+  function showNextResultPopup() {
+    if (!elements.resultPopup.hidden || resultPopupQueue.length === 0) return;
+    const result = resultPopupQueue.shift();
+    elements.resultPopupTitle.textContent = result.title;
+    elements.resultPopupName.textContent = result.name;
+    elements.resultPopup.hidden = false;
+    elements.resultPopupClose.focus();
+  }
+
+  function queueResultPopup(title, name) {
+    resultPopupQueue.push({ title, name });
+    showNextResultPopup();
+  }
+
   async function commitResult(result) {
     const target = provisionalTarget && state.games.find(game => game.id === provisionalTarget.id);
-    if (result.kind === 'battle-complete') {
-      let games = state.games;
-      for (const id of result.eliminatedIds) {
-        const eliminated = games.find(game => game.id === id);
-        if (!eliminated) continue;
-        state.roundCount += 1;
-        addLog(`Раунд ${state.roundCount}: <b>${eliminated.name}</b> вибуває з бою — HP вичерпано`, false, {
-          gameId: eliminated.id,
-          gameName: eliminated.name
-        });
-        games = games.filter(game => game.id !== id);
-        wheel.reconcile(games, { type: 'remove-game', gameId: id });
-      }
-      state = { ...state, games };
-      const winner = games.find(game => game.id === result.survivorId) ?? games[0];
-      if (winner) addLog(`Переможець: <b>${winner.name}</b>`, true);
-      persistAndRender({ preserveActiveVisualization: true });
-      if (winner) showFinishedState(winner);
-      return { finished: true };
-    }
-
     if (!target) throw new RangeError(`Unknown committed target ${result.targetId}`);
+    let eliminatedNames = [];
     state.roundCount += 1;
-    if (result.kind === 'wheel-complete' && result.decision === 'keep') {
-      addLog(`Раунд ${state.roundCount}: <b>${target.name}</b> залишається в грі без змін`);
-    } else if (state.instantWinMode) {
+    if (state.instantWinMode) {
       const resolved = resolveInstantWinner(state.games, target.id);
+      eliminatedNames = resolved.eliminatedIds
+        .map(id => state.games.find(game => game.id === id)?.name)
+        .filter(Boolean);
       state = { ...state, games: resolved.games };
       if (result.kind === 'wheel-complete') {
         wheel.reconcile(state.games, { type: 'landed-remove', index: result.landedSectorIndex });
@@ -241,6 +228,7 @@ function startDrawPage() {
     } else {
       const removed = removeRoundCopy(state.games, target.id);
       state = { ...state, games: removed.games };
+      if (removed.eliminated) eliminatedNames = [target.name];
       wheel.reconcile(state.games, result.kind === 'wheel-complete'
         ? { type: 'landed-remove', index: result.landedSectorIndex }
         : { type: removed.eliminated ? 'remove-game' : 'decrease', gameId: target.id });
@@ -256,6 +244,13 @@ function startDrawPage() {
     const winner = findTerminalWinner(state.games);
     if (winner && !state.logEntries.at(-1)?.text.startsWith('Переможець:')) addLog(`Переможець: <b>${winner.name}</b>`, true);
     persistAndRender({ preserveActiveVisualization: true });
+    if (eliminatedNames.length) {
+      queueResultPopup(
+        eliminatedNames.length === 1 ? 'Вибуває з розіграшу' : 'Вибули з розіграшу',
+        eliminatedNames.join(' · ')
+      );
+    }
+    if (winner) queueResultPopup('Переможець', winner.name);
     if (winner) showFinishedState(winner);
     else updateStatus(`Раунд ${state.roundCount + 1} готовий. У грі: ${state.games.length}.`);
     return { finished: Boolean(winner) };
@@ -281,7 +276,7 @@ function startDrawPage() {
 
   elements.slotMode.addEventListener('click', () => setMode('slot'));
   elements.wheelMode.addEventListener('click', () => setMode('wheel'));
-  elements.battleMode.addEventListener('click', () => setMode('battle'));
+  elements.mysteryMode.addEventListener('click', () => setMode('mystery'));
   elements.duration.addEventListener('input', () => { elements.durationValue.textContent = `${elements.duration.value} с`; });
   elements.duration.addEventListener('change', () => {
     state = { ...state, durationValue: Number(elements.duration.value) };
@@ -299,7 +294,7 @@ function startDrawPage() {
   });
   elements.start.addEventListener('click', () => {
     if (state.games.length < 2) return;
-    updateStatus(state.visualMode === 'battle' ? 'Батл-рояль триває...' : `Раунд ${state.roundCount + 1} триває...`, 'active');
+    updateStatus(`Раунд ${state.roundCount + 1} триває. У грі: ${state.games.length}.`, 'active');
     controller.start({
       mode: state.visualMode,
       games: state.games,
@@ -308,8 +303,10 @@ function startDrawPage() {
   });
   elements.participantsTab.addEventListener('click', () => setSideTab('participants'));
   elements.historyTab.addEventListener('click', () => setSideTab('history'));
-  elements.wheelKeep.addEventListener('click', () => controller.decideWheel('keep'));
-  elements.wheelRemove.addEventListener('click', () => controller.decideWheel('remove'));
+  elements.resultPopupClose.addEventListener('click', () => {
+    elements.resultPopup.hidden = true;
+    showNextResultPopup();
+  });
   elements.back.addEventListener('click', () => {
     if (controller.phase !== 'idle' && controller.phase !== 'finished') return;
     persist();

@@ -8,9 +8,10 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
-test('Wheel play completion stays provisional until a decision', async () => {
-  const commitResult = vi.fn();
-  const play = vi.fn().mockResolvedValue({ kind: 'wheel-complete', targetId: 2, landedSectorIndex: 3 });
+test('Wheel play completion commits immediately', async () => {
+  const result = { kind: 'wheel-complete', targetId: 2, landedSectorIndex: 3 };
+  const commitResult = vi.fn().mockResolvedValue(undefined);
+  const play = vi.fn().mockResolvedValue(result);
   const controller = new RoundController({
     selectTarget: () => ({ id: 2 }),
     visualizationFor: () => ({ play, cancel: vi.fn() }),
@@ -21,39 +22,8 @@ test('Wheel play completion stays provisional until a decision', async () => {
 
   await controller.start({ mode: 'wheel', games: [{ id: 2, copies: 1 }], durationMs: 2000 });
 
-  expect(controller.phase).toBe('awaiting-wheel-decision');
-  expect(commitResult).not.toHaveBeenCalled();
-  await controller.decideWheel('remove');
-  expect(commitResult).toHaveBeenCalledWith(expect.objectContaining({ decision: 'remove' }));
+  expect(commitResult).toHaveBeenCalledWith(result);
   expect(controller.phase).toBe('idle');
-});
-
-test('external abort discards a landed Wheel result before its decision', async () => {
-  const commitResult = vi.fn();
-  const visualization = {
-    play: vi.fn().mockResolvedValue({ kind: 'wheel-complete', targetId: 2, landedSectorIndex: 0 }),
-    cancel: vi.fn()
-  };
-  const controller = new RoundController({
-    selectTarget: () => ({ id: 2 }),
-    visualizationFor: () => visualization,
-    commitResult,
-    onPhaseChange: vi.fn(),
-    onError: vi.fn()
-  });
-  const external = new AbortController();
-  await controller.start({
-    mode: 'wheel',
-    games: [{ id: 2, copies: 1 }],
-    durationMs: 2000,
-    signal: external.signal
-  });
-
-  external.abort();
-
-  expect(controller.phase).toBe('idle');
-  expect(visualization.cancel).toHaveBeenCalledOnce();
-  expect(commitResult).not.toHaveBeenCalled();
 });
 
 test('Slot commits its typed visualization result before returning idle', async () => {

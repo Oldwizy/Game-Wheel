@@ -2,6 +2,8 @@ import { REWARD_TYPES } from './twitch-queue-state.js';
 
 const CLIENT_ID = '2xy2z7so34qc9k5i7kvf1e16upnusz';
 const TOKEN_KEY = 'twitch_token_v1';
+const OAUTH_STATE_KEY = 'twitch_oauth_state_v1';
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 const REWARD_PROMPT = 'Введи назву гри';
 const REWARD_TYPE_VALUES = new Set(Object.values(REWARD_TYPES));
 const EVENTSUB_URL = 'wss://eventsub.wss.twitch.tv/ws';
@@ -19,6 +21,7 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     onRedemption = () => {},
     onStatus = () => {},
     now = () => new Date(),
+    crypto: cryptoApi = globalThis.crypto,
     setTimer = globalThis.setTimeout,
     clearTimer = globalThis.clearTimeout
   } = legacyOptions ?? optionsOrRoot;
@@ -51,6 +54,39 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     try {
       storage?.removeItem(TOKEN_KEY);
     } catch {}
+  }
+
+  function saveOAuthState(value) {
+    try {
+      storage?.setItem(OAUTH_STATE_KEY, JSON.stringify({ value, createdAt: Date.now() }));
+    } catch {}
+  }
+
+  function takeOAuthState() {
+    try {
+      const value = JSON.parse(storage?.getItem(OAUTH_STATE_KEY));
+      storage?.removeItem(OAUTH_STATE_KEY);
+      return value;
+    } catch {
+      return null;
+    }
+  }
+
+  function createOAuthState() {
+    if (typeof cryptoApi?.getRandomValues !== 'function') {
+      throw new Error('Браузер не підтримує безпечну Twitch-авторизацію.');
+    }
+    const bytes = cryptoApi.getRandomValues(new Uint8Array(32));
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  function isValidOAuthState(saved, received) {
+    return typeof saved?.value === 'string'
+      && typeof received === 'string'
+      && saved.value === received
+      && Number.isFinite(saved.createdAt)
+      && Date.now() - saved.createdAt >= 0
+      && Date.now() - saved.createdAt <= OAUTH_STATE_TTL_MS;
   }
 
   function render(userInfo) {
@@ -106,15 +142,22 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
 
   async function init(rewardSlots = {}) {
     const freshToken = new URLSearchParams(loc.hash?.slice(1)).get('access_token');
+    const returnedState = new URLSearchParams(loc.hash?.slice(1)).get('state');
+    let oauthError = null;
     if (freshToken) {
-      saveToken(freshToken);
+      const savedState = takeOAuthState();
       browserHistory.replaceState?.(null, '', `${loc.pathname ?? ''}${loc.search ?? ''}`);
+      if (isValidOAuthState(savedState, returnedState)) {
+        saveToken(freshToken);
+      } else {
+        oauthError = new Error('Не вдалося перевірити Twitch-авторизацію. Спробуй увійти ще раз.');
+      }
     }
 
     accessToken = loadToken();
     if (!accessToken) {
       render(null);
-      return { user: null, verifiedSlots: rewardSlots, reconciledRedemptions: [], unfulfilledRedemptionIds: [] };
+      return { user: null, verifiedSlots: rewardSlots, reconciledRedemptions: [], unfulfilledRedemptionIds: [], oauthError };
     }
 
     const validation = await fetchFn('https://id.twitch.tv/oauth2/validate', {
@@ -124,7 +167,7 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
       clearToken();
       accessToken = null;
       render(null);
-      return { user: null, verifiedSlots: rewardSlots, reconciledRedemptions: [], unfulfilledRedemptionIds: [] };
+      return { user: null, verifiedSlots: rewardSlots, reconciledRedemptions: [], unfulfilledRedemptionIds: [], oauthError };
     }
 
     user = await validation.json();
@@ -154,6 +197,7 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
     return {
       user,
       verifiedSlots: configuredSlots,
+      oauthError,
       ...reconciliation
     };
   }
@@ -368,16 +412,22 @@ export function createTwitchIntegration(optionsOrRoot = {}, legacyOptions) {
 
   function login() {
     const redirectUri = `${loc.origin ?? ''}${String(loc.pathname ?? '').replace(/[^/]*$/, 'index.html')}`;
+    const state = createOAuthState();
+    saveOAuthState(state);
     loc.href = `https://id.twitch.tv/oauth2/authorize?${new URLSearchParams({
       client_id: CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'token',
+      state,
       scope: 'channel:manage:redemptions channel:read:redemptions',
       force_verify: 'true'
     })}`;
   }
 
   function logout() {
+    disconnect();
+    configuredSlots = {};
+    destroyed = true;
     clearToken();
     accessToken = null;
     broadcasterId = null;

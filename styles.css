@@ -42,7 +42,7 @@
        100%. height:100vh цю визначену висоту нарешті дає.
     */
     height:100vh;
-    padding:32px 20px 80px;
+    padding:32px 20px 0;
     /* flex-колонка потрібна, щоб .draw-layout нижче міг рахувати свою
        висоту через flex:1 (реальний залишок екрана), а не вгадувати
        пікселі через calc(100vh - N). */
@@ -433,7 +433,7 @@
     border-color:var(--teal);
   }
 
-  /* Перемикач між слот-машиною та колесом. */
+  /* Перемикач між варіантами розіграшу. */
   .view-switch{
     display:flex;
     flex-wrap:wrap;
@@ -519,60 +519,6 @@
   }
   .wheel-machine.spinning .wheel-stage{
     box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 26px rgba(255,179,71,0.35);
-  }
-
-  /* Короткий попап з результатом раунду поверх колеса. */
-  .wheel-result-popup{
-    position:absolute;
-    top:50%;
-    left:50%;
-    z-index:5;
-    max-width:78%;
-    text-align:center;
-    padding:14px 22px;
-    border-radius:8px;
-    background:var(--panel);
-    border:1px solid var(--amber);
-    box-shadow:0 0 30px rgba(255,179,71,0.35), 0 14px 34px rgba(0,0,0,0.5);
-    opacity:0;
-    pointer-events:none;
-    transform:translate(-50%,-50%) scale(0.85);
-    transition:opacity .22s ease, transform .22s ease;
-  }
-  .wheel-result-popup.show{
-    opacity:1;
-    transform:translate(-50%,-50%) scale(1);
-    pointer-events:auto;
-  }
-  .wheel-result-popup .wrp-eyebrow{
-    display:block;
-    font-size:10px;
-    letter-spacing:.16em;
-    text-transform:uppercase;
-    color:var(--amber);
-    margin-bottom:6px;
-  }
-  .wheel-result-popup .wrp-name{
-    display:block;
-    font-family:var(--font-display);
-    font-weight:800;
-    font-size:16px;
-    color:var(--text);
-    word-break:break-word;
-    line-height:1.25;
-  }
-  .wrp-actions{
-    display:flex;
-    gap:10px;
-    justify-content:center;
-    margin-top:16px;
-  }
-  .wrp-actions button{
-    padding:8px 16px;
-    font-size:12.5px;
-    display:flex;
-    align-items:center;
-    gap:6px;
   }
 
 
@@ -722,31 +668,48 @@
   #drawSidePanel #log[hidden]{
     display:none;
   }
-
-  /* Фінальний банер із назвою гри-переможця. */
-  .winner-banner{
+  #drawSidePanel #participantsDrawer[hidden]{
     display:none;
-    text-align:center;
-    padding:34px 20px;
-    border:1px solid var(--teal);
-    border-radius:14px;
-    background:rgba(78,205,196,0.06);
-    margin-bottom:20px;
   }
-  .winner-banner.show{display:block;}
-  .winner-eyebrow{
+  #drawSidePanel #participantsSection[hidden]{
+    display:none;
+  }
+
+  .draw-result-popup{
+    position:fixed;
+    z-index:20;
+    inset:0;
+    display:grid;
+    place-items:center;
+    padding:20px;
+    background:rgba(0,0,0,.72);
+  }
+  .draw-result-popup[hidden]{ display:none; }
+  .draw-result-popup-card{
+    width:min(440px, 100%);
+    padding:32px;
+    display:grid;
+    justify-items:center;
+    gap:18px;
+    text-align:center;
+    border:1px solid var(--teal);
+    border-radius:16px;
+    background:#080d0e;
+    box-shadow:0 0 38px rgba(78,205,196,.32), 0 20px 70px rgba(0,0,0,.6);
+  }
+  .draw-result-popup-eyebrow{
+    color:var(--cyan);
     font-family:var(--font-mono);
+    font-size:11px;
     letter-spacing:.2em;
     text-transform:uppercase;
-    font-size:11px;
-    color:var(--teal);
-    margin-bottom:10px;
   }
-  .winner-name{
-    font-family:var(--font-display);
-    font-size:clamp(26px,5vw,40px);
+  .draw-result-popup-name{
     color:var(--teal);
-    text-shadow:0 0 30px rgba(78,205,196,0.35);
+    font-family:var(--font-display);
+    font-size:clamp(26px, 7vw, 48px);
+    text-shadow:0 0 18px rgba(78,205,196,.45);
+    overflow-wrap:anywhere;
   }
 
   /* Вимикає анімації для користувачів, які обрали зменшення руху в системі. */
@@ -813,7 +776,7 @@
      константи (SLOT_ITEM_H), і зміна значення в CSS без відповідної зміни
      в JS знову зсуне видиму зупинку відносно реально обраного варіанта. */
   @media (max-width: 640px) {
-    body{ padding:20px 12px 60px; }
+    body{ padding:20px 12px 0; }
     .panel{ padding:16px 14px 20px; border-radius:12px; }
     .draw-layout #drawSidePanel{order:1;}
     .draw-layout #drawPanel{order:2;}
@@ -844,11 +807,6 @@
       border-top-width:10px; border-bottom-width:10px; border-right-width:20px;
       right:2px;
     }
-    .wheel-result-popup{ padding:10px 14px; max-width:88%; }
-    .wheel-result-popup .wrp-name{ font-size:14px; }
-    .wrp-actions{ margin-top:12px; gap:8px; }
-    .wrp-actions button{ padding:7px 12px; font-size:11.5px; }
-
     .round-controls{ gap:10px 14px; margin-bottom:18px; }
     .duration-block{ margin-bottom:20px; }
     .view-switch{ margin:14px 0 12px; }
@@ -909,6 +867,47 @@
     border-bottom:1px solid rgba(0,245,255,0.12);
     padding-bottom:18px;
   }
+  .round-settings,
+  .participants-section{
+    border:1px solid rgba(0,245,255,0.2);
+    border-radius:10px;
+    background:rgba(0,245,255,0.025);
+  }
+  .round-settings{
+    padding:16px;
+  }
+  .participants-section{
+    display:flex;
+    flex:1 1 auto;
+    min-height:0;
+    flex-direction:column;
+    margin-top:18px;
+    padding:16px;
+    overflow:hidden;
+  }
+  .side-block-title{
+    margin:0 0 14px;
+    color:var(--cyan);
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .participants-section .participants-drawer{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  .participants-section .participants-drawer::-webkit-scrollbar{ width:0; height:0; }
+
+  /* На великому екрані ліва колонка не прокручується: за довгий список
+     відповідає лише внутрішній блок учасників та історії. */
+  @media (min-width:1100px){
+    .draw-layout #drawSidePanel{ overflow:hidden; }
+  }
   .round-controls .btn-ghost{
     border-color:rgba(0,245,255,0.28);
     color:var(--cyan);
@@ -942,7 +941,7 @@
   }
   .switch input:checked + .switch-slider::before{ background:var(--cyan); }
 
-  /* --- Перемикачі вигляду (Слот-машина/Колесо/Рояль та Учасники/Історія) —
+  /* --- Перемикачі вигляду (Слот-машина/Колесо та Учасники/Історія) —
      компактні "пігулки"; той самий стиль застосовано до обох перемикачів. --- */
   .view-switch:has(#slotViewBtn),
   .view-switch:has(#participantsTabBtn){
@@ -975,12 +974,14 @@
 
   /* --- Слот-машина: темна шахта з ціановим світінням --- */
   .slot-machine{
-    background:#08090b;
-    border:1px solid rgba(0,245,255,0.22);
-    box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 20px rgba(0,245,255,0.06);
-    margin:28px auto 28px;
+    background:transparent;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    margin:44px 0 32px;
   }
-  .slot-machine.spinning{ animation:slotGlowCyan 0.9s ease-in-out infinite; }
+  .slot-machine.spinning{ animation:none; }
+  .slot-machine.spinning .slot-window{ animation:slotGlowCyan 0.9s ease-in-out infinite; }
   @keyframes slotGlowCyan{
     0%,100%{ box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,245,255,0.25); }
     50%{ box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,245,255,0.45), 0 0 0 1px var(--cyan); }
@@ -988,13 +989,23 @@
   .slot-window{
     background:
       radial-gradient(circle at 50% 50%, rgba(0,245,255,0.07), transparent 62%),
-      #030405;
+      #07090c;
+    border:1px solid rgba(0,245,255,0.28);
+    border-radius:18px;
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,245,255,0.08);
   }
-  .slot-fade.top{ background:linear-gradient(to bottom, #030405, transparent); }
-  .slot-fade.bottom{ background:linear-gradient(to top, #030405, transparent); }
+  .slot-fade{ height:22%; }
+  .slot-fade.top{ background:linear-gradient(to bottom, #07090c, transparent); }
+  .slot-fade.bottom{ background:linear-gradient(to top, #07090c, transparent); }
   .slot-item span{
     filter:blur(0.4px);
     opacity:.55;
+    color:var(--cyan) !important;
+    text-shadow:0 0 12px rgba(0,245,255,.13);
+  }
+  .slot-machine.spinning .slot-item span{
+    filter:blur(1.5px);
+    opacity:.32;
   }
   .slot-item-center span{
     filter:none;
@@ -1019,46 +1030,143 @@
     white-space:nowrap;
   }
   .slot-center-band{
-    left:9%;
-    width:82%;
-    height:72px;
-    border-radius:12px;
-    border:1px solid var(--cyan);
-    background:rgba(0,245,255,0.07);
-    box-shadow:0 0 24px rgba(0,245,255,0.18), inset 0 0 20px rgba(0,245,255,0.05);
+    left:0;
+    width:100%;
+    height:2px;
+    border:0;
+    border-radius:0;
+    background:var(--cyan);
+    box-shadow:0 0 14px var(--cyan);
   }
-  .slot-decal{
+  .slot-center-band::before,
+  .slot-center-band::after{
+    content:"";
     position:absolute;
     top:50%;
     transform:translateY(-50%);
+    border-top:10px solid transparent;
+    border-bottom:10px solid transparent;
+  }
+  .slot-center-band::before{ left:0; border-left:12px solid var(--cyan); }
+  .slot-center-band::after{ right:0; border-right:12px solid var(--cyan); }
+  .slot-landed .slot-center-band{
+    background:var(--teal);
+    border-color:transparent;
+    box-shadow:0 0 14px var(--teal);
+  }
+  .slot-landed .slot-center-band::before{ border-left-color:var(--teal); }
+  .slot-landed .slot-center-band::after{ border-right-color:var(--teal); }
+
+  /* Таємний розіграш: горизонтальна карусель папок, що сповільнюється
+     перед центральним маркером, як стрічка під час відкриття кейсу. */
+  .mystery-machine{
+    position:relative;
+    width:100%;
+    margin:44px 0 32px;
+    flex:1 1 auto;
+    min-height:280px;
     display:flex;
     flex-direction:column;
+    justify-content:center;
+    gap:18px;
+  }
+  .mystery-window{
+    position:relative;
+    overflow:hidden;
+    height:184px;
+    border:1px solid rgba(0,245,255,0.28);
+    border-radius:18px;
+    background:radial-gradient(circle at 50% 50%, rgba(0,245,255,0.08), transparent 62%), #07090c;
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,245,255,0.08);
+  }
+  .mystery-strip{
+    position:absolute;
+    display:flex;
     align-items:center;
-    gap:3px;
-    opacity:.5;
-    z-index:3;
+    height:100%;
+    will-change:transform;
+  }
+  .mystery-folder{
+    position:relative;
+    flex:0 0 148px;
+    height:126px;
+    padding:0 14px;
+  }
+  .mystery-folder-tab,
+  .mystery-folder-body{
+    position:absolute;
+    display:block;
+    background:linear-gradient(145deg, #f2bd46, #b87209);
+    border:1px solid #ffd96b;
+    box-shadow:inset 0 1px rgba(255,255,255,0.35), 0 7px 15px rgba(0,0,0,0.38);
+  }
+  .mystery-folder-tab{
+    top:6px;
+    left:25px;
+    width:58px;
+    height:24px;
+    border-radius:8px 8px 0 0;
+  }
+  .mystery-folder-body{
+    top:25px;
+    left:14px;
+    width:118px;
+    height:88px;
+    border-radius:7px;
+  }
+  .mystery-folder-question{
+    position:absolute;
+    inset:0;
+    display:grid;
+    place-items:center;
+    color:#271800;
+    font-family:var(--font-display);
+    font-size:52px;
+    font-weight:800;
+    text-shadow:0 1px rgba(255,255,255,0.35);
+  }
+  .mystery-fade{
+    position:absolute;
+    z-index:2;
+    top:0;
+    bottom:0;
+    width:18%;
     pointer-events:none;
   }
-  .slot-decal.left{ left:calc(9% + 14px); }
-  .slot-decal.right{ right:calc(9% + 14px); }
-  .slot-decal span:first-child{ width:3px; height:16px; background:var(--cyan); border-radius:2px; display:block; }
-  .slot-decal span:last-child{ width:3px; height:3px; background:var(--cyan); border-radius:50%; display:block; }
-  .slot-arrow{
-    left:auto; right:auto;
-    color:var(--cyan);
-    font-size:16px;
-    animation:arrowPulse 1.8s ease-in-out infinite;
+  .mystery-fade-left{ left:0; background:linear-gradient(to right, #07090c, transparent); }
+  .mystery-fade-right{ right:0; background:linear-gradient(to left, #07090c, transparent); }
+  .mystery-marker{
+    position:absolute;
+    z-index:3;
+    top:0;
+    bottom:0;
+    left:50%;
+    width:2px;
+    transform:translateX(-50%);
+    background:var(--cyan);
+    box-shadow:0 0 14px var(--cyan);
+    pointer-events:none;
   }
-  .slot-arrow.left{ left:4%; }
-  .slot-arrow.right{ right:4%; transform:translateY(-50%) rotate(180deg); }
-  @keyframes arrowPulse{
-    0%,100%{ opacity:.45; }
-    50%{ opacity:1; }
+  .mystery-marker::before,
+  .mystery-marker::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    border-left:10px solid transparent;
+    border-right:10px solid transparent;
   }
-  .slot-landed .slot-center-band{
-    background:rgba(78,205,196,0.1);
-    border-color:var(--teal);
-    box-shadow:0 0 24px rgba(78,205,196,0.22), inset 0 0 20px rgba(78,205,196,0.06);
+  .mystery-marker::before{ top:0; border-top:12px solid var(--cyan); }
+  .mystery-marker::after{ bottom:0; border-bottom:12px solid var(--cyan); }
+  .mystery-machine.spinning .mystery-window{ animation:slotGlowCyan .9s ease-in-out infinite; }
+  .mystery-folder-selected .mystery-folder-body{ border-color:var(--teal); box-shadow:0 0 24px rgba(78,205,196,.75), inset 0 1px rgba(255,255,255,.35); }
+  .mystery-result{
+    min-height:1.4em;
+    text-align:center;
+    color:var(--teal);
+    font-family:var(--font-display);
+    font-size:clamp(20px, 5vw, 32px);
+    text-shadow:0 0 18px rgba(78,205,196,.45);
   }
   .slot-landed .slot-item-center span{
     color:var(--teal) !important;
@@ -1078,12 +1186,6 @@
   .wheel-machine.spinning .wheel-stage{
     box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 26px rgba(0,245,255,0.35);
   }
-  .wheel-result-popup{
-    border-color:var(--cyan);
-    box-shadow:0 0 30px rgba(0,245,255,0.3), 0 14px 34px rgba(0,0,0,0.5);
-  }
-  .wheel-result-popup .wrp-eyebrow{ color:var(--cyan); }
-
   /* --- Кнопка запуску раунду --- */
   .btn-amber{ box-shadow:0 0 18px rgba(0,245,255,0.22); display:flex; align-items:center; gap:8px; }
   .btn-amber:hover:not(:disabled){ box-shadow:0 0 26px rgba(0,245,255,0.4); }
@@ -1145,24 +1247,3 @@
     border-color:rgba(78,205,196,0.4);
     color:var(--teal);
   }
-/* --- Батл-рояль: арена з кульками на canvas --- */
-.battle-machine{
-  position:relative;
-  width:100%;
-  margin:44px 0 32px;
-  flex:1 1 auto;
-  min-height:280px; /* мінімальна висота арени на малих екранах */
-  display:flex;
-}
-#battleCanvas{
-  display:block;
-  width:100%;
-  height:100%;
-  border:8px solid rgba(0,245,255,0.28);
-  border-radius:24px;
-  background:#000;
-  box-shadow:inset 0 2px 10px rgba(0,0,0,0.35), 0 0 22px rgba(0,245,255,0.08);
-}
-.battle-machine.active #battleCanvas{
-  animation: slotGlowCyan 0.9s ease-in-out infinite;
-}

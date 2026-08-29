@@ -1,7 +1,6 @@
 const transitions = {
   idle: new Set(['animating']),
-  animating: new Set(['awaiting-wheel-decision', 'resolving', 'idle']),
-  'awaiting-wheel-decision': new Set(['resolving', 'idle']),
+  animating: new Set(['resolving', 'idle']),
   resolving: new Set(['idle', 'finished']),
   finished: new Set(['idle'])
 };
@@ -24,7 +23,6 @@ export class RoundController {
     this.phase = 'idle';
     this.internalController = null;
     this.activeVisualization = null;
-    this.provisionalResult = null;
     this.removeExternalAbortListener = null;
   }
 
@@ -64,12 +62,6 @@ export class RoundController {
       });
       if (internalController.signal.aborted) throw abortError();
 
-      if (mode === 'wheel') {
-        this.provisionalResult = result;
-        this.transition('awaiting-wheel-decision');
-        return result;
-      }
-
       this.transition('resolving');
       const commit = await this.commitResult(result);
       this.transition(commit?.finished ? 'finished' : 'idle');
@@ -77,36 +69,9 @@ export class RoundController {
       return result;
     } catch (error) {
       this.activeVisualization?.cancel();
-      this.provisionalResult = null;
       if (this.phase !== 'idle') this.transition('idle');
       this.cleanupActiveRound();
       if (isAbortError(error) || internalController.signal.aborted) throw abortError();
-      this.onError(error);
-      throw error;
-    }
-  }
-
-  async decideWheel(decision) {
-    if (decision !== 'keep' && decision !== 'remove') {
-      throw new TypeError(`Unknown Wheel decision: ${decision}`);
-    }
-    if (this.phase !== 'awaiting-wheel-decision' || !this.provisionalResult) {
-      throw new Error('NO_WHEEL_DECISION_PENDING');
-    }
-
-    const result = { ...this.provisionalResult, decision };
-    try {
-      this.transition('resolving');
-      const commit = await this.commitResult(result);
-      this.provisionalResult = null;
-      this.transition(commit?.finished ? 'finished' : 'idle');
-      this.cleanupActiveRound();
-      return result;
-    } catch (error) {
-      this.provisionalResult = null;
-      if (this.phase !== 'idle') this.transition('idle');
-      this.cleanupActiveRound();
-      if (isAbortError(error) || this.internalController?.signal.aborted) throw abortError();
       this.onError(error);
       throw error;
     }
@@ -116,7 +81,6 @@ export class RoundController {
     if (this.phase === 'idle') return;
     this.internalController?.abort();
     this.activeVisualization?.cancel();
-    this.provisionalResult = null;
     this.transition('idle');
     this.cleanupActiveRound();
   }

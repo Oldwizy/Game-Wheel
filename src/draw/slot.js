@@ -4,7 +4,9 @@ import { createProgressKeyframes, velocityAt } from './motion-profile.js';
 export { velocityAt } from './motion-profile.js';
 
 const DEFAULT_ROW_HEIGHT = 56;
-const TRAVEL_SPEED_PX_PER_SECOND = 700;
+// Та сама швидкість та щільність кадрів, що в каруселі «Таємно»:
+// швидкий старт, довга прокрутка й виразне плавне гальмування.
+const TRAVEL_SPEED_PX_PER_SECOND = 900;
 const REDUCED_MOTION_DURATION_MS = 120;
 const PALETTE = ['#E85D5D', '#4ECDC4', '#FFB347', '#7C8CFF', '#C67CFF', '#69B56B', '#5DC8E8', '#FF8FB1', '#F2C14E', '#F2955A'];
 
@@ -85,7 +87,7 @@ export function createMotionKeyframes({
   finalTranslateY,
   targetIndex,
   durationMs,
-  samples = 120,
+  samples = 140,
   profile
 }) {
   if (!Number.isFinite(finalTranslateY)) throw new TypeError('Final Slot translation must be finite');

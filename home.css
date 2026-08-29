@@ -37,6 +37,8 @@ body{
   min-height:100vh;
   position:relative;
   overflow-x:hidden;
+  display:flex;
+  flex-direction:column;
 }
 
 /* Тонка лінія сканування, що повільно "проходить" по всьому екрану. */
@@ -63,7 +65,44 @@ body{
   display:inline-block;
 }
 
-.wrap{max-width:900px;margin:0 auto;padding:40px 20px 24px;}
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:40px 20px 24px;
+  width:100%;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.site-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-top:0;
+  width:100vw;
+  margin-left:calc((100vw - 100%) / -2);
+  padding:14px max(20px, calc((100vw - 860px) / 2));
+  border-top:1px solid var(--line);
+  background:rgba(0,0,0,.28);
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:.03em;
+}
+.footer-channel{display:flex;align-items:center;gap:10px;}
+.site-footer a{
+  display:inline-block;
+  padding:6px 9px;
+  border:1px solid rgba(0,245,255,.38);
+  border-radius:4px;
+  background:rgba(0,245,255,.11);
+  color:var(--cyan);
+  text-decoration:none;
+}
+.site-footer a:hover,
+.site-footer a:focus-visible{ background:rgba(0,245,255,.2); }
 
 /* --- Header --- */
 .site-header{text-align:center;padding-bottom:26px;border-bottom:1px solid var(--line-soft);}

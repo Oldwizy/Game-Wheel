@@ -278,6 +278,9 @@ async function initializeTwitch() {
   try {
     const result = await twitch.init(twitchState.rewards);
     twitchUser = result.user;
+    if (result.oauthError) {
+      connectionStatus = { state: 'error', message: result.oauthError.message };
+    }
     twitchState = { ...twitchState, rewards: result.verifiedSlots };
     twitchState = mergePending(twitchState, result.reconciledRedemptions);
     if (twitchUser && Array.isArray(result.unfulfilledRedemptionIds)) {

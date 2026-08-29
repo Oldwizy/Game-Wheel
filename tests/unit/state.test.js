@@ -36,6 +36,17 @@ describe('state persistence', () => {
     });
   });
 
+  test('changes a saved Battle Royale mode to the slot machine', () => {
+    const state = { ...createDefaultState(), schemaVersion: 1, visualMode: 'battle' };
+    const storage = createMemoryStorage({ [STATE_KEY]: JSON.stringify(state) });
+
+    const { value, error } = loadState(storage);
+
+    expect(error).toBeNull();
+    expect(value.visualMode).toBe('slot');
+    expect(value.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
   test('does not overwrite an unknown future state version', () => {
     const raw = JSON.stringify({ schemaVersion: 999, games: [] });
     const storage = createMemoryStorage({ [STATE_KEY]: raw });
