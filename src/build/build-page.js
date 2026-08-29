@@ -373,8 +373,8 @@ document.getElementById('twitchLogoutBtn').addEventListener('click', () => {
   twitch.logout();
   twitchUser = null;
   connectionStatus = { state: 'muted', message: 'Прослуховування вимкнено' };
+  ui.actionStatus.textContent = 'Ви вийшли з Twitch.';
   render();
-  window.location.replace(`${window.location.pathname}${window.location.search}`);
 });
 document.querySelectorAll('[data-main-tab]').forEach(tab => tab.addEventListener('click', event => {
   event.preventDefault();
