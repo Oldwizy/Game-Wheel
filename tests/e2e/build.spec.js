@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { CURRENT_SCHEMA_VERSION } from '../../src/core/state.js';
 import {
   drawState,
   seedDrawState,
@@ -50,7 +51,7 @@ test('reset stores schema-versioned defaults', async ({ page }) => {
   page.on('dialog', dialog => dialog.accept());
   await page.locator('#resetAllBtn').click();
   const state = await page.evaluate(() => JSON.parse(localStorage.getItem('lototron_state_v1')));
-  expect(state).toMatchObject({ schemaVersion: 1, games: [], nextId: 1, visualMode: 'slot' });
+  expect(state).toMatchObject({ schemaVersion: CURRENT_SCHEMA_VERSION, games: [], nextId: 1, visualMode: 'slot' });
 });
 
 test('reload preserves the build state', async ({ page }) => {
