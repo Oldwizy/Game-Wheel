@@ -65,17 +65,20 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(-
 .game-suggestion span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* Game cards mirror the catalog selection: cover on the left, controls on the right. */
-[data-main-pane="home"] .tickets{grid-template-columns:1fr;gap:16px;}
-[data-main-pane="home"] .ticket{display:grid;grid-template-columns:112px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:26px;min-height:205px;padding:20px 28px!important;border-width:1px!important;border-left-width:7px!important;border-radius:18px!important;background:#242336!important;}
-.game-card-cover{grid-row:1 / -1;align-self:center;display:grid;place-items:center;width:112px;height:168px;overflow:hidden;border-radius:3px;background:linear-gradient(145deg,var(--cover-color),#12111f 75%);box-shadow:0 8px 20px rgba(0,0,0,.28);}
+[data-main-pane="home"] .tickets{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
+[data-main-pane="home"] .ticket{display:grid;grid-template-columns:76px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:14px;min-height:146px;padding:14px!important;border-width:1px!important;border-left-width:5px!important;border-radius:12px!important;background:#242336!important;}
+.game-card-cover{grid-row:1 / -1;align-self:center;display:grid;place-items:center;width:76px;height:114px;overflow:hidden;border-radius:3px;background:linear-gradient(145deg,var(--cover-color),#12111f 75%);box-shadow:0 8px 20px rgba(0,0,0,.28);}
 .game-card-cover img{width:100%;height:100%;object-fit:cover;}
-.game-card-fallback{color:#fff;font:800 58px/1 Manrope,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.35);}
-[data-main-pane="home"] .ticket .tname{align-self:end;overflow-wrap:anywhere;white-space:normal;font-size:27px;line-height:1.12;}
-[data-main-pane="home"] .ticket .trow{align-self:start;margin-top:20px;}
-[data-main-pane="home"] .ticket .step-btn{width:56px;height:56px;font-size:35px;}
-[data-main-pane="home"] .ticket .copies-stepper{gap:26px;}
-[data-main-pane="home"] .ticket .copies-badge{min-width:116px;padding:13px 20px;border-radius:28px!important;font-size:27px;}
-[data-main-pane="home"] .ticket .del-btn{font-size:17px;}
+.game-card-fallback{color:#fff;font:800 42px/1 Manrope,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.35);}
+[data-main-pane="home"] .ticket .tname{align-self:end;overflow-wrap:anywhere;white-space:normal;font-size:18px;line-height:1.12;}
+[data-main-pane="home"] .ticket .trow{align-self:start;flex-wrap:wrap;gap:9px;margin-top:10px;}
+[data-main-pane="home"] .ticket .step-btn{width:32px;height:32px;font-size:22px;}
+[data-main-pane="home"] .ticket .copies-stepper{gap:8px;}
+[data-main-pane="home"] .ticket .copies-badge{min-width:56px;padding:7px 10px;border-radius:18px!important;font-size:14px;}
+[data-main-pane="home"] .ticket .del-btn{font-size:11px;}
+
+@media (max-width:1200px){[data-main-pane="home"] .tickets{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:560px){[data-main-pane="home"] .tickets{grid-template-columns:1fr;}}
 
 @media (max-width:600px){
   [data-main-pane="home"] .tickets{gap:12px;}

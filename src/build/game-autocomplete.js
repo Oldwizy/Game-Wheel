@@ -4,7 +4,7 @@ const RESULT_LIMIT = 8;
 
 function searchGames(games, query) {
   const normalizedQuery = normalizeName(query).toLocaleLowerCase('uk');
-  if (!normalizedQuery) return games.slice(0, RESULT_LIMIT);
+  if (!normalizedQuery) return [];
   return games
     .map(game => ({ game, index: game.title.toLocaleLowerCase('uk').indexOf(normalizedQuery) }))
     .filter(result => result.index >= 0)
