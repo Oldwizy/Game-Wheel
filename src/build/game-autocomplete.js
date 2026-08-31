@@ -2,15 +2,20 @@ import { normalizeName } from '../shared/presentation.js';
 
 const RESULT_LIMIT = 8;
 
-function searchGames(games, query) {
+export function searchGames(games, query) {
   const normalizedQuery = normalizeName(query).toLocaleLowerCase('uk');
   if (!normalizedQuery) return [];
   return games
-    .map(game => ({ game, index: game.title.toLocaleLowerCase('uk').indexOf(normalizedQuery) }))
+    .map(game => {
+      const titleIndex = game.title.toLocaleLowerCase('uk').indexOf(normalizedQuery);
+      const alias = game.aliases?.find(value => value.toLocaleLowerCase('uk').includes(normalizedQuery));
+      const aliasIndex = alias?.toLocaleLowerCase('uk').indexOf(normalizedQuery) ?? -1;
+      const index = titleIndex >= 0 ? titleIndex : aliasIndex;
+      return { game, index, alias: titleIndex < 0 ? alias : null };
+    })
     .filter(result => result.index >= 0)
     .sort((left, right) => left.index - right.index || left.game.title.localeCompare(right.game.title))
-    .slice(0, RESULT_LIMIT)
-    .map(result => result.game);
+    .slice(0, RESULT_LIMIT);
 }
 
 export function createGameAutocomplete({ input, list }) {
@@ -35,7 +40,8 @@ export function createGameAutocomplete({ input, list }) {
   function render() {
     results = searchGames(games, input.value);
     activeIndex = -1;
-    list.replaceChildren(...results.map((game, index) => {
+    list.replaceChildren(...results.map((result, index) => {
+      const { game } = result;
       const option = document.createElement('button');
       option.type = 'button';
       option.className = 'game-suggestion';
@@ -49,7 +55,7 @@ export function createGameAutocomplete({ input, list }) {
       image.width = 36;
       image.height = 54;
       const title = document.createElement('span');
-      title.textContent = game.title;
+      title.textContent = result.alias ? `${game.title} · ${result.alias}` : game.title;
       option.append(image, title);
       option.addEventListener('mousedown', event => {
         event.preventDefault();
@@ -83,7 +89,7 @@ export function createGameAutocomplete({ input, list }) {
     } else if (event.key === 'Enter' && activeIndex >= 0) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      select(results[activeIndex]);
+      select(results[activeIndex].game);
     } else if (event.key === 'Escape') {
       event.preventDefault();
       close();

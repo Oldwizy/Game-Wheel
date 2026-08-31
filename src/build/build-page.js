@@ -3,6 +3,7 @@ import { changeCopies } from '../core/game-rules.js';
 import { normalizeName } from '../shared/presentation.js';
 import { createGameListView } from './game-list-view.js';
 import { createGameAutocomplete } from './game-autocomplete.js';
+import { UKRAINIAN_GAME_ALIASES } from '../data/game-ukrainian-aliases.js';
 import { createTwitchRewardView } from './twitch-reward-view.js';
 import { createTwitchRequestView } from './twitch-request-view.js';
 import { createTwitchIntegration } from '../integrations/twitch.js';
@@ -49,7 +50,8 @@ const gameAutocomplete = createGameAutocomplete({ input: ui.input, list: id('gam
 fetch('src/data/metacritic-games.json')
   .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
   .then(games => {
-    gameAutocomplete.setGames(games);
+    const localizedGames = games.map(game => ({ ...game, aliases: UKRAINIAN_GAME_ALIASES[game.title] ?? [] }));
+    gameAutocomplete.setGames(localizedGames);
     gameListView.setCatalog(games);
     render();
   })
