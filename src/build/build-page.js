@@ -48,7 +48,11 @@ const gameListView = createGameListView(ui, {
 const gameAutocomplete = createGameAutocomplete({ input: ui.input, list: id('gameSuggestions') });
 fetch('src/data/metacritic-games.json')
   .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
-  .then(games => gameAutocomplete.setGames(games))
+  .then(games => {
+    gameAutocomplete.setGames(games);
+    gameListView.setCatalog(games);
+    render();
+  })
   .catch(() => { ui.actionStatus.textContent = 'Каталог ігор тимчасово недоступний — назву можна ввести вручну.'; });
 
 const rewardView = createTwitchRewardView(document, {
