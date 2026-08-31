@@ -179,3 +179,58 @@ body{
   #buildPanel .ticket:hover,
   #buildPanel .ticket:hover .game-card-cover{transform:none;}
 }
+
+/* Draw-page cards stay deliberately compact inside the participants panel. */
+#drawSidePanel .tickets{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:12px;
+}
+#drawSidePanel .ticket{
+  display:flex;
+  flex-direction:column;
+  min-height:116px;
+  padding:12px !important;
+  border-width:1px !important;
+  border-left-width:5px !important;
+  border-radius:9px !important;
+  background:#242336 !important;
+}
+#drawSidePanel .ticket .tnum{
+  display:block;
+  margin:0 0 7px;
+  font:600 9px/1 'Roboto Mono',monospace;
+  letter-spacing:.06em;
+}
+#drawSidePanel .ticket .tname{
+  display:-webkit-box;
+  min-height:38px;
+  margin:0;
+  overflow:hidden;
+  white-space:normal;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  font-size:15px;
+  line-height:1.2;
+}
+#drawSidePanel .ticket .trow{
+  align-items:center;
+  margin-top:auto;
+}
+#drawSidePanel .ticket .copies-stepper{gap:7px;}
+#drawSidePanel .ticket .step-btn{
+  width:25px;
+  height:25px;
+  border-radius:6px;
+  font-size:17px;
+}
+#drawSidePanel .ticket .copies-badge{
+  min-width:42px;
+  padding:4px 7px;
+  border-radius:14px;
+  font-size:11px;
+}
+#drawSidePanel .ticket .del-btn{display:none;}
+@media (max-width:390px){
+  #drawSidePanel .tickets{grid-template-columns:1fr;}
+}
