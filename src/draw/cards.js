@@ -32,14 +32,24 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     card?.classList.remove('is-previewed');
   }
 
+  function spendCard(card) {
+    hidePreview(card);
+    card?.classList.add('is-spent');
+    if (card) {
+      card.disabled = true;
+      card.setAttribute('aria-label', 'Відкрита картка. Цей варіант більше недоступний.');
+    }
+  }
+
   function preview(card, temporary = false) {
-    if (!card || card.classList.contains('is-selected')) return;
+    if (!card || card.disabled || card.classList.contains('is-selected')) return;
     hidePreview(elements.grid.querySelector('.is-previewed'));
     card.classList.add('is-previewed');
     if (temporary) {
       card.classList.add('is-viewed');
+      card.disabled = true;
       clearTimeout(previewTimer);
-      previewTimer = setTimeout(() => hidePreview(card), reducedMotionEnabled(prefersReducedMotion) ? 0 : PREVIEW_MS);
+      previewTimer = setTimeout(() => spendCard(card), reducedMotionEnabled(prefersReducedMotion) ? 0 : PREVIEW_MS);
     }
   }
 
@@ -79,8 +89,9 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
       card.style.removeProperty('--card-tilt-x');
       card.style.removeProperty('--card-tilt-y');
     };
-    card.addEventListener('pointerenter', () => card.classList.add('is-hovered'));
+    card.addEventListener('pointerenter', () => { if (!card.disabled) card.classList.add('is-hovered'); });
     card.addEventListener('pointermove', event => {
+      if (card.disabled) return;
       const bounds = card.getBoundingClientRect();
       const tiltX = ((event.clientY - bounds.top) / bounds.height - .5) * -10;
       const tiltY = ((event.clientX - bounds.left) / bounds.width - .5) * 10;
@@ -88,7 +99,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
       card.style.setProperty('--card-tilt-y', `${tiltY.toFixed(2)}deg`);
     });
     card.addEventListener('pointerleave', resetTilt);
-    card.addEventListener('focus', () => card.classList.add('is-hovered'));
+    card.addEventListener('focus', () => { if (!card.disabled) card.classList.add('is-hovered'); });
     card.addEventListener('blur', resetTilt);
     card.addEventListener('click', () => preview(card, true));
     return card;
@@ -135,7 +146,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     elements.result.textContent = target.name;
     clearTimeout(previewTimer);
     previewTimer = setTimeout(() => {
-      hidePreview(selected);
+      spendCard(selected);
       elements.result.textContent = '';
     }, reducedMotionEnabled(prefersReducedMotion) ? 0 : PREVIEW_MS);
     elements.machine.classList.remove('spinning');

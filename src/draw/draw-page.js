@@ -26,6 +26,7 @@ const elements = {
   durationBlock: document.querySelector('.duration-block'),
   durationValue: byId('durVal'),
   status: byId('statusLine'),
+  statusDivider: byId('statusDivider'),
   start: byId('startRoundBtn'),
   shuffle: byId('shuffleVisualsBtn'),
   slotMachine: byId('slotMachine'),
@@ -190,6 +191,8 @@ function startDrawPage() {
     elements.participantsSection.hidden = hiddenSideMode;
     elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
     elements.cardsRules.hidden = mode !== 'cards';
+    elements.status.hidden = mode === 'cards';
+    elements.statusDivider.hidden = mode === 'cards';
     elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';
     elements.mysterySideDescription.textContent = mode === 'cards'
       ? 'Учасники та історія приховані. Переглядайте картки, не розкриваючи пул завчасно.'
