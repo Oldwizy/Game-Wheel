@@ -47,15 +47,32 @@ const gameListView = createGameListView(ui, {
 });
 
 const gameAutocomplete = createGameAutocomplete({ input: ui.input, list: id('gameSuggestions') });
-fetch('src/data/metacritic-games.json')
-  .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
-  .then(games => {
-    const localizedGames = games.map(game => ({ ...game, aliases: UKRAINIAN_GAME_ALIASES[game.title] ?? [] }));
-    gameAutocomplete.setGames(localizedGames);
-    gameListView.setCatalog(games);
-    render();
-  })
-  .catch(() => { ui.actionStatus.textContent = 'Каталог ігор тимчасово недоступний — назву можна ввести вручну.'; });
+let catalogLoad = null;
+let catalogLoaded = false;
+
+function loadGameCatalog({ retry = false } = {}) {
+  if (catalogLoaded) return Promise.resolve();
+  if (catalogLoad && !retry) return catalogLoad;
+
+  catalogLoad = fetch('src/data/metacritic-games.json', { cache: 'force-cache' })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+    .then(games => {
+      const localizedGames = games.map(game => ({ ...game, aliases: UKRAINIAN_GAME_ALIASES[game.title] ?? [] }));
+      gameAutocomplete.setGames(localizedGames);
+      gameListView.setCatalog(games);
+      catalogLoaded = true;
+      if (ui.actionStatus.textContent.startsWith('Каталог ігор тимчасово недоступний')) ui.actionStatus.textContent = '';
+      render();
+    })
+    .catch(() => {
+      catalogLoad = null;
+      ui.actionStatus.textContent = 'Каталог ігор тимчасово недоступний — назву можна ввести вручну.';
+    });
+
+  return catalogLoad;
+}
+
+void loadGameCatalog();
 
 const rewardView = createTwitchRewardView(document, {
   onCreate: createReward,
@@ -396,6 +413,7 @@ document.getElementById('twitchLogoutBtn').addEventListener('click', () => {
     connectionStatus = { state: 'muted', message: 'Прослуховування вимкнено' };
     ui.actionStatus.textContent = 'Ви вийшли з Twitch.';
     render();
+    void loadGameCatalog({ retry: true });
   }
 });
 document.querySelectorAll('[data-main-tab]').forEach(tab => tab.addEventListener('click', event => {
