@@ -5,6 +5,7 @@ import { applyControlState, controlStateForPhase } from './controls.js';
 import { createDrawListView } from './draw-list-view.js';
 import { createDrawLog } from './draw-log.js';
 import { createMysteryVisualization } from './mystery.js';
+import { createCardsVisualization } from './cards.js';
 import { RoundController } from './round-controller.js';
 import { createSlotVisualization } from './slot.js';
 import { createWheelVisualization } from './wheel.js';
@@ -14,10 +15,11 @@ const totalCopies = games => games.reduce((total, game) => total + game.copies, 
 const elements = {
   drawTickets: byId('drawTickets'),
   back: byId('backBtn'),
-  modeButtons: [byId('slotViewBtn'), byId('wheelViewBtn'), byId('mysteryViewBtn')],
+  modeButtons: [byId('slotViewBtn'), byId('wheelViewBtn'), byId('mysteryViewBtn'), byId('cardsViewBtn')],
   slotMode: byId('slotViewBtn'),
   wheelMode: byId('wheelViewBtn'),
   mysteryMode: byId('mysteryViewBtn'),
+  cardsMode: byId('cardsViewBtn'),
   instant: byId('instantWinToggle'),
   instantLabel: byId('instantWinLabel'),
   duration: byId('durationRange'),
@@ -35,6 +37,9 @@ const elements = {
   mysteryMachine: byId('mysteryMachine'),
   mysteryStrip: byId('mysteryStrip'),
   mysteryResult: byId('mysteryResult'),
+  cardsMachine: byId('cardsMachine'),
+  cardsGrid: byId('cardsGrid'),
+  cardsResult: byId('cardsResult'),
   resultPopup: byId('drawResultPopup'),
   resultPopupTitle: byId('drawResultTitle'),
   resultPopupName: byId('drawResultName'),
@@ -44,6 +49,9 @@ const elements = {
   historyTab: byId('historyTabBtn'),
   participantsSection: byId('participantsSection'),
   mysterySidePlaceholder: byId('mysterySidePlaceholder'),
+  mysterySideTitle: byId('mysterySideTitle'),
+  mysterySideDescription: byId('mysterySideDescription'),
+  cardsRules: byId('cardsRules'),
   participantsDrawer: byId('participantsDrawer')
 };
 
@@ -78,6 +86,11 @@ function startDrawPage() {
     strip: elements.mysteryStrip,
     result: elements.mysteryResult
   }, { prefersReducedMotion: reducedMotion });
+  const cards = createCardsVisualization({
+    machine: elements.cardsMachine,
+    grid: elements.cardsGrid,
+    result: elements.cardsResult
+  }, { prefersReducedMotion: reducedMotion });
   wheel.initialize(state.games);
 
   const drawList = createDrawListView(elements.drawTickets, {
@@ -97,6 +110,7 @@ function startDrawPage() {
     .then(games => {
       drawList.setCatalog(games);
       mystery.setCatalog(games);
+      cards.setCatalog(games);
       // If the catalog arrives while the carousel is idle, rebuild it so
       // previously rendered fallback letters are replaced with blurred covers.
       // During an active round, preserve the reel that is already moving.
@@ -116,7 +130,7 @@ function startDrawPage() {
     }
   });
 
-  const visualizations = { slot, wheel, mystery };
+  const visualizations = { slot, wheel, mystery, cards };
   const controller = new RoundController({
     selectTarget(games) {
       provisionalTarget = weightedPick(games);
@@ -168,12 +182,18 @@ function startDrawPage() {
 
   function renderMode() {
     const mode = state.visualMode;
-    const mysteryMode = mode === 'mystery';
+    const hiddenSideMode = mode === 'mystery' || mode === 'cards';
     elements.slotMachine.style.display = mode === 'slot' ? 'flex' : 'none';
     elements.wheelMachine.style.display = mode === 'wheel' ? 'flex' : 'none';
-    elements.mysteryMachine.style.display = mysteryMode ? 'flex' : 'none';
-    elements.participantsSection.hidden = mysteryMode;
-    elements.mysterySidePlaceholder.hidden = !mysteryMode;
+    elements.mysteryMachine.style.display = mode === 'mystery' ? 'flex' : 'none';
+    elements.cardsMachine.style.display = mode === 'cards' ? 'flex' : 'none';
+    elements.participantsSection.hidden = hiddenSideMode;
+    elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
+    elements.cardsRules.hidden = mode !== 'cards';
+    elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';
+    elements.mysterySideDescription.textContent = mode === 'cards'
+      ? 'Учасники та історія приховані. Переглядайте картки, не розкриваючи пул завчасно.'
+      : 'Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.';
     elements.modeButtons.forEach(button => {
       const selected = button.id.startsWith(mode);
       button.classList.toggle('active', selected);
@@ -263,7 +283,7 @@ function startDrawPage() {
     const winner = findTerminalWinner(state.games);
     if (winner && !state.logEntries.at(-1)?.text.startsWith('Переможець:')) addLog(`Переможець: <b>${winner.name}</b>`, true);
     persistAndRender({ preserveActiveVisualization: true });
-    const showResultPopup = state.visualMode !== 'mystery';
+    const showResultPopup = !['mystery', 'cards'].includes(state.visualMode);
     if (showResultPopup && eliminatedNames.length) {
       queueResultPopup(
         eliminatedNames.length === 1 ? 'Вибуває з розіграшу' : 'Вибули з розіграшу',
@@ -297,6 +317,7 @@ function startDrawPage() {
   elements.slotMode.addEventListener('click', () => setMode('slot'));
   elements.wheelMode.addEventListener('click', () => setMode('wheel'));
   elements.mysteryMode.addEventListener('click', () => setMode('mystery'));
+  elements.cardsMode.addEventListener('click', () => setMode('cards'));
   elements.duration.addEventListener('input', () => { elements.durationValue.textContent = `${elements.duration.value} с`; });
   elements.duration.addEventListener('change', () => {
     state = { ...state, durationValue: Number(elements.duration.value) };

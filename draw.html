@@ -46,12 +46,18 @@
         <button class="btn-ghost active" id="slotViewBtn" type="button" aria-pressed="true">Слот-машина</button>
         <button class="btn-ghost" id="wheelViewBtn" type="button" aria-pressed="false">Колесо</button>
         <button class="btn-ghost" id="mysteryViewBtn" type="button" aria-pressed="false">Таємно</button>
+        <button class="btn-ghost" id="cardsViewBtn" type="button" aria-pressed="false">Картки</button>
       </div>
 
       <div class="duration-block">
         <div class="duration-label"><span>Тривалість раунду</span><span class="val" id="durVal">15 с</span></div>
         <input type="range" id="durationRange" min="2" max="60" value="15" step="1" aria-label="Тривалість раунду в секундах">
       </div>
+
+      <section class="cards-rules" id="cardsRules" aria-labelledby="cardsRulesTitle" hidden>
+        <h3 id="cardsRulesTitle">Правила гри з картками</h3>
+        <p>Кожна картка — окрема копія гри. Наведіть курсор, щоб побачити 3D-ефект, і натисніть картку, щоб ненадовго відкрити її вміст. Після перевертання картка знову стає нерозпізнаваною. Фінальна обрана картка визначає переможця.</p>
+      </section>
     </section>
 
     <!-- Перемикач між списком учасників і журналом раундів. -->
@@ -72,7 +78,7 @@
     <section class="mystery-side-placeholder" id="mysterySidePlaceholder" aria-labelledby="mysterySideTitle" hidden>
       <span class="mystery-side-icon" aria-hidden="true">?</span>
       <h2 class="side-block-title" id="mysterySideTitle">Таємний режим</h2>
-      <p>Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.</p>
+      <p id="mysterySideDescription">Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.</p>
     </section>
 
   </section>
@@ -116,6 +122,11 @@
         <div class="mystery-marker" aria-hidden="true"></div>
       </div>
       <div class="mystery-result" id="mysteryResult" aria-live="polite"></div>
+    </div>
+
+    <div class="cards-machine" id="cardsMachine" style="display:none;" aria-label="Розіграш картками">
+      <div class="cards-grid" id="cardsGrid"></div>
+      <div class="cards-result" id="cardsResult" aria-live="polite"></div>
     </div>
 
     <div class="view-switch" role="group" aria-label="Дії розіграшу">

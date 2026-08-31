@@ -1,6 +1,6 @@
 export const STATE_KEY = 'lototron_state_v1';
 export const HISTORY_KEY = 'lototron_history_v1';
-export const CURRENT_SCHEMA_VERSION = 3;
+export const CURRENT_SCHEMA_VERSION = 4;
 
 const MAX_HISTORY = 15;
 
@@ -24,6 +24,11 @@ const stateMigrations = new Map([
     ...state,
     schemaVersion: 3,
     visualMode: ['slot', 'wheel', 'mystery'].includes(state.visualMode) ? state.visualMode : 'slot'
+  })],
+  [3, state => ({
+    ...state,
+    schemaVersion: 4,
+    visualMode: ['slot', 'wheel', 'mystery', 'cards'].includes(state.visualMode) ? state.visualMode : 'slot'
   })]
 ]);
 
@@ -33,7 +38,8 @@ const historyMigrations = new Map([
     entries: Array.isArray(entries) ? entries : []
   })],
   [1, history => ({ ...history, schemaVersion: 2 })],
-  [2, history => ({ ...history, schemaVersion: 3 })]
+  [2, history => ({ ...history, schemaVersion: 3 })],
+  [3, history => ({ ...history, schemaVersion: 4 })]
 ]);
 
 export function createDefaultState() {
@@ -100,7 +106,7 @@ function normalizeState(value) {
   if (!Number.isInteger(normalized.nextId) || normalized.nextId < 1) return null;
   if (!Number.isInteger(normalized.roundCount) || normalized.roundCount < 0) return null;
   if (!Array.isArray(normalized.logEntries)) return null;
-  if (!['slot', 'wheel', 'mystery'].includes(normalized.visualMode)) return null;
+  if (!['slot', 'wheel', 'mystery', 'cards'].includes(normalized.visualMode)) return null;
   if (typeof normalized.instantWinMode !== 'boolean') return null;
   if (!Number.isFinite(Number(normalized.durationValue)) || Number(normalized.durationValue) <= 0) return null;
   normalized.durationValue = Number(normalized.durationValue);
