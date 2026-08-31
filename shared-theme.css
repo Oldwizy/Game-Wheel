@@ -52,6 +52,8 @@ body{
   gap:16px;
 }
 #buildPanel .ticket{
+  position:relative;
+  isolation:isolate;
   display:grid;
   grid-template-columns:84px minmax(0,1fr);
   grid-template-rows:minmax(124px,1fr) auto;
@@ -61,11 +63,12 @@ body{
   border-left-width:5px !important;
   border-radius:14px !important;
   box-shadow:0 8px 22px rgba(0,0,0,.16);
+  perspective:900px;
   transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease;
 }
 #buildPanel .ticket:hover{
   transform:translateY(-2px);
-  box-shadow:0 12px 28px rgba(0,0,0,.24);
+  box-shadow:0 18px 34px rgba(0,0,0,.34),0 0 0 1px var(--ticket-color);
 }
 #buildPanel .game-card-cover{
   grid-column:1;
@@ -74,6 +77,31 @@ body{
   width:84px;
   height:126px;
   border-radius:7px;
+  position:relative;
+  transform-origin:top center;
+  transform-style:preserve-3d;
+  will-change:transform;
+  transition:transform .35s cubic-bezier(.18,.9,.58,1),box-shadow .35s ease;
+  box-shadow:0 7px 15px rgba(0,0,0,.28);
+}
+#buildPanel .game-card-cover::after{
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(125deg,rgba(255,255,255,.38) 0%,rgba(255,255,255,.12) 26%,transparent 53%);
+  opacity:0;
+  transform:translateY(-18%);
+  transition:transform .6s cubic-bezier(.18,.9,.58,1),opacity .3s ease;
+}
+#buildPanel .ticket:hover .game-card-cover{
+  transform:rotateX(7deg) translateY(-6px) scale(1.015);
+  box-shadow:0 14px 24px rgba(0,0,0,.42);
+}
+#buildPanel .ticket:hover .game-card-cover::after{
+  opacity:1;
+  transform:translateY(0);
 }
 #buildPanel .ticket .tname{
   grid-column:2;
@@ -138,4 +166,11 @@ body{
   #buildPanel .ticket{grid-template-columns:72px minmax(0,1fr);grid-template-rows:minmax(108px,1fr) auto;min-height:176px;padding:13px !important;}
   #buildPanel .game-card-cover{width:72px;height:108px;}
   #buildPanel .ticket .tname{font-size:17px;}
+}
+@media (hover:none), (prefers-reduced-motion:reduce){
+  #buildPanel .ticket,
+  #buildPanel .game-card-cover,
+  #buildPanel .game-card-cover::after{transition:none;}
+  #buildPanel .ticket:hover,
+  #buildPanel .ticket:hover .game-card-cover{transform:none;}
 }
