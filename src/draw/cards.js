@@ -139,6 +139,11 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     replaceCards(games);
   }
 
+  function shuffleCards() {
+    if (destroyed || !elements.grid?.replaceChildren) return;
+    elements.grid.replaceChildren(...shuffle([...elements.grid.children], random));
+  }
+
   async function play({ target, games = lastGames, durationMs, signal }) {
     if (destroyed) throw new Error('Cards visualization has been destroyed');
     if (activePlay) throw new Error('CARDS_PLAY_ACTIVE');
@@ -188,6 +193,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
 
   return {
     render,
+    shuffle: shuffleCards,
     play,
     cancel,
     setCatalog(games) {

@@ -197,6 +197,7 @@ function startDrawPage() {
     elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
     elements.cardsRules.hidden = mode !== 'cards';
     elements.durationBlock.hidden = mode === 'cards';
+    elements.start.hidden = mode === 'cards';
     elements.status.hidden = mode === 'cards';
     elements.statusDivider.hidden = mode === 'cards';
     elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';
@@ -344,6 +345,7 @@ function startDrawPage() {
   elements.shuffle.addEventListener('click', () => {
     if (controller.phase !== 'idle' && controller.phase !== 'finished') return;
     if (state.visualMode === 'wheel') wheel.shuffle();
+    else if (state.visualMode === 'cards') cards.shuffle();
     else visualizations[state.visualMode].render({ games: state.games });
   });
   elements.start.addEventListener('click', () => {

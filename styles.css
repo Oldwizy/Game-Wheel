@@ -629,6 +629,7 @@
   }
   .status-line.active{color:var(--amber);}
   .status-line.win{color:var(--teal);}
+  #startRoundBtn[hidden]{display:none;}
   #drawPanel .status-line[hidden],
   #drawPanel .status-divider[hidden]{display:none;}
   .status-divider{
