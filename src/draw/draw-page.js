@@ -196,6 +196,7 @@ function startDrawPage() {
     elements.participantsSection.hidden = hiddenSideMode;
     elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
     elements.cardsRules.hidden = mode !== 'cards';
+    elements.durationBlock.hidden = mode === 'cards';
     elements.status.hidden = mode === 'cards';
     elements.statusDivider.hidden = mode === 'cards';
     elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';

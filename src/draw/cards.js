@@ -44,6 +44,9 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
 
   function preview(card, temporary = false, game = null) {
     if (!card || card.disabled || card.classList.contains('is-selected')) return;
+    card.classList.remove('is-hovered');
+    card.style.removeProperty('--card-tilt-x');
+    card.style.removeProperty('--card-tilt-y');
     hidePreview(elements.grid.querySelector('.is-previewed'));
     card.classList.add('is-previewed');
     if (temporary) {
