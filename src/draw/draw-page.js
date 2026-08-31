@@ -55,7 +55,6 @@ const elements = {
   cardsRules: byId('cardsRules'),
   participantsDrawer: byId('participantsDrawer')
 };
-const drawLayout = document.querySelector('.draw-layout');
 
 let { value: state, error: loadError } = loadState(localStorage);
 if (state.games.length === 0) {
@@ -195,13 +194,12 @@ function startDrawPage() {
     elements.mysteryMachine.style.display = mode === 'mystery' ? 'flex' : 'none';
     elements.cardsMachine.style.display = mode === 'cards' ? 'flex' : 'none';
     elements.participantsSection.hidden = hiddenSideMode;
-    elements.mysterySidePlaceholder.hidden = !hiddenSideMode || mode === 'cards';
+    elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
     elements.cardsRules.hidden = mode !== 'cards';
     elements.durationBlock.hidden = mode === 'cards';
     elements.start.hidden = mode === 'cards';
     elements.status.hidden = mode === 'cards';
     elements.statusDivider.hidden = mode === 'cards';
-    drawLayout?.classList.toggle('cards-mode', mode === 'cards');
     elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';
     elements.mysterySideDescription.textContent = mode === 'cards'
       ? 'Учасники та історія приховані. Переглядайте картки, не розкриваючи пул завчасно.'
