@@ -1348,3 +1348,47 @@
     background:#030405;
     overflow:hidden;
   }
+
+  /* Responsive layout layer. The visual machines keep their proportions,
+     while controls and panels reflow instead of creating horizontal scroll. */
+  @media (max-width:1099px){
+    body{height:auto;min-height:100dvh;padding:0;}
+    .wrap{height:auto;min-height:100dvh;}
+    .draw-layout{width:100%;left:auto;right:auto;margin:0;padding:24px;}
+    .draw-layout #drawPanel,.draw-layout #drawSidePanel{height:auto;overflow:visible;}
+    .slot-machine{min-height:300px;}
+    .wheel-machine{min-height:300px;}
+    .participants-section{min-height:360px;}
+  }
+
+  @media (max-width:640px){
+    .draw-layout{gap:16px;padding:16px 12px 24px;}
+    .round-settings,.participants-section{padding:14px 12px;}
+    .round-controls{align-items:flex-start;}
+    .switch-label{white-space:normal;}
+    .view-switch:has(#slotViewBtn),.view-switch:has(#participantsTabBtn){max-width:100%;}
+    .view-switch .btn-ghost{flex:1 1 auto;}
+    .slot-machine{min-height:260px;margin:22px 0;}
+    .wheel-machine{min-height:260px;margin:22px 0;}
+    .mystery-machine{min-height:250px;margin:22px 0;}
+    .mystery-window{height:164px;}
+    .view-switch:has(#shuffleVisualsBtn){gap:10px;}
+    .view-switch:has(#shuffleVisualsBtn) .btn-amber{justify-content:center;}
+    .participants-section{min-height:0;}
+    .participants-drawer[open]{max-height:55dvh;overflow-y:auto;}
+  }
+
+  @media (max-width:390px){
+    .draw-layout{padding:12px 8px 20px;}
+    .round-settings,.participants-section{padding:12px 10px;}
+    .round-controls{flex-direction:column;align-items:stretch;}
+    .round-controls .btn-ghost{justify-content:center;}
+    .switch-label{justify-content:center;}
+    .view-switch:has(#slotViewBtn),.view-switch:has(#participantsTabBtn){width:100%;}
+    .view-switch:has(#slotViewBtn) .btn-ghost,.view-switch:has(#participantsTabBtn) .btn-ghost{padding-inline:7px;font-size:11px;}
+    .view-switch:has(#shuffleVisualsBtn){flex-direction:column;align-items:stretch;}
+    .view-switch:has(#shuffleVisualsBtn) button{width:100%;justify-content:center;}
+    .slot-machine,.wheel-machine{min-height:220px;}
+    .mystery-folder{flex-basis:126px;transform:scale(.9);}
+    .mystery-window{height:148px;}
+  }
