@@ -1,6 +1,7 @@
 import { shuffleNoAdjacent } from '../core/random.js';
 import { createProgressKeyframes } from './motion-profile.js';
 import { normalizeName } from '../shared/presentation.js';
+import { UKRAINIAN_GAME_ALIASES } from '../data/game-ukrainian-aliases.js';
 
 const CARD_WIDTH = 148;
 const TRAVEL_SPEED_PX_PER_SECOND = 900;
@@ -182,9 +183,15 @@ export function createMysteryVisualization(elements, {
     play,
     cancel,
     setCatalog(games) {
-      catalogImages = new Map((Array.isArray(games) ? games : [])
+      catalogImages = new Map();
+      (Array.isArray(games) ? games : [])
         .filter(game => game?.title && game?.image)
-        .map(game => [catalogKey(game.title), game.image]));
+        .forEach(game => {
+          catalogImages.set(catalogKey(game.title), game.image);
+          (UKRAINIAN_GAME_ALIASES[game.title] ?? []).forEach(alias => {
+            catalogImages.set(catalogKey(alias), game.image);
+          });
+        });
     },
     destroy
   };

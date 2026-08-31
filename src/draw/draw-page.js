@@ -43,6 +43,7 @@ const elements = {
   participantsTab: byId('participantsTabBtn'),
   historyTab: byId('historyTabBtn'),
   participantsSection: byId('participantsSection'),
+  mysterySidePlaceholder: byId('mysterySidePlaceholder'),
   participantsDrawer: byId('participantsDrawer')
 };
 
@@ -91,7 +92,7 @@ function startDrawPage() {
     }
   });
 
-  fetch('src/data/metacritic-games.json')
+  fetch('src/data/metacritic-games.json', { cache: 'force-cache' })
     .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
     .then(games => {
       drawList.setCatalog(games);
@@ -169,6 +170,7 @@ function startDrawPage() {
     elements.wheelMachine.style.display = mode === 'wheel' ? 'flex' : 'none';
     elements.mysteryMachine.style.display = mysteryMode ? 'flex' : 'none';
     elements.participantsSection.hidden = mysteryMode;
+    elements.mysterySidePlaceholder.hidden = !mysteryMode;
     elements.modeButtons.forEach(button => {
       const selected = button.id.startsWith(mode);
       button.classList.toggle('active', selected);
@@ -258,13 +260,14 @@ function startDrawPage() {
     const winner = findTerminalWinner(state.games);
     if (winner && !state.logEntries.at(-1)?.text.startsWith('Переможець:')) addLog(`Переможець: <b>${winner.name}</b>`, true);
     persistAndRender({ preserveActiveVisualization: true });
-    if (eliminatedNames.length) {
+    const showResultPopup = state.visualMode !== 'mystery';
+    if (showResultPopup && eliminatedNames.length) {
       queueResultPopup(
         eliminatedNames.length === 1 ? 'Вибуває з розіграшу' : 'Вибули з розіграшу',
         eliminatedNames.join(' · ')
       );
     }
-    if (winner) queueResultPopup('Переможець', winner.name);
+    if (showResultPopup && winner) queueResultPopup('Переможець', winner.name);
     if (winner) showFinishedState(winner);
     else updateStatus(roundStatus('готовий'));
     return { finished: Boolean(winner) };
