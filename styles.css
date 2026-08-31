@@ -1137,6 +1137,9 @@
     font-size:44px;
     font-weight:800;
   }
+  /* Author CSS sets the fallback to grid; explicitly honour the HTML hidden
+     attribute so a successfully loaded cover is never covered by its letter. */
+  .mystery-cover-fallback[hidden]{display:none!important;}
   .mystery-fade{
     position:absolute;
     z-index:2;
