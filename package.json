@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "serve": "node scripts/local-server.js"
+    "serve": "node scripts/local-server.js",
+    "catalog:metacritic": "node scripts/build-metacritic-catalog.mjs"
   }
 }

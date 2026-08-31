@@ -2,6 +2,8 @@ import { addHistorySnapshot, createDefaultState, loadHistory, loadState, saveSta
 import { changeCopies } from '../core/game-rules.js';
 import { normalizeName } from '../shared/presentation.js';
 import { createGameListView } from './game-list-view.js';
+import { createGameAutocomplete } from './game-autocomplete.js';
+import { UKRAINIAN_GAME_ALIASES } from '../data/game-ukrainian-aliases.js';
 import { createTwitchRewardView } from './twitch-reward-view.js';
 import { createTwitchRequestView } from './twitch-request-view.js';
 import { createTwitchIntegration } from '../integrations/twitch.js';
@@ -43,6 +45,17 @@ const gameListView = createGameListView(ui, {
   onCopyDelta: copies,
   onCopyHistory: copyHistory
 });
+
+const gameAutocomplete = createGameAutocomplete({ input: ui.input, list: id('gameSuggestions') });
+fetch('src/data/metacritic-games.json')
+  .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+  .then(games => {
+    const localizedGames = games.map(game => ({ ...game, aliases: UKRAINIAN_GAME_ALIASES[game.title] ?? [] }));
+    gameAutocomplete.setGames(localizedGames);
+    gameListView.setCatalog(games);
+    render();
+  })
+  .catch(() => { ui.actionStatus.textContent = 'Каталог ігор тимчасово недоступний — назву можна ввести вручну.'; });
 
 const rewardView = createTwitchRewardView(document, {
   onCreate: createReward,
@@ -331,6 +344,7 @@ function cleanup() {
   if (cleanedUp) return;
   cleanedUp = true;
   gameListView.destroy();
+  gameAutocomplete.destroy();
   rewardView.destroy();
   requestView.destroy();
   twitch.destroy();

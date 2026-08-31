@@ -1,4 +1,4 @@
-import { colorForGame, formatSavedAt, hexToRgba } from '../shared/presentation.js';
+import { colorForGame, formatSavedAt, hexToRgba, normalizeName } from '../shared/presentation.js';
 
 function gamesWord(count) {
   const lastTwo = count % 100;
@@ -10,6 +10,38 @@ function gamesWord(count) {
 }
 
 export function createGameListView(elements, handlers) {
+  let catalogImages = new Map();
+
+  function catalogKey(name) {
+    return normalizeName(name).toLocaleLowerCase('uk');
+  }
+
+  function gameInitial(name) {
+    return [...normalizeName(name)][0]?.toLocaleUpperCase('uk') ?? '?';
+  }
+
+  function createCover(game, color) {
+    const cover = document.createElement('div');
+    cover.className = 'game-card-cover';
+    cover.style.setProperty('--cover-color', color);
+    const fallback = document.createElement('span');
+    fallback.className = 'game-card-fallback';
+    fallback.textContent = gameInitial(game.name);
+    const imageUrl = catalogImages.get(catalogKey(game.name));
+    if (imageUrl) {
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = '';
+      image.loading = 'lazy';
+      fallback.hidden = true;
+      image.addEventListener('error', () => { image.remove(); fallback.hidden = false; });
+      cover.append(image, fallback);
+    } else {
+      cover.append(fallback);
+    }
+    return cover;
+  }
+
   function render(state, history) {
     elements.empty.hidden = state.games.length > 0;
     elements.listHead.hidden = state.games.length === 0;
@@ -27,6 +59,7 @@ export function createGameListView(elements, handlers) {
       card.style.borderLeft = `3px solid ${color}`;
       card.style.background = `linear-gradient(90deg, ${hexToRgba(color, .1)}, transparent 60%), var(--panel)`;
       card.innerHTML = `<div class="tnum"> №${String(index + 1).padStart(2, '0')}</div><div class="tname"></div><div class="trow"><div class="copies-stepper"><button class="step-btn minus-btn" data-action="decrease" type="button">−</button><span class="copies-badge">× ${game.copies}</span><button class="step-btn plus-btn" data-action="increase" type="button">+</button></div><button class="del-btn" data-action="remove">видалити</button></div>`;
+      card.prepend(createCover(game, color));
       card.querySelector('.tname').textContent = game.name;
       card.querySelector('.minus-btn').setAttribute('aria-label', `Зменшити кількість копій ${game.name}`);
       card.querySelector('.plus-btn').setAttribute('aria-label', `Збільшити кількість копій ${game.name}`);
@@ -52,5 +85,13 @@ export function createGameListView(elements, handlers) {
     ({ remove: handlers.onRemove, decrease: () => handlers.onCopyDelta(id, -1), increase: () => handlers.onCopyDelta(id, 1), 'copy-history': handlers.onCopyHistory }[action.dataset.action])?.(id);
   }
   elements.tickets.addEventListener('click', click); elements.historyList.addEventListener('click', click);
-  return { render, destroy() { elements.tickets.removeEventListener('click', click); elements.historyList.removeEventListener('click', click); } };
+  return {
+    render,
+    setCatalog(games) {
+      catalogImages = new Map((Array.isArray(games) ? games : [])
+        .filter(game => game?.title && game?.image)
+        .map(game => [catalogKey(game.title), game.image]));
+    },
+    destroy() { elements.tickets.removeEventListener('click', click); elements.historyList.removeEventListener('click', click); }
+  };
 }

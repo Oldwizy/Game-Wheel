@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.twitch.tv https://id.twitch.tv wss://eventsub.wss.twitch.tv; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.metacritic.com; connect-src 'self' https://api.twitch.tv https://id.twitch.tv wss://eventsub.wss.twitch.tv; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Рандомайзер рандому</title>
   <link rel="stylesheet" href="home.css">
   <link rel="stylesheet" href="shared-theme.css">
@@ -27,7 +27,10 @@
           <section class="add-panel">
             <label for="gameInput">Введіть що ви хочете додати</label>
             <div class="add-row">
-              <input type="text" id="gameInput" placeholder="Наприклад Відьмак 3..." maxlength="60">
+              <div class="game-autocomplete">
+                <input type="text" id="gameInput" placeholder="Введіть або оберіть гру…" maxlength="100" autocomplete="off" aria-autocomplete="list" aria-controls="gameSuggestions" aria-expanded="false">
+                <div class="game-suggestions" id="gameSuggestions" role="listbox" aria-label="Пропозиції ігор" hidden></div>
+              </div>
               <input class="copies-input" type="number" id="copiesInput" min="1" value="1" aria-label="Кількість копій">
               <button class="btn-cta" id="addBtn" type="button">Додати до пулу</button>
             </div>
