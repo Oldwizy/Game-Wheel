@@ -14,13 +14,14 @@ function reducedMotionEnabled(preference) {
     : Boolean(preference);
 }
 
-export function createCardsVisualization(elements, { random = Math.random, prefersReducedMotion = false } = {}) {
+export function createCardsVisualization(elements, { random = Math.random, prefersReducedMotion = false, onFinalCard = () => {} } = {}) {
   let destroyed = false;
   let activePlay = null;
   let lastGames = [];
   let catalogImages = new Map();
   let catalogEntries = [];
   let previewTimer = null;
+  let completed = false;
 
   const catalogKey = name => normalizeName(name).toLocaleLowerCase('uk');
   const imageForGame = name => {
@@ -41,15 +42,24 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     }
   }
 
-  function preview(card, temporary = false) {
+  function preview(card, temporary = false, game = null) {
     if (!card || card.disabled || card.classList.contains('is-selected')) return;
     hidePreview(elements.grid.querySelector('.is-previewed'));
     card.classList.add('is-previewed');
     if (temporary) {
-      card.classList.add('is-viewed');
+      const isFinalCard = elements.grid.querySelectorAll('.game-card:not(:disabled)').length === 1;
       card.disabled = true;
       clearTimeout(previewTimer);
-      previewTimer = setTimeout(() => spendCard(card), reducedMotionEnabled(prefersReducedMotion) ? 0 : PREVIEW_MS);
+      previewTimer = setTimeout(() => {
+        if (isFinalCard && game) {
+          completed = true;
+          card.classList.add('is-selected');
+          card.setAttribute('aria-label', `Переможна картка: ${game.name}`);
+          onFinalCard(game);
+          return;
+        }
+        spendCard(card);
+      }, reducedMotionEnabled(prefersReducedMotion) ? 0 : PREVIEW_MS);
     }
   }
 
@@ -101,7 +111,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     card.addEventListener('pointerleave', resetTilt);
     card.addEventListener('focus', () => { if (!card.disabled) card.classList.add('is-hovered'); });
     card.addEventListener('blur', resetTilt);
-    card.addEventListener('click', () => preview(card, true));
+    card.addEventListener('click', () => preview(card, true, game));
     return card;
   }
 
@@ -115,6 +125,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     if (destroyed) return;
     lastGames = [...games];
     clearTimeout(previewTimer);
+    completed = false;
     elements.result.textContent = '';
     elements.machine.classList.remove('spinning', 'cards-landed');
     replaceCards(games);
@@ -155,6 +166,8 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
   }
 
   function cancel() {
+    clearTimeout(previewTimer);
+    previewTimer = null;
     if (!activePlay) return;
     clearTimeout(activePlay.timer);
     activePlay.signal?.removeEventListener?.('abort', activePlay.abort);
@@ -174,6 +187,9 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
         catalogImages.set(game.key, game.image);
         (UKRAINIAN_GAME_ALIASES[game.title] ?? []).forEach(alias => catalogImages.set(catalogKey(alias), game.image));
       });
+    },
+    hasProgress() {
+      return completed || Boolean(elements.grid.querySelector('.game-card:disabled'));
     },
     destroy() {
       clearTimeout(previewTimer);

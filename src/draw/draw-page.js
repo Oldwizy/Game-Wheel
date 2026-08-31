@@ -91,7 +91,12 @@ function startDrawPage() {
     machine: elements.cardsMachine,
     grid: elements.cardsGrid,
     result: elements.cardsResult
-  }, { prefersReducedMotion: reducedMotion });
+  }, {
+    prefersReducedMotion: reducedMotion,
+    onFinalCard(winner) {
+      queueResultPopup('Переможець', winner.name);
+    }
+  });
   wheel.initialize(state.games);
 
   const drawList = createDrawListView(elements.drawTickets, {
@@ -311,6 +316,10 @@ function startDrawPage() {
 
   function setMode(mode, save = true) {
     if (controller.phase !== 'idle' && controller.phase !== 'finished') return;
+    if (state.visualMode === 'cards' && mode !== 'cards' && cards.hasProgress()) {
+      const confirmed = window.confirm('Зміна режиму скине відкриті картки. Продовжити?');
+      if (!confirmed) return;
+    }
     state = { ...state, visualMode: mode };
     renderMode();
     renderPhase(controller.phase);
