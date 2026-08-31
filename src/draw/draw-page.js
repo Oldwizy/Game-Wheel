@@ -91,6 +91,14 @@ function startDrawPage() {
     }
   });
 
+  fetch('src/data/metacritic-games.json')
+    .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+    .then(games => {
+      drawList.setCatalog(games);
+      renderState({ preserveActiveVisualization: true });
+    })
+    .catch(() => {});
+
   const drawLog = createDrawLog(elements.log, {
     onReturn(entry) {
       if (entry.returned || (controller.phase !== 'idle' && controller.phase !== 'finished')) return;

@@ -1,8 +1,34 @@
-import { colorForGame, hexToRgba } from '../shared/presentation.js';
+import { colorForGame, hexToRgba, normalizeName } from '../shared/presentation.js';
 
 export function createDrawListView(element, { onCopyDelta }) {
   let games = [];
   let disabled = false;
+  let catalogImages = new Map();
+
+  const catalogKey = name => normalizeName(name).toLocaleLowerCase('uk');
+  const gameInitial = name => [...normalizeName(name)][0]?.toLocaleUpperCase('uk') ?? '?';
+
+  function createCover(game, color) {
+    const cover = document.createElement('div');
+    cover.className = 'game-card-cover';
+    cover.style.setProperty('--cover-color', color);
+    const fallback = document.createElement('span');
+    fallback.className = 'game-card-fallback';
+    fallback.textContent = gameInitial(game.name);
+    const imageUrl = catalogImages.get(catalogKey(game.name));
+    if (imageUrl) {
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = '';
+      image.loading = 'lazy';
+      fallback.hidden = true;
+      image.addEventListener('error', () => { image.remove(); fallback.hidden = false; });
+      cover.append(image, fallback);
+    } else {
+      cover.append(fallback);
+    }
+    return cover;
+  }
 
   function render(nextGames, options = {}) {
     games = [...nextGames];
@@ -50,7 +76,7 @@ export function createDrawListView(element, { onCopyDelta }) {
       plus.disabled = disabled;
       stepper.append(minus, badge, plus);
       row.append(stepper, document.createElement('span'));
-      card.append(stamp, number, name, row);
+      card.append(stamp, createCover(game, color), number, name, row);
       return card;
     });
     element.replaceChildren(...nodes);
@@ -75,6 +101,11 @@ export function createDrawListView(element, { onCopyDelta }) {
   element.addEventListener('click', handleClick);
   return {
     render,
+    setCatalog(nextGames) {
+      catalogImages = new Map((Array.isArray(nextGames) ? nextGames : [])
+        .filter(game => game?.title && game?.image)
+        .map(game => [catalogKey(game.title), game.image]));
+    },
     setDisabled,
     markWinner,
     markEliminated,
