@@ -97,7 +97,10 @@ function startDrawPage() {
     .then(games => {
       drawList.setCatalog(games);
       mystery.setCatalog(games);
-      renderState({ preserveActiveVisualization: true });
+      // If the catalog arrives while the carousel is idle, rebuild it so
+      // previously rendered fallback letters are replaced with blurred covers.
+      // During an active round, preserve the reel that is already moving.
+      renderState({ preserveActiveVisualization: controller.phase !== 'idle' && controller.phase !== 'finished' });
     })
     .catch(() => {});
 
