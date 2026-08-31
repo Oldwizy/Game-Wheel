@@ -61,6 +61,30 @@ export function createMysteryVisualization(elements, {
       ?? catalogEntries.find(entry => entry.key.includes(key) || key.includes(entry.key))?.image;
   }
 
+  function addCoverImage(cover, name) {
+    if (cover.querySelector('img')) return;
+    const imageUrl = imageForGame(name);
+    if (!imageUrl) return;
+    const documentRef = cover.ownerDocument;
+    const fallback = cover.querySelector('.mystery-cover-fallback');
+    const image = documentRef.createElement('img');
+    image.src = imageUrl;
+    image.alt = '';
+    image.decoding = 'async';
+    image.addEventListener('error', () => {
+      image.remove();
+      if (fallback) fallback.hidden = false;
+    });
+    if (fallback) fallback.hidden = true;
+    cover.prepend(image);
+  }
+
+  function hydrateRenderedCovers() {
+    elements.strip?.querySelectorAll?.('.mystery-folder').forEach(card => {
+      addCoverImage(card.querySelector('.mystery-cover'), card.dataset.gameName);
+    });
+  }
+
   function replaceItems(items) {
     const documentRef = elements.strip?.ownerDocument ?? globalThis.document;
     if (!documentRef?.createElement || !elements.strip?.replaceChildren) return;
@@ -68,24 +92,15 @@ export function createMysteryVisualization(elements, {
       const card = documentRef.createElement('div');
       card.className = 'mystery-folder';
       card.dataset.gameId = String(game.id);
+      card.dataset.gameName = game.name;
       card.setAttribute('aria-label', 'Прихована гра');
       const cover = documentRef.createElement('span');
       cover.className = 'mystery-cover';
       const fallback = documentRef.createElement('span');
       fallback.className = 'mystery-cover-fallback';
       fallback.textContent = gameInitial(game.name);
-      const imageUrl = imageForGame(game.name);
-      if (imageUrl) {
-        const image = documentRef.createElement('img');
-        image.src = imageUrl;
-        image.alt = '';
-        image.decoding = 'async';
-        image.addEventListener('error', () => { image.remove(); fallback.hidden = false; });
-        fallback.hidden = true;
-        cover.append(image, fallback);
-      } else {
-        cover.append(fallback);
-      }
+      cover.append(fallback);
+      addCoverImage(cover, game.name);
       card.append(cover);
       return card;
     });
@@ -197,6 +212,7 @@ export function createMysteryVisualization(elements, {
             catalogImages.set(catalogKey(alias), game.image);
           });
         });
+      hydrateRenderedCovers();
     },
     destroy
   };
