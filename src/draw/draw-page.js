@@ -95,6 +95,7 @@ function startDrawPage() {
     .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
     .then(games => {
       drawList.setCatalog(games);
+      mystery.setCatalog(games);
       renderState({ preserveActiveVisualization: true });
     })
     .catch(() => {});
