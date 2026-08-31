@@ -10,6 +10,7 @@ import { createSlotVisualization } from './slot.js';
 import { createWheelVisualization } from './wheel.js';
 
 const byId = id => document.getElementById(id);
+const totalCopies = games => games.reduce((total, game) => total + game.copies, 0);
 const elements = {
   drawTickets: byId('drawTickets'),
   back: byId('backBtn'),
@@ -132,6 +133,10 @@ function startDrawPage() {
     elements.status.className = `status-line${mode ? ` ${mode}` : ''}`;
   }
 
+  function roundStatus(phase) {
+    return `Раунд ${state.roundCount + 1} ${phase}. Варіантів: ${state.games.length}. Усього з копіями: ${totalCopies(state.games)}.`;
+  }
+
   function renderPhase(phase) {
     const disabled = controlStateForPhase(phase);
     applyControlState({
@@ -252,7 +257,7 @@ function startDrawPage() {
     }
     if (winner) queueResultPopup('Переможець', winner.name);
     if (winner) showFinishedState(winner);
-    else updateStatus(`Раунд ${state.roundCount + 1} готовий. У грі: ${state.games.length}.`);
+    else updateStatus(roundStatus('готовий'));
     return { finished: Boolean(winner) };
   }
 
@@ -294,7 +299,7 @@ function startDrawPage() {
   });
   elements.start.addEventListener('click', () => {
     if (state.games.length < 2) return;
-    updateStatus(`Раунд ${state.roundCount + 1} триває. У грі: ${state.games.length}.`, 'active');
+    updateStatus(roundStatus('триває'), 'active');
     controller.start({
       mode: state.visualMode,
       games: state.games,
@@ -325,5 +330,5 @@ function startDrawPage() {
   renderState();
   setSideTab('participants');
   if (loadError) updateStatus('Не вдалося повністю відновити збережений стан.');
-  else updateStatus(`Раунд ${state.roundCount + 1} готовий. У грі: ${state.games.length}.`);
+  else updateStatus(roundStatus('готовий'));
 }
