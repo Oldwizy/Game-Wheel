@@ -21,6 +21,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
   let catalogImages = new Map();
   let catalogEntries = [];
   let previewTimer = null;
+  let activePreviewCard = null;
   let completed = false;
 
   const catalogKey = name => normalizeName(name).toLocaleLowerCase('uk');
@@ -44,6 +45,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
 
   function preview(card, temporary = false, game = null) {
     if (!card || card.disabled || card.classList.contains('is-selected')) return;
+    if (temporary && activePreviewCard) return;
     card.classList.remove('is-hovered');
     card.style.removeProperty('--card-tilt-x');
     card.style.removeProperty('--card-tilt-y');
@@ -52,8 +54,10 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     if (temporary) {
       const isFinalCard = elements.grid.querySelectorAll('.game-card:not(:disabled)').length === 1;
       card.disabled = true;
+      activePreviewCard = card;
       clearTimeout(previewTimer);
       previewTimer = setTimeout(() => {
+        activePreviewCard = null;
         if (isFinalCard && game) {
           completed = true;
           card.classList.add('is-selected');
@@ -128,6 +132,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     if (destroyed) return;
     lastGames = [...games];
     clearTimeout(previewTimer);
+    activePreviewCard = null;
     completed = false;
     elements.result.textContent = '';
     elements.machine.classList.remove('spinning', 'cards-landed');
@@ -156,11 +161,13 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     if (signal?.aborted) throw abortError();
     activePlay = null;
     selected.classList.add('is-selected', 'is-previewed');
+    activePreviewCard = selected;
     selected.setAttribute('aria-label', `Обрана картка: ${target.name}`);
     elements.result.textContent = target.name;
     clearTimeout(previewTimer);
     previewTimer = setTimeout(() => {
       spendCard(selected);
+      activePreviewCard = null;
       elements.result.textContent = '';
     }, reducedMotionEnabled(prefersReducedMotion) ? 0 : PREVIEW_MS);
     elements.machine.classList.remove('spinning');
@@ -171,6 +178,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
   function cancel() {
     clearTimeout(previewTimer);
     previewTimer = null;
+    activePreviewCard = null;
     if (!activePlay) return;
     clearTimeout(activePlay.timer);
     activePlay.signal?.removeEventListener?.('abort', activePlay.abort);
