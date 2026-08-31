@@ -195,9 +195,15 @@ body{
   min-height:126px;
   padding:10px !important;
   border-width:1px !important;
-  border-left-width:5px !important;
+  border-left-width:1px !important;
+  border-color:var(--line) !important;
+  border-left-color:var(--line) !important;
   border-radius:9px !important;
   background:#242336 !important;
+}
+#drawSidePanel .ticket:hover{
+  border-color:#514d68 !important;
+  border-left-color:#514d68 !important;
 }
 #drawSidePanel .ticket .tnum{
   grid-column:2;
