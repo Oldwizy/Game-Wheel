@@ -124,6 +124,8 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
 
   function replaceCards(games) {
     const pool = games.flatMap(game => Array.from({ length: game.copies }, (_, copyIndex) => ({ game, copyIndex })));
+    const columns = Math.max(4, Math.ceil(Math.sqrt(pool.length * 3.75)));
+    elements.grid.style.setProperty('--cards-columns', String(columns));
     const cards = shuffle(pool, random).map(({ game, copyIndex }) => createCard(game, copyIndex));
     elements.grid.replaceChildren(...cards);
   }
