@@ -51,9 +51,15 @@ export function createMysteryVisualization(elements, {
   let activePlay = null;
   let lastGames = [];
   let catalogImages = new Map();
+  let catalogEntries = [];
 
   const catalogKey = name => normalizeName(name).toLocaleLowerCase('uk');
   const gameInitial = name => [...normalizeName(name)][0]?.toLocaleUpperCase('uk') ?? '?';
+  function imageForGame(name) {
+    const key = catalogKey(name);
+    return catalogImages.get(key)
+      ?? catalogEntries.find(entry => entry.key.includes(key) || key.includes(entry.key))?.image;
+  }
 
   function replaceItems(items) {
     const documentRef = elements.strip?.ownerDocument ?? globalThis.document;
@@ -68,7 +74,7 @@ export function createMysteryVisualization(elements, {
       const fallback = documentRef.createElement('span');
       fallback.className = 'mystery-cover-fallback';
       fallback.textContent = gameInitial(game.name);
-      const imageUrl = catalogImages.get(catalogKey(game.name));
+      const imageUrl = imageForGame(game.name);
       if (imageUrl) {
         const image = documentRef.createElement('img');
         image.src = imageUrl;
@@ -80,10 +86,6 @@ export function createMysteryVisualization(elements, {
       } else {
         cover.append(fallback);
       }
-      const question = documentRef.createElement('span');
-      question.className = 'mystery-cover-question';
-      question.textContent = '?';
-      cover.append(question);
       card.append(cover);
       return card;
     });
@@ -184,6 +186,9 @@ export function createMysteryVisualization(elements, {
     cancel,
     setCatalog(games) {
       catalogImages = new Map();
+      catalogEntries = (Array.isArray(games) ? games : [])
+        .filter(game => game?.title && game?.image)
+        .map(game => ({ key: catalogKey(game.title), image: game.image }));
       (Array.isArray(games) ? games : [])
         .filter(game => game?.title && game?.image)
         .forEach(game => {

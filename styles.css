@@ -1124,15 +1124,7 @@
     transform:scale(1.28);
     transition:filter .6s ease,transform .6s ease;
   }
-  .mystery-cover::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:radial-gradient(circle at center,transparent 18%,rgba(8,7,15,.16) 84%);
-    transition:opacity .45s ease;
-  }
-  .mystery-cover-fallback,
-  .mystery-cover-question{
+  .mystery-cover-fallback{
     position:absolute;
     inset:0;
     display:grid;
@@ -1144,16 +1136,6 @@
     font-family:var(--font-display);
     font-size:44px;
     font-weight:800;
-  }
-  .mystery-cover-question{
-    z-index:1;
-    color:#fff;
-    font-family:var(--font-display);
-    font-size:48px;
-    font-weight:800;
-    opacity:.72;
-    text-shadow:0 2px 12px #000;
-    transition:opacity .28s ease;
   }
   .mystery-fade{
     position:absolute;
@@ -1192,7 +1174,6 @@
   .mystery-folder-selected{z-index:4;animation:mysteryReveal .72s cubic-bezier(.18,.86,.26,1.2) both;}
   .mystery-folder-selected .mystery-cover{border-color:var(--teal);box-shadow:0 0 30px rgba(78,205,196,.64),0 14px 28px rgba(0,0,0,.5);}
   .mystery-folder-selected .mystery-cover img{filter:blur(0) brightness(1) saturate(1);transform:scale(1);}
-  .mystery-folder-selected .mystery-cover::after,.mystery-folder-selected .mystery-cover-question{opacity:0;}
   @keyframes mysteryReveal{0%{transform:scale(.92)}55%{transform:scale(1.34)}100%{transform:scale(1.22)}}
   .mystery-result{
     min-height:1.4em;
@@ -1209,7 +1190,7 @@
   .slot-landed .slot-decal span{ background:var(--teal); }
 
   @media (prefers-reduced-motion: reduce){
-    .mystery-folder,.mystery-cover img,.mystery-cover::after,.mystery-cover-question{transition:none;}
+    .mystery-folder,.mystery-cover img{transition:none;}
     .mystery-folder-selected{animation:none;transform:scale(1.1);}
   }
 
