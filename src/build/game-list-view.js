@@ -72,11 +72,16 @@ export function createGameListView(elements, handlers) {
     }));
     elements.historyEmpty.hidden = history.length > 0;
     elements.historyList.replaceChildren(...history.map(entry => {
-      const item = document.createElement('div'); item.className = 'history-item'; item.dataset.id = entry.id;
-      const date = document.createElement('div'); date.className = 'h-date'; date.textContent = `${formatSavedAt(entry.savedAt)} · ${entry.games.length} ${gamesWord(entry.games.length)}`;
-      const names = document.createElement('div'); names.className = 'h-names'; names.textContent = entry.games.map(game => game.name + (game.copies > 1 ? ` ×${game.copies}` : '')).join(', ');
-      const button = document.createElement('button'); button.className = 'btn-ghost'; button.type = 'button'; button.dataset.action = 'copy-history'; button.textContent = 'Скопіювати список';
-      item.append(date, names, button); return item;
+      const totalCopies = entry.games.reduce((total, game) => total + game.copies, 0);
+      const item = document.createElement('article'); item.className = 'history-item'; item.dataset.id = entry.id;
+      const top = document.createElement('div'); top.className = 'history-item-top';
+      const date = document.createElement('time'); date.className = 'h-date'; date.dateTime = entry.savedAt; date.textContent = formatSavedAt(entry.savedAt);
+      const summary = document.createElement('span'); summary.className = 'history-summary'; summary.textContent = `${entry.games.length} ${gamesWord(entry.games.length)} · ${totalCopies} коп.`;
+      top.append(date, summary);
+      const names = document.createElement('p'); names.className = 'h-names'; names.textContent = entry.games.map(game => game.name + (game.copies > 1 ? ` ×${game.copies}` : '')).join(', ');
+      const button = document.createElement('button'); button.className = 'btn-ghost history-restore'; button.type = 'button'; button.dataset.action = 'copy-history'; button.innerHTML = 'Відновити список <span aria-hidden="true">→</span>';
+      button.setAttribute('aria-label', `Відновити список від ${formatSavedAt(entry.savedAt)}`);
+      item.append(top, names, button); return item;
     }));
   }
   function click(event) {

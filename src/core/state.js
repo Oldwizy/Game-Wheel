@@ -2,7 +2,7 @@ export const STATE_KEY = 'lototron_state_v1';
 export const HISTORY_KEY = 'lototron_history_v1';
 export const CURRENT_SCHEMA_VERSION = 3;
 
-const MAX_HISTORY = 3;
+const MAX_HISTORY = 15;
 
 const stateMigrations = new Map([
   [0, legacy => ({
