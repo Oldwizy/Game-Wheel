@@ -455,6 +455,8 @@ ui.lock.addEventListener('click', async () => {
   location.href = 'draw.html';
 });
 
-window.addEventListener('pagehide', cleanup, { once: true });
+window.addEventListener('pagehide', event => {
+  if (!event.persisted) cleanup();
+}, { once: true });
 render();
 void initializeTwitch();

@@ -1,11 +1,12 @@
 import { loadState, saveState } from '../core/state.js';
 import { weightedPick } from '../core/random.js';
-import { changeCopies, findTerminalWinner, removeRoundCopy, resolveInstantWinner, returnGame } from '../core/game-rules.js';
+import { changeCopies, findTerminalWinner, removeRoundCopy, resolveCardsWinner, resolveInstantWinner, returnGame } from '../core/game-rules.js';
 import { applyControlState, controlStateForPhase } from './controls.js';
 import { createDrawListView } from './draw-list-view.js';
 import { createDrawLog } from './draw-log.js';
 import { createMysteryVisualization } from './mystery.js';
 import { createCardsVisualization } from './cards.js';
+import { shouldPreserveActiveVisualization } from './render-policy.js';
 import { RoundController } from './round-controller.js';
 import { createSlotVisualization } from './slot.js';
 import { createWheelVisualization } from './wheel.js';
@@ -66,6 +67,7 @@ if (state.games.length === 0) {
 function startDrawPage() {
   let provisionalTarget = null;
   let destroyed = false;
+  const catalogController = new AbortController();
   const resultPopupQueue = [];
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const mobileLayout = matchMedia('(max-width: 640px)');
@@ -94,6 +96,18 @@ function startDrawPage() {
   }, {
     prefersReducedMotion: reducedMotion,
     onFinalCard(winner) {
+      if (controller.phase !== 'idle') return;
+      const resolved = resolveCardsWinner(state.games, winner.id);
+      state = {
+        ...state,
+        games: resolved.games,
+        roundCount: state.roundCount + 1
+      };
+      wheel.reconcile(state.games, { type: 'cards-winner', gameId: winner.id });
+      addLog(`Переможець: <b>${winner.name}</b>`, true);
+      persist();
+      controller.finish();
+      showFinishedState(winner);
       queueResultPopup('Переможець', winner.name);
     }
   });
@@ -111,18 +125,27 @@ function startDrawPage() {
     }
   });
 
-  fetch('src/data/metacritic-games.json', { cache: 'force-cache' })
+  fetch('src/data/metacritic-games.json', { cache: 'force-cache', signal: catalogController.signal })
     .then(response => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
     .then(games => {
+      if (destroyed) return;
       drawList.setCatalog(games);
       mystery.setCatalog(games);
       cards.setCatalog(games);
       // If the catalog arrives while the carousel is idle, rebuild it so
       // previously rendered fallback letters are replaced with blurred covers.
       // During an active round, preserve the reel that is already moving.
-      renderState({ preserveActiveVisualization: controller.phase !== 'idle' && controller.phase !== 'finished' });
+      renderState({
+        preserveActiveVisualization: shouldPreserveActiveVisualization({
+          phase: controller.phase,
+          mode: state.visualMode,
+          cardsHasProgress: cards.hasProgress()
+        })
+      });
     })
-    .catch(() => {});
+    .catch(error => {
+      if (error.name !== 'AbortError') return;
+    });
 
   const drawLog = createDrawLog(elements.log, {
     onReturn(entry) {
@@ -147,7 +170,8 @@ function startDrawPage() {
     onPhaseChange: renderPhase,
     onError(error) {
       updateStatus(`Помилка раунду: ${error.message}`);
-    }
+    },
+    initialPhase: findTerminalWinner(state.games) ? 'finished' : 'idle'
   });
 
   function addLog(text, isWin = false, meta = null) {
@@ -213,6 +237,9 @@ function startDrawPage() {
       if (name !== mode) visualization.cancel();
     });
     visualizations[mode].render({ games: state.games });
+    if (mode === 'cards' && controller.phase === 'finished') {
+      elements.cardsGrid.querySelectorAll('.game-card').forEach(card => { card.disabled = true; });
+    }
   }
 
   function renderState({ preserveActiveVisualization = false } = {}) {
@@ -368,9 +395,14 @@ function startDrawPage() {
     persist();
     location.href = 'index.html';
   });
-  window.addEventListener('pagehide', () => {
+  window.addEventListener('pagehide', event => {
     if (destroyed) return;
+    if (event.persisted) {
+      controller.cancel();
+      return;
+    }
     destroyed = true;
+    catalogController.abort();
     controller.cancel();
     Object.values(visualizations).forEach(visualization => visualization.destroy());
     drawList.destroy();
@@ -380,6 +412,8 @@ function startDrawPage() {
 
   renderState();
   setSideTab('participants');
-  if (loadError) updateStatus('Не вдалося повністю відновити збережений стан.');
+  const restoredWinner = findTerminalWinner(state.games);
+  if (restoredWinner) showFinishedState(restoredWinner);
+  else if (loadError) updateStatus('Не вдалося повністю відновити збережений стан.');
   else updateStatus(roundStatus('готовий'));
 }

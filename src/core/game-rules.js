@@ -33,6 +33,10 @@ export function resolveInstantWinner(games, targetId) {
   };
 }
 
+export function resolveCardsWinner(games, targetId) {
+  return resolveInstantWinner(games, targetId);
+}
+
 export function returnGame(games, entry) {
   const existing = games.find(game => game.id === entry.gameId);
   if (existing) {

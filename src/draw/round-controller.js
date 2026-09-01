@@ -1,5 +1,5 @@
 const transitions = {
-  idle: new Set(['animating']),
+  idle: new Set(['animating', 'finished']),
   animating: new Set(['resolving', 'idle']),
   resolving: new Set(['idle', 'finished']),
   finished: new Set(['idle'])
@@ -14,13 +14,14 @@ function isAbortError(error) {
 }
 
 export class RoundController {
-  constructor({ selectTarget, visualizationFor, commitResult, onPhaseChange, onError }) {
+  constructor({ selectTarget, visualizationFor, commitResult, onPhaseChange, onError, initialPhase = 'idle' }) {
     this.selectTarget = selectTarget;
     this.visualizationFor = visualizationFor;
     this.commitResult = commitResult;
     this.onPhaseChange = onPhaseChange;
     this.onError = onError;
-    this.phase = 'idle';
+    if (!transitions[initialPhase]) throw new Error(`Unknown initial round phase: ${initialPhase}`);
+    this.phase = initialPhase;
     this.internalController = null;
     this.activeVisualization = null;
     this.removeExternalAbortListener = null;
@@ -83,6 +84,11 @@ export class RoundController {
     this.activeVisualization?.cancel();
     this.transition('idle');
     this.cleanupActiveRound();
+  }
+
+  finish() {
+    if (this.phase !== 'idle') throw new Error(`Cannot finish round from ${this.phase}`);
+    this.transition('finished');
   }
 
   cleanupActiveRound() {
