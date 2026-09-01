@@ -104,7 +104,7 @@ export function createMotionKeyframes({
     profile: resolvedProfile
   }).keyframes;
   const keyframes = progressFrames.map(({ offset, progress }) => ({
-    transform: `translateX(${startTranslateY + (finalTranslateY - startTranslateY) * progress}px)`,
+    transform: `translateY(${startTranslateY + (finalTranslateY - startTranslateY) * progress}px)`,
     offset,
     easing: 'linear'
   }));
@@ -124,8 +124,20 @@ export function createSlotVisualization(elements, {
   }
 
   function rowMetrics() {
-    const rowHeight = elements.itemWidth ?? elements.window?.clientWidth ?? DEFAULT_ROW_HEIGHT * 6;
-    return { rowHeight, visibleRows: 1 };
+    const rowHeight = elements.rowHeight ?? DEFAULT_ROW_HEIGHT;
+    if (elements.window?.style) {
+      elements.window.style.flex = '1 1 auto';
+      elements.window.style.height = '';
+    }
+    const naturalHeight = elements.window?.clientHeight || rowHeight * 3;
+    let visibleRows = Math.max(3, Math.floor(naturalHeight / rowHeight));
+    if (visibleRows % 2 === 0) visibleRows -= 1;
+    visibleRows = Math.max(3, visibleRows);
+    if (elements.window?.style) {
+      elements.window.style.flex = '0 0 auto';
+      elements.window.style.height = `${visibleRows * rowHeight}px`;
+    }
+    return { rowHeight, visibleRows };
   }
 
   function createItem(game, centered = false) {
@@ -160,8 +172,8 @@ export function createSlotVisualization(elements, {
     const items = buildSequence(pool, Math.max(visibleRows, pool.length), random);
     const centerIndex = Math.min(Math.floor(visibleRows / 2), items.length - 1);
     replaceItems(items, centerIndex);
-    const translateX = (visibleRows * rowHeight / 2 - rowHeight / 2) - centerIndex * rowHeight;
-    elements.strip.style.transform = `translateX(${translateX}px)`;
+    const translateY = (visibleRows * rowHeight / 2 - rowHeight / 2) - centerIndex * rowHeight;
+    elements.strip.style.transform = `translateY(${translateY}px)`;
   }
 
   function cancelActivePlay() {
@@ -194,7 +206,7 @@ export function createSlotVisualization(elements, {
     });
     replaceItems(reel.items);
     elements.strip.querySelectorAll?.('.slot-item-center').forEach(item => item.classList.remove('slot-item-center'));
-    elements.strip.style.transform = 'translateX(0px)';
+    elements.strip.style.transform = 'translateY(0px)';
     const finalTranslateY = (visibleRows * rowHeight / 2 - rowHeight / 2) - reel.targetIndex * rowHeight;
     const motion = createMotionKeyframes({
       startTranslateY: 0,
@@ -229,7 +241,7 @@ export function createSlotVisualization(elements, {
         if (!activePlay || activePlay.animation !== animation) return;
         activePlay.removeAbortListener?.();
         activePlay = null;
-        elements.strip.style.transform = `translateX(${motion.finalTranslateY}px)`;
+        elements.strip.style.transform = `translateY(${motion.finalTranslateY}px)`;
         animation.commitStyles?.();
         animation.cancel();
         elements.strip.children[reel.targetIndex]?.classList?.add('slot-item-center');

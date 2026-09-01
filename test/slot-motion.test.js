@@ -28,7 +28,7 @@ test('slot reel keeps near-peak speed through the first 90 percent of its spin',
   assert.ok(velocityAt(0.9, motion.profile) >= 0.95);
 });
 
-test('slot reel moves game names horizontally through the matchmaking window', () => {
+test('slot reel moves game names vertically through the matchmaking window', () => {
   const motion = createMotionKeyframes({
     startTranslateY: 0,
     finalTranslateY: -1000,
@@ -36,5 +36,5 @@ test('slot reel moves game names horizontally through the matchmaking window', (
     durationMs: 5000
   });
 
-  assert.match(motion.keyframes[0].transform, /^translateX\(/);
+  assert.match(motion.keyframes[0].transform, /^translateY\(/);
 });
