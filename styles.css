@@ -597,6 +597,7 @@
   .duration-block{
     margin-bottom:28px;
   }
+  #drawSidePanel .duration-block[hidden]{display:none;}
   .duration-label{
     display:flex;
     justify-content:space-between;
@@ -628,6 +629,9 @@
   }
   .status-line.active{color:var(--amber);}
   .status-line.win{color:var(--teal);}
+  #startRoundBtn[hidden]{display:none;}
+  #drawPanel .status-line[hidden],
+  #drawPanel .status-divider[hidden]{display:none;}
   .status-divider{
     height:1px;
     margin:14px 0 0;
@@ -675,6 +679,23 @@
   #drawSidePanel #participantsSection[hidden]{
     display:none;
   }
+  #drawSidePanel .mystery-side-placeholder[hidden]{
+    display:none;
+  }
+  .mystery-side-placeholder{
+    display:grid;
+    justify-items:center;
+    gap:12px;
+    min-height:230px;
+    padding:28px 22px;
+    border:1px dashed rgba(0,245,255,.34);
+    border-radius:12px;
+    background:radial-gradient(circle at 50% 0,rgba(0,245,255,.1),transparent 58%),rgba(13,12,25,.52);
+    text-align:center;
+  }
+  .mystery-side-placeholder .side-block-title{margin:0;}
+  .mystery-side-placeholder p{max-width:280px;margin:0;color:var(--muted);font-size:12px;line-height:1.55;}
+  .mystery-side-icon{display:grid;place-items:center;width:48px;height:48px;border:1px solid rgba(0,245,255,.42);border-radius:50%;background:rgba(0,245,255,.08);color:var(--cyan);font-family:var(--font-display);font-size:28px;font-weight:800;}
 
   .draw-result-popup{
     position:fixed;
@@ -1078,42 +1099,56 @@
   .mystery-folder{
     position:relative;
     flex:0 0 148px;
-    height:126px;
+    height:132px;
     padding:0 14px;
+    display:grid;
+    place-items:center;
+    transform:scale(.92);
+    transition:transform .28s ease,filter .28s ease;
   }
-  .mystery-folder-tab,
-  .mystery-folder-body{
-    position:absolute;
+  .mystery-cover{
+    position:relative;
     display:block;
-    background:linear-gradient(145deg, #f2bd46, #b87209);
-    border:1px solid #ffd96b;
-    box-shadow:inset 0 1px rgba(255,255,255,0.35), 0 7px 15px rgba(0,0,0,0.38);
+    width:108px;
+    height:122px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:8px;
+    background:linear-gradient(145deg,#373244,#12111f);
+    box-shadow:0 8px 16px rgba(0,0,0,.44);
   }
-  .mystery-folder-tab{
-    top:6px;
-    left:25px;
-    width:58px;
-    height:24px;
-    border-radius:8px 8px 0 0;
+  .mystery-cover img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    /* The artwork remains visible as an abstract color silhouette, but the
+       22px blur makes its title and subject impossible to identify. */
+    filter:blur(22px) brightness(.9) saturate(.82);
+    transform:scale(1.28);
+    transition:filter .6s ease,transform .6s ease;
   }
-  .mystery-folder-body{
-    top:25px;
-    left:14px;
-    width:118px;
-    height:88px;
-    border-radius:7px;
-  }
-  .mystery-folder-question{
+  .mystery-cover-fallback{
     position:absolute;
     inset:0;
     display:grid;
     place-items:center;
-    color:#271800;
-    font-family:var(--font-display);
-    font-size:52px;
-    font-weight:800;
-    text-shadow:0 1px rgba(255,255,255,0.35);
   }
+  .mystery-cover-fallback{
+    background:linear-gradient(145deg,#514a75,#181629 72%);
+    color:#f4f3f7;
+    font-family:var(--font-display);
+    font-size:44px;
+    font-weight:800;
+    /* Manual games have no artwork, so their initial must stay as concealed
+       as a blurred cover until this card is selected. */
+    filter:blur(14px) brightness(.9);
+    transform:scale(1.28);
+    transition:filter .6s ease,transform .6s ease;
+  }
+  /* Author CSS sets the fallback to grid; explicitly honour the HTML hidden
+     attribute so a successfully loaded cover is never covered by its letter. */
+  .mystery-cover-fallback[hidden]{display:none!important;}
   .mystery-fade{
     position:absolute;
     z-index:2;
@@ -1148,7 +1183,11 @@
   .mystery-marker::before{ top:0; border-top:12px solid var(--cyan); }
   .mystery-marker::after{ bottom:0; border-bottom:12px solid var(--cyan); }
   .mystery-machine.spinning .mystery-window{ animation:slotGlowCyan .9s ease-in-out infinite; }
-  .mystery-folder-selected .mystery-folder-body{ border-color:var(--teal); box-shadow:0 0 24px rgba(78,205,196,.75), inset 0 1px rgba(255,255,255,.35); }
+  .mystery-folder-selected{z-index:4;animation:mysteryReveal .72s cubic-bezier(.18,.86,.26,1.2) both;}
+  .mystery-folder-selected .mystery-cover{border-color:var(--teal);box-shadow:0 0 30px rgba(78,205,196,.64),0 14px 28px rgba(0,0,0,.5);}
+  .mystery-folder-selected .mystery-cover img{filter:blur(0) brightness(1) saturate(1);transform:scale(1);}
+  .mystery-folder-selected .mystery-cover-fallback{filter:blur(0) brightness(1);transform:scale(1);}
+  @keyframes mysteryReveal{0%{transform:scale(.92)}55%{transform:scale(1.34)}100%{transform:scale(1.22)}}
   .mystery-result{
     min-height:1.4em;
     text-align:center;
@@ -1162,6 +1201,90 @@
     text-shadow:0 0 18px rgba(78,205,196,0.55), 0 0 34px rgba(78,205,196,0.25);
   }
   .slot-landed .slot-decal span{ background:var(--teal); }
+
+  @media (prefers-reduced-motion: reduce){
+    .mystery-folder,.mystery-cover img{transition:none;}
+    .mystery-folder-selected{animation:none;transform:scale(1.1);}
+  }
+
+  /* --- card draw --- */
+  .cards-machine{
+    flex:1 1 auto;
+    min-height:300px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:18px;
+    padding:22px 8px;
+  }
+  .cards-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(84px,1fr));
+    grid-auto-rows:minmax(86px,1fr);
+    flex:1 1 auto;
+    min-height:0;
+    gap:13px;
+    width:100%;
+    max-height:none;
+    overflow-x:hidden;
+    overflow-y:auto;
+    padding:5px;
+  }
+  .game-card{
+    position:relative;
+    min-height:0;
+    height:100%;
+    padding:0;
+    border:0;
+    border-radius:10px;
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+    perspective:800px;
+    transition:transform .18s ease,filter .18s ease;
+  }
+  .game-card.is-hovered:not(.is-selected){transform:perspective(800px) rotateX(var(--card-tilt-x,3deg)) rotateY(var(--card-tilt-y,-3deg)) translateY(-4px);filter:brightness(1.12);}
+  .game-card:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;}
+  .game-card-inner{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .38s ease;}
+  .game-card.is-previewed .game-card-inner{transform:rotateY(180deg);}
+  .game-card-back,.game-card-face{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.13);
+    border-radius:10px;
+    backface-visibility:hidden;
+  }
+  .game-card-back{
+    background:linear-gradient(145deg,#141923,#0a0d13);
+    color:rgba(225,235,245,.18);
+    font-family:var(--font-display);
+    font-size:56px;
+    font-weight:800;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),0 8px 18px rgba(0,0,0,.22);
+  }
+  .game-card-back::after{content:'';position:absolute;inset:7px;border:1px solid rgba(255,255,255,.035);border-radius:6px;}
+  .game-card.is-viewed .game-card-back{color:rgba(225,235,245,.08);border-color:rgba(255,255,255,.07);background:linear-gradient(145deg,#10141c,#080a0f);}
+  .game-card.is-spent{cursor:default;filter:none;}
+  .game-card.is-spent .game-card-back{background:linear-gradient(145deg,#291113,#12090a);border-color:rgba(255,82,82,.5);color:transparent;box-shadow:inset 0 0 0 1px rgba(109,16,16,.35),0 8px 18px rgba(0,0,0,.22);}
+  .game-card.is-spent .game-card-back::before{content:'×';position:absolute;color:#ff4d4d;font-family:var(--font-display);font-size:58px;font-weight:800;line-height:1;text-shadow:0 0 15px rgba(255,77,77,.36);}
+  .game-card:disabled{opacity:1;}
+  .game-card-face{transform:rotateY(180deg);background:#090b10;align-items:flex-end;}
+  .game-card-face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.82;}
+  .game-card-face::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 28%,rgba(3,5,8,.92));}
+  .game-card-title{position:relative;z-index:1;width:100%;padding:10px 9px;color:#fff;font-size:12px;font-weight:700;line-height:1.2;text-align:left;text-shadow:0 1px 3px #000;}
+  .cards-machine.spinning .game-card{animation:cardsPulse .55s ease-in-out infinite alternate;}
+  .cards-machine.spinning .game-card:nth-child(3n){animation-delay:.12s;}
+  @keyframes cardsPulse{to{transform:translateY(-3px);filter:brightness(1.22);}}
+  .game-card.is-selected{z-index:2;}
+  .game-card.is-selected .game-card-inner{transition-duration:.55s;}
+  .cards-result{min-height:24px;color:var(--teal);font-family:var(--font-display);font-size:18px;font-weight:800;text-align:center;text-shadow:0 0 18px rgba(78,205,196,.4);}
+  .cards-rules{margin-top:18px;padding:13px;border:1px solid rgba(0,245,255,.22);border-radius:10px;background:rgba(0,245,255,.035);}
+  .cards-rules h3{margin:0 0 7px;color:var(--cyan);font-family:var(--font-display);font-size:13px;}
+  .cards-rules p{margin:0;color:var(--muted);font-size:12px;line-height:1.5;}
 
 
   /* --- Колесо --- */
@@ -1371,6 +1494,9 @@
     .slot-machine{min-height:260px;margin:22px 0;}
     .wheel-machine{min-height:260px;margin:22px 0;}
     .mystery-machine{min-height:250px;margin:22px 0;}
+    .cards-machine{min-height:250px;margin:12px 0;}
+    .cards-grid{grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:10px;max-height:48vh;}
+    .game-card{min-height:124px;}
     .mystery-window{height:164px;}
     .view-switch:has(#shuffleVisualsBtn){gap:10px;}
     .view-switch:has(#shuffleVisualsBtn) .btn-amber{justify-content:center;}

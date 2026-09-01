@@ -1,5 +1,7 @@
 import { shuffleNoAdjacent } from '../core/random.js';
 import { createProgressKeyframes } from './motion-profile.js';
+import { normalizeName } from '../shared/presentation.js';
+import { UKRAINIAN_GAME_ALIASES } from '../data/game-ukrainian-aliases.js';
 
 const CARD_WIDTH = 148;
 const TRAVEL_SPEED_PX_PER_SECOND = 900;
@@ -48,6 +50,40 @@ export function createMysteryVisualization(elements, {
   let destroyed = false;
   let activePlay = null;
   let lastGames = [];
+  let catalogImages = new Map();
+  let catalogEntries = [];
+
+  const catalogKey = name => normalizeName(name).toLocaleLowerCase('uk');
+  const gameInitial = name => [...normalizeName(name)][0]?.toLocaleUpperCase('uk') ?? '?';
+  function imageForGame(name) {
+    const key = catalogKey(name);
+    return catalogImages.get(key)
+      ?? catalogEntries.find(entry => entry.key.includes(key) || key.includes(entry.key))?.image;
+  }
+
+  function addCoverImage(cover, name) {
+    if (cover.querySelector('img')) return;
+    const imageUrl = imageForGame(name);
+    if (!imageUrl) return;
+    const documentRef = cover.ownerDocument;
+    const fallback = cover.querySelector('.mystery-cover-fallback');
+    const image = documentRef.createElement('img');
+    image.src = imageUrl;
+    image.alt = '';
+    image.decoding = 'async';
+    image.addEventListener('error', () => {
+      image.remove();
+      if (fallback) fallback.hidden = false;
+    });
+    if (fallback) fallback.hidden = true;
+    cover.prepend(image);
+  }
+
+  function hydrateRenderedCovers() {
+    elements.strip?.querySelectorAll?.('.mystery-folder').forEach(card => {
+      addCoverImage(card.querySelector('.mystery-cover'), card.dataset.gameName);
+    });
+  }
 
   function replaceItems(items) {
     const documentRef = elements.strip?.ownerDocument ?? globalThis.document;
@@ -56,16 +92,16 @@ export function createMysteryVisualization(elements, {
       const card = documentRef.createElement('div');
       card.className = 'mystery-folder';
       card.dataset.gameId = String(game.id);
-      card.setAttribute('aria-label', 'Закрита папка з грою');
-      const tab = documentRef.createElement('span');
-      tab.className = 'mystery-folder-tab';
-      const body = documentRef.createElement('span');
-      body.className = 'mystery-folder-body';
-      const question = documentRef.createElement('span');
-      question.className = 'mystery-folder-question';
-      question.textContent = '?';
-      body.appendChild(question);
-      card.append(tab, body);
+      card.dataset.gameName = game.name;
+      card.setAttribute('aria-label', 'Прихована гра');
+      const cover = documentRef.createElement('span');
+      cover.className = 'mystery-cover';
+      const fallback = documentRef.createElement('span');
+      fallback.className = 'mystery-cover-fallback';
+      fallback.textContent = gameInitial(game.name);
+      cover.append(fallback);
+      addCoverImage(cover, game.name);
+      card.append(cover);
       return card;
     });
     elements.strip.replaceChildren(...nodes);
@@ -132,7 +168,9 @@ export function createMysteryVisualization(elements, {
         elements.strip.style.transform = `translateX(${finalTranslateX}px)`;
         animation.commitStyles?.();
         animation.cancel();
-        elements.strip.children[reel.targetIndex]?.classList?.add('mystery-folder-selected');
+        const selected = elements.strip.children[reel.targetIndex];
+        selected?.classList?.add('mystery-folder-selected');
+        selected?.setAttribute?.('aria-label', `Відкрито: ${target.name}`);
         elements.result.textContent = target.name;
         elements.machine?.classList?.remove('spinning');
         elements.machine?.classList?.add('mystery-landed');
@@ -157,5 +195,25 @@ export function createMysteryVisualization(elements, {
     lastGames = [];
   }
 
-  return { render, play, cancel, destroy };
+  return {
+    render,
+    play,
+    cancel,
+    setCatalog(games) {
+      catalogImages = new Map();
+      catalogEntries = (Array.isArray(games) ? games : [])
+        .filter(game => game?.title && game?.image)
+        .map(game => ({ key: catalogKey(game.title), image: game.image }));
+      (Array.isArray(games) ? games : [])
+        .filter(game => game?.title && game?.image)
+        .forEach(game => {
+          catalogImages.set(catalogKey(game.title), game.image);
+          (UKRAINIAN_GAME_ALIASES[game.title] ?? []).forEach(alias => {
+            catalogImages.set(catalogKey(alias), game.image);
+          });
+        });
+      hydrateRenderedCovers();
+    },
+    destroy
+  };
 }
