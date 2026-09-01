@@ -9,7 +9,7 @@ const DEFAULT_ROW_HEIGHT = 56;
 const REEL_ITEMS_PER_SECOND = 3;
 const MIN_REEL_ITEMS = 24;
 const MAX_REEL_ITEMS = 160;
-const SLOT_VELOCITY_PROFILE = { acceleration: 0.08, deceleration: 0.18 };
+const SLOT_VELOCITY_PROFILE = { acceleration: 0.04, deceleration: 0.1 };
 const REDUCED_MOTION_DURATION_MS = 120;
 const PALETTE = ['#E85D5D', '#4ECDC4', '#FFB347', '#7C8CFF', '#C67CFF', '#69B56B', '#5DC8E8', '#FF8FB1', '#F2C14E', '#F2955A'];
 

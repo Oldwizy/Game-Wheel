@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMotionKeyframes } from '../src/draw/slot.js';
+import { createMotionKeyframes, velocityAt } from '../src/draw/slot.js';
 
 test('slot reel keeps active travel for the final fifth of the spin', () => {
   const motion = createMotionKeyframes({
@@ -15,4 +15,15 @@ test('slot reel keeps active travel for the final fifth of the spin', () => {
 
   assert.ok(frameAtFourSeconds);
   assert.ok(Number.parseFloat(frameAtFourSeconds.transform.match(/-?[\d.]+/)[0]) >= -880);
+});
+
+test('slot reel keeps near-peak speed through the first 90 percent of its spin', () => {
+  const motion = createMotionKeyframes({
+    startTranslateY: 0,
+    finalTranslateY: -1000,
+    targetIndex: 20,
+    durationMs: 5000
+  });
+
+  assert.ok(velocityAt(0.9, motion.profile) >= 0.95);
 });
