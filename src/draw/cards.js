@@ -30,6 +30,17 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     return catalogImages.get(key) ?? catalogEntries.find(entry => entry.key.includes(key) || key.includes(entry.key))?.image;
   };
 
+  function appendGameImage(face, game) {
+    const imageUrl = imageForGame(game.name);
+    if (!imageUrl || face.querySelector('img')) return;
+    const image = elements.grid.ownerDocument.createElement('img');
+    image.src = imageUrl;
+    image.alt = '';
+    image.decoding = 'async';
+    image.addEventListener('error', () => image.remove());
+    face.prepend(image);
+  }
+
   function hidePreview(card) {
     card?.classList.remove('is-previewed');
   }
@@ -97,15 +108,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     back.textContent = '?';
     const face = documentRef.createElement('span');
     face.className = 'game-card-face';
-    const imageUrl = imageForGame(game.name);
-    if (imageUrl) {
-      const image = documentRef.createElement('img');
-      image.src = imageUrl;
-      image.alt = '';
-      image.decoding = 'async';
-      image.addEventListener('error', () => image.remove());
-      face.append(image);
-    }
+    appendGameImage(face, game);
     const title = documentRef.createElement('span');
     title.className = 'game-card-title';
     title.textContent = game.name;
@@ -232,6 +235,10 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
       catalogEntries.forEach(game => {
         catalogImages.set(game.key, game.image);
         (UKRAINIAN_GAME_ALIASES[game.title] ?? []).forEach(alias => catalogImages.set(catalogKey(alias), game.image));
+      });
+      elements.grid.querySelectorAll('.game-card').forEach(card => {
+        const game = lastGames.find(entry => entry.id === Number(card.dataset.gameId));
+        if (game) appendGameImage(card.querySelector('.game-card-face'), game);
       });
     },
     hasProgress() {

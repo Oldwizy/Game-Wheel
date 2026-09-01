@@ -1499,7 +1499,7 @@
     .wheel-machine{min-height:260px;margin:22px 0;}
     .mystery-machine{min-height:250px;margin:22px 0;}
     .cards-machine{min-height:250px;margin:12px 0;}
-    .cards-grid{grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:10px;max-height:48vh;}
+    .cards-grid{grid-template-columns:repeat(auto-fit,minmax(92px,116px));gap:10px;max-height:48vh;}
     .game-card{min-height:124px;}
     .mystery-window{height:164px;}
     .view-switch:has(#shuffleVisualsBtn){gap:10px;}
