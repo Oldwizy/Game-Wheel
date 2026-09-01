@@ -1220,7 +1220,7 @@
   .cards-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(84px,116px));
-    grid-auto-rows:auto;
+    grid-auto-rows:174px;
     flex:1 1 auto;
     min-height:0;
     gap:13px;
@@ -1238,6 +1238,7 @@
     width:100%;
     height:auto;
     aspect-ratio:2 / 3;
+    align-self:start;
     padding:0;
     border:0;
     border-radius:10px;
