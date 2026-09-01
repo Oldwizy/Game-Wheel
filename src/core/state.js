@@ -1,6 +1,6 @@
 export const STATE_KEY = 'lototron_state_v1';
 export const HISTORY_KEY = 'lototron_history_v1';
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 const MAX_HISTORY = 15;
 
@@ -29,6 +29,11 @@ const stateMigrations = new Map([
     ...state,
     schemaVersion: 4,
     visualMode: ['slot', 'wheel', 'mystery', 'cards'].includes(state.visualMode) ? state.visualMode : 'slot'
+  })],
+  [4, state => ({
+    ...state,
+    schemaVersion: 5,
+    cardsSession: null
   })]
 ]);
 
@@ -39,7 +44,8 @@ const historyMigrations = new Map([
   })],
   [1, history => ({ ...history, schemaVersion: 2 })],
   [2, history => ({ ...history, schemaVersion: 3 })],
-  [3, history => ({ ...history, schemaVersion: 4 })]
+  [3, history => ({ ...history, schemaVersion: 4 })],
+  [4, history => ({ ...history, schemaVersion: 5 })]
 ]);
 
 export function createDefaultState() {
@@ -50,6 +56,7 @@ export function createDefaultState() {
     roundCount: 0,
     logEntries: [],
     visualMode: 'slot',
+    cardsSession: null,
     instantWinMode: false,
     durationValue: 15
   };
@@ -96,6 +103,21 @@ function isGame(game) {
   );
 }
 
+function isCardsSession(session) {
+  return session === null || Boolean(
+    session
+    && Array.isArray(session.cards)
+    && session.cards.every(card => (
+      card
+      && Number.isInteger(card.gameId)
+      && card.gameId > 0
+      && Number.isInteger(card.copyIndex)
+      && card.copyIndex >= 0
+      && typeof card.spent === 'boolean'
+    ))
+  );
+}
+
 function normalizeState(value) {
   if (!value || value.schemaVersion !== CURRENT_SCHEMA_VERSION || !Array.isArray(value.games) || !value.games.every(isGame)) {
     return null;
@@ -107,6 +129,7 @@ function normalizeState(value) {
   if (!Number.isInteger(normalized.roundCount) || normalized.roundCount < 0) return null;
   if (!Array.isArray(normalized.logEntries)) return null;
   if (!['slot', 'wheel', 'mystery', 'cards'].includes(normalized.visualMode)) return null;
+  if (!isCardsSession(normalized.cardsSession)) return null;
   if (typeof normalized.instantWinMode !== 'boolean') return null;
   if (!Number.isFinite(Number(normalized.durationValue)) || Number(normalized.durationValue) <= 0) return null;
   normalized.durationValue = Number(normalized.durationValue);

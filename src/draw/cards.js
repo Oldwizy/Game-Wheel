@@ -14,7 +14,7 @@ function reducedMotionEnabled(preference) {
     : Boolean(preference);
 }
 
-export function createCardsVisualization(elements, { random = Math.random, prefersReducedMotion = false, onFinalCard = () => {} } = {}) {
+export function createCardsVisualization(elements, { random = Math.random, prefersReducedMotion = false, onFinalCard = () => {}, onSessionChange = () => {} } = {}) {
   let destroyed = false;
   let activePlay = null;
   let lastGames = [];
@@ -40,7 +40,18 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     if (card) {
       card.disabled = true;
       card.setAttribute('aria-label', 'Відкрита картка. Цей варіант більше недоступний.');
+      notifySessionChange();
     }
+  }
+
+  function notifySessionChange() {
+    onSessionChange({
+      cards: [...elements.grid.querySelectorAll('.game-card')].map(card => ({
+        gameId: Number(card.dataset.gameId),
+        copyIndex: Number(card.dataset.copyIndex),
+        spent: card.classList.contains('is-spent')
+      }))
+    });
   }
 
   function preview(card, temporary = false, game = null) {
@@ -70,7 +81,7 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     }
   }
 
-  function createCard(game, copyIndex) {
+  function createCard(game, copyIndex, spent = false) {
     const documentRef = elements.grid.ownerDocument;
     const card = documentRef.createElement('button');
     card.type = 'button';
@@ -119,16 +130,33 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     card.addEventListener('focus', () => { if (!card.disabled) card.classList.add('is-hovered'); });
     card.addEventListener('blur', resetTilt);
     card.addEventListener('click', () => preview(card, true, game));
+    if (spent) {
+      card.classList.add('is-spent');
+      card.disabled = true;
+      card.setAttribute('aria-label', 'Відкрита картка. Цей варіант більше недоступний.');
+    }
     return card;
   }
 
-  function replaceCards(games) {
-    const pool = games.flatMap(game => Array.from({ length: game.copies }, (_, copyIndex) => ({ game, copyIndex })));
-    const cards = shuffle(pool, random).map(({ game, copyIndex }) => createCard(game, copyIndex));
-    elements.grid.replaceChildren(...cards);
+  function isUsableSession(games, session) {
+    if (!session || !Array.isArray(session.cards)) return false;
+    const pool = games.flatMap(game => Array.from({ length: game.copies }, (_, copyIndex) => `${game.id}:${copyIndex}`));
+    const sessionKeys = session.cards.map(card => `${card.gameId}:${card.copyIndex}`);
+    return pool.length === sessionKeys.length && new Set(pool).size === new Set(sessionKeys).size && pool.every(key => sessionKeys.includes(key));
   }
 
-  function render({ games }) {
+  function replaceCards(games, session = null) {
+    const pool = games.flatMap(game => Array.from({ length: game.copies }, (_, copyIndex) => ({ game, copyIndex })));
+    const gamesById = new Map(games.map(game => [game.id, game]));
+    const deck = isUsableSession(games, session)
+      ? session.cards.map(card => ({ game: gamesById.get(card.gameId), copyIndex: card.copyIndex, spent: card.spent }))
+      : shuffle(pool, random);
+    const cards = deck.map(({ game, copyIndex, spent }) => createCard(game, copyIndex, spent));
+    elements.grid.replaceChildren(...cards);
+    notifySessionChange();
+  }
+
+  function render({ games, session = null }) {
     if (destroyed) return;
     lastGames = [...games];
     clearTimeout(previewTimer);
@@ -136,12 +164,13 @@ export function createCardsVisualization(elements, { random = Math.random, prefe
     completed = false;
     elements.result.textContent = '';
     elements.machine.classList.remove('spinning', 'cards-landed');
-    replaceCards(games);
+    replaceCards(games, session);
   }
 
   function shuffleCards() {
     if (destroyed || !elements.grid?.replaceChildren) return;
     elements.grid.replaceChildren(...shuffle([...elements.grid.children], random));
+    notifySessionChange();
   }
 
   async function play({ target, games = lastGames, durationMs, signal }) {
