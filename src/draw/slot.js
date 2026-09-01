@@ -1,15 +1,15 @@
 import { shuffleNoAdjacent } from '../core/random.js';
-import { velocityAt } from './motion-profile.js';
+import { createProgressKeyframes, velocityAt } from './motion-profile.js';
 
 export { velocityAt } from './motion-profile.js';
 
 const DEFAULT_ROW_HEIGHT = 56;
-// Початковий характер слот-машини: компактна стрічка, що швидко стартує
-// і довго, плавно гальмує наприкінці.
+// Слот зберігає швидкість майже до результату: довге гальмування
+// заздалегідь розкриває переможця і знижує напругу.
 const REEL_ITEMS_PER_SECOND = 3;
 const MIN_REEL_ITEMS = 24;
 const MAX_REEL_ITEMS = 160;
-const ORIGINAL_SLOT_EASING = 'cubic-bezier(0.15, 0.82, 0.22, 1)';
+const SLOT_VELOCITY_PROFILE = { acceleration: 0.08, deceleration: 0.18 };
 const REDUCED_MOTION_DURATION_MS = 120;
 const PALETTE = ['#E85D5D', '#4ECDC4', '#FFB347', '#7C8CFF', '#C67CFF', '#69B56B', '#5DC8E8', '#FF8FB1', '#F2C14E', '#F2955A'];
 
@@ -97,11 +97,18 @@ export function createMotionKeyframes({
   profile
 }) {
   if (!Number.isFinite(finalTranslateY)) throw new TypeError('Final Slot translation must be finite');
-  const keyframes = [
-    { transform: `translateY(${startTranslateY}px)`, offset: 0, easing: ORIGINAL_SLOT_EASING },
-    { transform: `translateY(${finalTranslateY}px)`, offset: 1 }
-  ];
-  return { keyframes, finalTranslateY, targetIndex, profile, samples, durationMs };
+  const resolvedProfile = profile ?? SLOT_VELOCITY_PROFILE;
+  const progressFrames = createProgressKeyframes({
+    durationMs,
+    samples,
+    profile: resolvedProfile
+  }).keyframes;
+  const keyframes = progressFrames.map(({ offset, progress }) => ({
+    transform: `translateY(${startTranslateY + (finalTranslateY - startTranslateY) * progress}px)`,
+    offset,
+    easing: 'linear'
+  }));
+  return { keyframes, finalTranslateY, targetIndex, profile: resolvedProfile, samples, durationMs };
 }
 
 export function createSlotVisualization(elements, {
