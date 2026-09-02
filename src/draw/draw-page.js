@@ -101,7 +101,8 @@ function startDrawPage() {
       state = {
         ...state,
         games: resolved.games,
-        roundCount: state.roundCount + 1
+        roundCount: state.roundCount + 1,
+        cardsSession: null
       };
       wheel.reconcile(state.games, { type: 'cards-winner', gameId: winner.id });
       addLog(`Переможець: <b>${winner.name}</b>`, true);
@@ -109,6 +110,11 @@ function startDrawPage() {
       controller.finish();
       showFinishedState(winner);
       queueResultPopup('Переможець', winner.name);
+    },
+    onSessionChange(cardsSession) {
+      if (controller.phase === 'finished') return;
+      state = { ...state, cardsSession };
+      persist();
     }
   });
   wheel.initialize(state.games);
@@ -236,7 +242,7 @@ function startDrawPage() {
     Object.entries(visualizations).forEach(([name, visualization]) => {
       if (name !== mode) visualization.cancel();
     });
-    visualizations[mode].render({ games: state.games });
+    visualizations[mode].render({ games: state.games, session: mode === 'cards' ? state.cardsSession : null });
     if (mode === 'cards' && controller.phase === 'finished') {
       elements.cardsGrid.querySelectorAll('.game-card').forEach(card => { card.disabled = true; });
     }
@@ -345,11 +351,13 @@ function startDrawPage() {
 
   function setMode(mode, save = true) {
     if (controller.phase !== 'idle' && controller.phase !== 'finished') return;
+    let resetCardsSession = false;
     if (state.visualMode === 'cards' && mode !== 'cards' && cards.hasProgress()) {
       const confirmed = window.confirm('Зміна режиму скине відкриті картки. Продовжити?');
       if (!confirmed) return;
+      resetCardsSession = true;
     }
-    state = { ...state, visualMode: mode };
+    state = { ...state, visualMode: mode, cardsSession: resetCardsSession ? null : state.cardsSession };
     renderMode();
     renderPhase(controller.phase);
     if (save) persist();

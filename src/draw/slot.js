@@ -1,15 +1,16 @@
 import { shuffleNoAdjacent } from '../core/random.js';
-import { velocityAt } from './motion-profile.js';
+import { createProgressKeyframes, velocityAt } from './motion-profile.js';
 
 export { velocityAt } from './motion-profile.js';
 
 const DEFAULT_ROW_HEIGHT = 56;
-// Початковий характер слот-машини: компактна стрічка, що швидко стартує
-// і довго, плавно гальмує наприкінці.
-const REEL_ITEMS_PER_SECOND = 3;
+// Слот тримає темп майже до результату, а потім різко гальмує й відскакує.
+const REEL_ITEMS_PER_SECOND = 12;
 const MIN_REEL_ITEMS = 24;
-const MAX_REEL_ITEMS = 160;
-const ORIGINAL_SLOT_EASING = 'cubic-bezier(0.15, 0.82, 0.22, 1)';
+const MAX_REEL_ITEMS = 480;
+const SLOT_VELOCITY_PROFILE = { acceleration: 0.04, deceleration: 0.15 };
+const BOUNCE_OVERSHOOT_PX = 16;
+const BOUNCE_RETURN_PX = 6;
 const REDUCED_MOTION_DURATION_MS = 120;
 const PALETTE = ['#E85D5D', '#4ECDC4', '#FFB347', '#7C8CFF', '#C67CFF', '#69B56B', '#5DC8E8', '#FF8FB1', '#F2C14E', '#F2955A'];
 
@@ -97,11 +98,25 @@ export function createMotionKeyframes({
   profile
 }) {
   if (!Number.isFinite(finalTranslateY)) throw new TypeError('Final Slot translation must be finite');
-  const keyframes = [
-    { transform: `translateY(${startTranslateY}px)`, offset: 0, easing: ORIGINAL_SLOT_EASING },
-    { transform: `translateY(${finalTranslateY}px)`, offset: 1 }
-  ];
-  return { keyframes, finalTranslateY, targetIndex, profile, samples, durationMs };
+  const motionProfile = createProgressKeyframes({
+    durationMs,
+    samples,
+    profile: profile ?? SLOT_VELOCITY_PROFILE
+  });
+  const keyframes = motionProfile.keyframes
+    .filter(({ offset }) => offset < 0.9)
+    .map(({ offset, progress }) => ({
+    transform: `translateY(${startTranslateY + (finalTranslateY - startTranslateY) * progress}px)`,
+    offset,
+    easing: 'linear'
+    }));
+  const direction = Math.sign(finalTranslateY - startTranslateY) || -1;
+  keyframes.push(
+    { transform: `translateY(${finalTranslateY + direction * BOUNCE_OVERSHOOT_PX}px)`, offset: 0.9, easing: 'linear' },
+    { transform: `translateY(${finalTranslateY - direction * BOUNCE_RETURN_PX}px)`, offset: 0.96, easing: 'linear' },
+    { transform: `translateY(${finalTranslateY}px)`, offset: 1, easing: 'linear' }
+  );
+  return { keyframes, finalTranslateY, targetIndex, profile: motionProfile.profile, samples, durationMs };
 }
 
 export function createSlotVisualization(elements, {
