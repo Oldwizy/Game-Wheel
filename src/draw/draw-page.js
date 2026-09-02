@@ -50,9 +50,7 @@ const elements = {
   participantsTab: byId('participantsTabBtn'),
   historyTab: byId('historyTabBtn'),
   participantsSection: byId('participantsSection'),
-  mysterySidePlaceholder: byId('mysterySidePlaceholder'),
-  mysterySideTitle: byId('mysterySideTitle'),
-  mysterySideDescription: byId('mysterySideDescription'),
+  mysteryRules: byId('mysteryRules'),
   cardsRules: byId('cardsRules'),
   participantsDrawer: byId('participantsDrawer')
 };
@@ -224,16 +222,12 @@ function startDrawPage() {
     elements.mysteryMachine.style.display = mode === 'mystery' ? 'flex' : 'none';
     elements.cardsMachine.style.display = mode === 'cards' ? 'flex' : 'none';
     elements.participantsSection.hidden = hiddenSideMode;
-    elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
+    elements.mysteryRules.hidden = mode !== 'mystery';
     elements.cardsRules.hidden = mode !== 'cards';
     elements.durationBlock.hidden = mode === 'cards';
     elements.start.hidden = mode === 'cards';
     elements.status.hidden = mode === 'cards';
     elements.statusDivider.hidden = mode === 'cards';
-    elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';
-    elements.mysterySideDescription.textContent = mode === 'cards'
-      ? 'Учасники та історія приховані. Переглядайте картки, не розкриваючи пул завчасно.'
-      : 'Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.';
     elements.modeButtons.forEach(button => {
       const selected = button.id.startsWith(mode);
       button.classList.toggle('active', selected);

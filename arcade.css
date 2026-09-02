@@ -1,0 +1,181 @@
+/* Neon 80s arcade finish shared by the builder and draw screens. */
+:root{
+  --arcade-ink:#050311;
+  --arcade-deep:#0d0822;
+  --arcade-violet:#a126ff;
+  --arcade-pink:#ff3cac;
+  --arcade-cyan:#35f7ff;
+  --arcade-amber:#ffd65c;
+  --arcade-grid:rgba(53,247,255,.15);
+  --arcade-glow-cyan:0 0 7px rgba(53,247,255,.9),0 0 25px rgba(53,247,255,.34);
+  --arcade-glow-pink:0 0 8px rgba(255,60,172,.85),0 0 30px rgba(255,60,172,.3);
+}
+
+body{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse 72% 44% at 50% -5%,rgba(161,38,255,.28),transparent 72%),
+    radial-gradient(ellipse 46% 30% at 83% 20%,rgba(53,247,255,.12),transparent 80%),
+    linear-gradient(165deg,#10062a 0%,var(--arcade-ink) 55%,#090318 100%) !important;
+}
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  z-index:-1;
+  inset:0;
+  pointer-events:none;
+}
+body::before{
+  opacity:.52;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0 / 100% 4px,
+    linear-gradient(90deg,transparent 0 49.7%,rgba(53,247,255,.03) 50%,transparent 50.3%);
+  mix-blend-mode:screen;
+}
+body::after{
+  background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.42) 125%);
+}
+
+.wrap{
+  position:relative;
+  background:linear-gradient(145deg,rgba(18,9,46,.92),rgba(5,3,17,.95)) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(161,38,255,.16),0 22px 70px rgba(0,0,0,.38);
+}
+.wrap::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 0 46%,rgba(53,247,255,.035) 50%,transparent 54%);
+  background-size:240% 100%;
+  animation:arcadeSweep 9s linear infinite;
+}
+.site-header,.draw-header{
+  position:relative;
+  border-bottom-color:rgba(53,247,255,.45) !important;
+  background:linear-gradient(90deg,rgba(161,38,255,.12),transparent 30%,transparent 70%,rgba(53,247,255,.1));
+}
+.brand,.draw-header .brand{
+  letter-spacing:.035em !important;
+  text-transform:uppercase;
+  text-shadow:var(--arcade-glow-pink);
+}
+.brand a,.draw-header .brand a{color:#fff !important;}
+.brand span,.draw-header .brand span{color:var(--arcade-amber) !important;text-shadow:0 0 13px rgba(255,214,92,.72);}
+nav a,.draw-header nav a,.side-tab,.side-block-title,.add-panel>label{
+  font-family:'Roboto Mono','IBM Plex Mono',monospace !important;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+nav .active,.draw-header nav .active,.side-tab.active{color:var(--arcade-cyan) !important;text-shadow:0 0 10px rgba(53,247,255,.75);}
+nav .active::after,.draw-header nav .active::after,.side-tab.active::after{background:var(--arcade-cyan) !important;box-shadow:var(--arcade-glow-cyan);}
+
+.main-board,.side-panel,.panel,.round-settings,.participants-section{
+  border-color:rgba(161,38,255,.62) !important;
+  background:linear-gradient(150deg,rgba(29,16,66,.95),rgba(10,5,28,.93)) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.08),inset 0 0 32px rgba(161,38,255,.07),0 0 20px rgba(161,38,255,.1) !important;
+}
+.main-board,.side-panel,.panel{border-radius:4px !important;}
+.main-board::before,.side-panel::before,.panel::before{
+  content:"";
+  display:block;
+  height:2px;
+  margin:-1px -1px 16px;
+  background:linear-gradient(90deg,transparent,var(--arcade-pink),var(--arcade-cyan),transparent);
+  box-shadow:var(--arcade-glow-cyan);
+}
+#drawSidePanel::before,#drawPanel::before{display:none;}
+
+input,.add-row input,.twitch-field input,.game-suggestions{
+  border:1px solid rgba(53,247,255,.35) !important;
+  border-radius:2px !important;
+  background:rgba(3,2,14,.82) !important;
+  box-shadow:inset 0 0 18px rgba(53,247,255,.04);
+}
+input:focus,.add-row input:focus,.twitch-field input:focus{border-color:var(--arcade-cyan) !important;box-shadow:var(--arcade-glow-cyan),inset 0 0 14px rgba(53,247,255,.08) !important;}
+
+.btn-cta,.btn-amber,.hex-btn{
+  position:relative;
+  overflow:hidden;
+  border:1px solid var(--arcade-amber) !important;
+  border-radius:2px !important;
+  background:linear-gradient(135deg,#ffe47c,var(--arcade-amber) 45%,#ffad2f) !important;
+  color:#170622 !important;
+  box-shadow:0 0 10px rgba(255,214,92,.58),inset 0 1px rgba(255,255,255,.65) !important;
+  text-shadow:none !important;
+  transition:transform .16s ease,filter .16s ease,box-shadow .16s ease !important;
+}
+.btn-cta::after,.btn-amber::after,.hex-btn::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.67) 50%,transparent 64%);
+  transform:translateX(-130%);
+}
+.btn-cta:hover:not(:disabled),.btn-amber:hover:not(:disabled),.hex-btn:hover:not(:disabled){transform:translateY(-2px);filter:saturate(1.2) brightness(1.08);box-shadow:0 0 20px rgba(255,214,92,.82),0 7px 18px rgba(0,0,0,.35) !important;}
+.btn-cta:hover::after,.btn-amber:hover::after,.hex-btn:hover::after{animation:arcadeButtonFlash .55s ease;}
+.btn-cta:active:not(:disabled),.btn-amber:active:not(:disabled),.hex-btn:active:not(:disabled){transform:translateY(1px) scale(.985);}
+.btn-ghost,.step-btn,.reset,.del-btn{
+  border-color:rgba(53,247,255,.42) !important;
+  border-radius:2px !important;
+  color:var(--arcade-cyan) !important;
+  font-family:'Roboto Mono','IBM Plex Mono',monospace !important;
+  text-transform:uppercase;
+}
+.btn-ghost:hover:not(:disabled),.btn-ghost.active,.step-btn:hover:not(:disabled){border-color:var(--arcade-cyan) !important;background:rgba(53,247,255,.14) !important;box-shadow:var(--arcade-glow-cyan) !important;}
+.view-switch:has(#slotViewBtn) .btn-ghost.active,.view-switch:has(#participantsTabBtn) .btn-ghost.active{background:var(--arcade-cyan) !important;color:#09031c !important;}
+
+.ticket,#buildPanel .ticket,#drawSidePanel .ticket{
+  border-radius:3px !important;
+  background:linear-gradient(140deg,rgba(30,19,66,.98),rgba(12,7,33,.98)) !important;
+  box-shadow:inset 0 0 18px rgba(161,38,255,.09),0 7px 18px rgba(0,0,0,.24) !important;
+}
+.ticket:hover,#buildPanel .ticket:hover{border-color:var(--arcade-cyan) !important;box-shadow:var(--arcade-glow-cyan),inset 0 0 18px rgba(53,247,255,.08) !important;}
+.game-card-cover{border:1px solid rgba(255,214,92,.55);box-shadow:0 0 12px rgba(255,214,92,.18) !important;}
+.copies-badge{border:1px solid rgba(255,60,172,.6) !important;background:#16072d !important;color:#fff !important;}
+
+.slot-machine,.wheel-stage,.mystery-window{
+  border:1px solid rgba(53,247,255,.55) !important;
+  border-radius:3px !important;
+  background:radial-gradient(ellipse at 50% 50%,#160a36,#03020d 70%) !important;
+  box-shadow:inset 0 0 44px rgba(161,38,255,.22),0 0 20px rgba(53,247,255,.15) !important;
+}
+/* The wheel itself is round; only its parent owns the surrounding layout. */
+.wheel-stage{
+  border:0 !important;
+  border-radius:50% !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+.slot-machine::before,.mystery-window::before{
+  content:"";
+  position:absolute;
+  z-index:4;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(transparent 50%,rgba(53,247,255,.045) 50%);
+  background-size:100% 4px;
+}
+.slot-center-band{border-color:var(--arcade-pink) !important;background:rgba(255,60,172,.08) !important;box-shadow:var(--arcade-glow-pink) !important;}
+.slot-arrow,.wheel-pointer{color:var(--arcade-amber) !important;text-shadow:0 0 15px var(--arcade-amber);}
+.slot-machine.spinning,.mystery-machine.spinning .mystery-window{animation:arcadeMachinePulse .72s ease-in-out infinite !important;}
+.wheel-machine.spinning .wheel-stage{filter:drop-shadow(0 0 12px var(--arcade-cyan));}
+.status-line.active{color:var(--arcade-cyan) !important;text-shadow:var(--arcade-glow-cyan) !important;}
+.status-line.win,.draw-result-popup-eyebrow{color:var(--arcade-amber) !important;text-shadow:0 0 14px rgba(255,214,92,.72);}
+.draw-result-popup{background:rgba(3,1,11,.78) !important;backdrop-filter:blur(5px);}
+.draw-result-popup-card{border:1px solid var(--arcade-pink) !important;border-radius:3px !important;background:linear-gradient(145deg,#2b0d56,#0b041f) !important;box-shadow:var(--arcade-glow-pink),inset 0 0 34px rgba(161,38,255,.2) !important;animation:arcadeResultIn .38s cubic-bezier(.2,.9,.28,1.2);}
+
+@keyframes arcadeSweep{to{background-position:240% 0;}}
+@keyframes arcadeButtonFlash{to{transform:translateX(130%);}}
+@keyframes arcadeMachinePulse{50%{border-color:var(--arcade-pink);box-shadow:0 0 10px rgba(255,60,172,.9),0 0 34px rgba(53,247,255,.42),inset 0 0 44px rgba(161,38,255,.28) !important;}}
+@keyframes arcadeResultIn{from{opacity:0;transform:scale(.86);filter:brightness(1.7);}to{opacity:1;transform:scale(1);filter:none;}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;}
+}
+@media(max-width:900px){
+  .main-board::before,.side-panel::before,.panel::before{margin-bottom:12px;}
+}

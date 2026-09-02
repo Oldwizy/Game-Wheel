@@ -14,6 +14,10 @@ const BOUNCE_RETURN_PX = 6;
 const REDUCED_MOTION_DURATION_MS = 120;
 const PALETTE = ['#E85D5D', '#4ECDC4', '#FFB347', '#7C8CFF', '#C67CFF', '#69B56B', '#5DC8E8', '#FF8FB1', '#F2C14E', '#F2955A'];
 
+export function slotPlaybackDuration(durationMs) {
+  return durationMs / 2;
+}
+
 function abortError() {
   return new DOMException('Aborted', 'AbortError');
 }
@@ -225,7 +229,7 @@ export function createSlotVisualization(elements, {
     const reducedMotion = reducedMotionEnabled(prefersReducedMotion);
     const plannedDuration = reducedMotion
       ? Math.min(durationMs, REDUCED_MOTION_DURATION_MS)
-      : durationMs;
+      : slotPlaybackDuration(durationMs);
     const animation = elements.strip.animate(motion.keyframes, {
       duration: plannedDuration,
       fill: 'forwards',

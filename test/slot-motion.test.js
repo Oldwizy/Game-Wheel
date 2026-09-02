@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildReelModel, createMotionKeyframes } from '../src/draw/slot.js';
+import { buildReelModel, createMotionKeyframes, slotPlaybackDuration } from '../src/draw/slot.js';
+
+test('slot playback duration is half of the selected round duration', () => {
+  assert.equal(slotPlaybackDuration(10_000), 5_000);
+});
 
 test('slot reel provides a rapid drum travel for a 15-second round', () => {
   const games = [
