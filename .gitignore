@@ -5,3 +5,4 @@ coverage/
 .serena/
 debug.log
 .superpowers/
+.worktrees/

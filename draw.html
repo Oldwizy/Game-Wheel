@@ -7,6 +7,7 @@
   <title>Лохотрон ігор і не тільки — розіграш</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="arcade.css">
 </head>
 <body>
 <div class="scanline" aria-hidden="true"></div>
@@ -54,10 +55,22 @@
         <input type="range" id="durationRange" min="2" max="60" value="15" step="1" aria-label="Тривалість раунду в секундах">
       </div>
 
-      <section class="cards-rules" id="cardsRules" aria-labelledby="cardsRulesTitle" hidden>
-        <h3 id="cardsRulesTitle">Правила гри з картками</h3>
+    </section>
+
+    <section class="mode-rules mystery-rules" id="mysteryRules" aria-labelledby="mysteryRulesTitle" hidden>
+      <span class="mode-rules-icon" aria-hidden="true">?</span>
+      <div>
+        <h2 class="side-block-title" id="mysteryRulesTitle">Таємний режим</h2>
+        <p>Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.</p>
+      </div>
+    </section>
+
+    <section class="mode-rules cards-rules" id="cardsRules" aria-labelledby="cardsRulesTitle" hidden>
+      <span class="mode-rules-icon" aria-hidden="true">♠</span>
+      <div>
+        <h2 class="side-block-title" id="cardsRulesTitle">Правила гри з картками</h2>
         <p>Кожна картка — окрема копія гри. Наведіть курсор, щоб побачити 3D-ефект, і натисніть картку, щоб ненадовго відкрити її вміст. Потім вона закриється червоним хрестиком і стане недоступною. Фінальна обрана картка визначає переможця.</p>
-      </section>
+      </div>
     </section>
 
     <!-- Перемикач між списком учасників і журналом раундів. -->
@@ -73,12 +86,6 @@
       <div class="tickets" id="drawTickets"></div>
       <ul class="log" id="log" hidden></ul>
       </details>
-    </section>
-
-    <section class="mystery-side-placeholder" id="mysterySidePlaceholder" aria-labelledby="mysterySideTitle" hidden>
-      <span class="mystery-side-icon" aria-hidden="true">?</span>
-      <h2 class="side-block-title" id="mysterySideTitle">Таємний режим</h2>
-      <p id="mysterySideDescription">Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.</p>
     </section>
 
   </section>
@@ -139,6 +146,8 @@
   </div>
 
 </div>
+  <div class="elimination-snackbars" id="eliminationSnackbars" aria-live="polite" aria-relevant="additions"></div>
+
   <div class="draw-result-popup" id="drawResultPopup" role="dialog" aria-modal="true" aria-labelledby="drawResultTitle" hidden>
     <div class="draw-result-popup-card">
       <div class="draw-result-popup-eyebrow" id="drawResultTitle"></div>

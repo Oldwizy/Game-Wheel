@@ -4,6 +4,7 @@ import { changeCopies, findTerminalWinner, removeRoundCopy, resolveCardsWinner, 
 import { applyControlState, controlStateForPhase } from './controls.js';
 import { createDrawListView } from './draw-list-view.js';
 import { createDrawLog } from './draw-log.js';
+import { showEliminationSnackbar } from './elimination-snackbar.js';
 import { createMysteryVisualization } from './mystery.js';
 import { createCardsVisualization } from './cards.js';
 import { shouldPreserveActiveVisualization } from './render-policy.js';
@@ -42,6 +43,7 @@ const elements = {
   cardsMachine: byId('cardsMachine'),
   cardsGrid: byId('cardsGrid'),
   cardsResult: byId('cardsResult'),
+  eliminationSnackbars: byId('eliminationSnackbars'),
   resultPopup: byId('drawResultPopup'),
   resultPopupTitle: byId('drawResultTitle'),
   resultPopupName: byId('drawResultName'),
@@ -50,9 +52,7 @@ const elements = {
   participantsTab: byId('participantsTabBtn'),
   historyTab: byId('historyTabBtn'),
   participantsSection: byId('participantsSection'),
-  mysterySidePlaceholder: byId('mysterySidePlaceholder'),
-  mysterySideTitle: byId('mysterySideTitle'),
-  mysterySideDescription: byId('mysterySideDescription'),
+  mysteryRules: byId('mysteryRules'),
   cardsRules: byId('cardsRules'),
   participantsDrawer: byId('participantsDrawer')
 };
@@ -224,16 +224,12 @@ function startDrawPage() {
     elements.mysteryMachine.style.display = mode === 'mystery' ? 'flex' : 'none';
     elements.cardsMachine.style.display = mode === 'cards' ? 'flex' : 'none';
     elements.participantsSection.hidden = hiddenSideMode;
-    elements.mysterySidePlaceholder.hidden = !hiddenSideMode;
+    elements.mysteryRules.hidden = mode !== 'mystery';
     elements.cardsRules.hidden = mode !== 'cards';
     elements.durationBlock.hidden = mode === 'cards';
     elements.start.hidden = mode === 'cards';
     elements.status.hidden = mode === 'cards';
     elements.statusDivider.hidden = mode === 'cards';
-    elements.mysterySideTitle.textContent = mode === 'cards' ? 'Режим карток' : 'Таємний режим';
-    elements.mysterySideDescription.textContent = mode === 'cards'
-      ? 'Учасники та історія приховані. Переглядайте картки, не розкриваючи пул завчасно.'
-      : 'Учасники приховані до завершення каруселі. Обкладинка переможця відкриється у центрі екрана.';
     elements.modeButtons.forEach(button => {
       const selected = button.id.startsWith(mode);
       button.classList.toggle('active', selected);
@@ -310,7 +306,7 @@ function startDrawPage() {
     } else {
       const removed = removeRoundCopy(state.games, target.id);
       state = { ...state, games: removed.games };
-      if (removed.eliminated) eliminatedNames = [target.name];
+      eliminatedNames = [target.name];
       wheel.reconcile(state.games, result.kind === 'wheel-complete'
         ? { type: 'landed-remove', index: result.landedSectorIndex }
         : { type: removed.eliminated ? 'remove-game' : 'decrease', gameId: target.id });
@@ -326,13 +322,8 @@ function startDrawPage() {
     const winner = findTerminalWinner(state.games);
     if (winner && !state.logEntries.at(-1)?.text.startsWith('Переможець:')) addLog(`Переможець: <b>${winner.name}</b>`, true);
     persistAndRender({ preserveActiveVisualization: true });
+    eliminatedNames.forEach(name => showEliminationSnackbar(elements.eliminationSnackbars, name));
     const showResultPopup = !['mystery', 'cards'].includes(state.visualMode);
-    if (showResultPopup && eliminatedNames.length) {
-      queueResultPopup(
-        eliminatedNames.length === 1 ? 'Вибуває з розіграшу' : 'Вибули з розіграшу',
-        eliminatedNames.join(' · ')
-      );
-    }
     if (showResultPopup && winner) queueResultPopup('Переможець', winner.name);
     if (winner) showFinishedState(winner);
     else updateStatus(roundStatus('готовий'));
