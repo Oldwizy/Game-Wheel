@@ -697,6 +697,34 @@
   .mystery-side-placeholder p{max-width:280px;margin:0;color:var(--muted);font-size:12px;line-height:1.55;}
   .mystery-side-icon{display:grid;place-items:center;width:48px;height:48px;border:1px solid rgba(0,245,255,.42);border-radius:50%;background:rgba(0,245,255,.08);color:var(--cyan);font-family:var(--font-display);font-size:28px;font-weight:800;}
 
+  .elimination-snackbars{
+    position:fixed;
+    z-index:21;
+    top:20px;
+    right:20px;
+    display:grid;
+    gap:10px;
+    width:min(390px,calc(100vw - 40px));
+    pointer-events:none;
+  }
+  .elimination-snackbar{
+    padding:15px 18px;
+    border:1px solid var(--cyan);
+    border-radius:6px;
+    background:rgba(11,4,31,.96);
+    color:#fff;
+    font-family:var(--font-display);
+    font-size:16px;
+    line-height:1.35;
+    overflow-wrap:anywhere;
+    box-shadow:0 0 20px rgba(0,245,255,.38),0 12px 30px rgba(0,0,0,.38);
+    animation:eliminationSnackbarIn .24s ease-out both;
+  }
+  @keyframes eliminationSnackbarIn{
+    from{opacity:0;transform:translateX(24px);}
+    to{opacity:1;transform:translateX(0);}
+  }
+
   .draw-result-popup{
     position:fixed;
     z-index:20;
