@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMotionKeyframes, velocityAt } from '../src/draw/slot.js';
+import * as slot from '../src/draw/slot.js';
+
+const { createMotionKeyframes, velocityAt } = slot;
+
+test('slot playback duration is half of the selected round duration', () => {
+  assert.equal(typeof slot.slotPlaybackDuration, 'function');
+  assert.equal(slot.slotPlaybackDuration(10_000), 5_000);
+});
 
 test('slot reel keeps active travel for the final fifth of the spin', () => {
   const motion = createMotionKeyframes({
